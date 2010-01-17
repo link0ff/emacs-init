@@ -1576,7 +1576,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; htmlize
 
-(global-set-key [print] 'htmlize-buffer)
+;; (global-set-key [print] 'htmlize-buffer)
+(global-set-key [print] 'htmlfontify-buffer)
 
 
 ;;; debug
