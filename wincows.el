@@ -4,7 +4,7 @@
 
 ;; Author: Juri Linkov <juri@jurta.org>
 ;; Keywords: windows
-;; Version: 1.2
+;; Version: 1.3
 
 ;; This package is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -285,7 +285,10 @@ For more information, see the function `wincows'."
                   (delq nil (mapcar
                              (lambda (b) (and (buffer-live-p b) b))
                              (frame-parameter (selected-frame)
-                                              'buried-buffer-list))))))
+                                              'buried-buffer-list)))
+                  ;; Add a unique value, so `delete' in `wincows-select'
+                  ;; won't delete identical records.
+                  (random))))
     (setq wincows-list (cons current wincows-list))))
 
 (provide 'wincows)
