@@ -4,7 +4,7 @@
 
 ;; Author: Juri Linkov <juri@jurta.org>
 ;; Keywords: windows
-;; Version: 1.0
+;; Version: 1.1
 
 ;; This package is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -134,12 +134,12 @@ marked for deletion."
 Optional prefix arg means move up."
   (interactive "P")
   (beginning-of-line)
-  (forward-char wincows-column)
+  (move-to-column wincows-column)
   (let* ((buffer-read-only nil))
     (delete-char 1)
     (insert " "))
   (forward-line (if backup -1 1))
-  (forward-char wincows-column))
+  (move-to-column wincows-column))
 
 (defun wincows-backup-unmark ()
   "Move up and cancel all requested operations on window configuration on line above."
@@ -147,7 +147,7 @@ Optional prefix arg means move up."
   (forward-line -1)
   (wincows-unmark)
   (forward-line -1)
-  (forward-char wincows-column))
+  (move-to-column wincows-column))
 
 (defun wincows-delete (&optional arg)
   "Mark window configuration on this line to be deleted by \\<wincows-mode-map>\\[wincows-execute] command.
@@ -167,7 +167,7 @@ Negative arg means delete backwards."
       (insert ?D)
       (forward-line -1)
       (setq arg (1+ arg)))
-    (forward-char wincows-column)))
+    (move-to-column wincows-column)))
 
 (defun wincows-delete-backwards (&optional arg)
   "Mark window configuration on this line to be deleted by \\<wincows-mode-map>\\[wincows-execute] command
@@ -191,7 +191,7 @@ and then move up one line.  Prefix arg means move that many lines."
             (beginning-of-line)
             (delete-region (point) (progn (forward-line 1) (point))))))))
   (beginning-of-line)
-  (forward-char wincows-column))
+  (move-to-column wincows-column))
 
 (defun wincows-select ()
   "Select this line's window configuration.
@@ -200,15 +200,25 @@ in the selected frame."
   (interactive)
   (let* ((wincow (wincows-current t))
          (bl (delq nil (mapcar (lambda (b) (and (buffer-live-p b) b))
-                               (nth 2 wincow))))
+                               (nth 3 wincow))))
          (bbl (delq nil (mapcar (lambda (b) (and (buffer-live-p b) b))
-                                (nth 3 wincow)))))
+                                (nth 4 wincow)))))
     ;; Delete the selected window configuration
     (setq wincows-list (delete wincow wincows-list))
     (kill-buffer (current-buffer))
     (modify-frame-parameters (selected-frame) (list (cons 'buffer-list bl)))
     (modify-frame-parameters (selected-frame) (list (cons 'buried-buffer-list bbl)))
-    (set-window-configuration (nth 0 wincow))))
+    (set-window-configuration (nth 0 wincow))
+    ;; set-window-configuration does not restore the value
+    ;; of point in the current buffer, so restore that separately.
+    (when (and (markerp (nth 1 wincow))
+               (marker-buffer (nth 1 wincow))
+               ;; After dired-revert, marker relocates to 1.
+               ;; window-configuration restores point to global point
+               ;; in this dired buffer, not to its window point,
+               ;; but this is slightly better than 1.
+               (not (eq 1 (marker-position (nth 1 wincow)))))
+      (goto-char (nth 1 wincow)))))
 
 (defun wincows-mouse-select (event)
   "Select the window configuration whose line you click on."
@@ -225,6 +235,8 @@ The list is displayed in a buffer named `*Wincows*'.
 
 For more information, see the function `wincows'."
   (wincows-add-current)
+  ;; WORKAROUND FOR A BUG IN NEXT-LINE
+  (pop-to-buffer (get-buffer-create "*Wincows*")) (delete-other-windows)
   (with-current-buffer (get-buffer-create "*Wincows*")
     (setq buffer-read-only nil)
     (erase-buffer)
@@ -237,14 +249,16 @@ For more information, see the function `wincows'."
                (format "%s %s\n"
                        (make-string wincows-column ?\040)
                        (propertize
-                        (nth 1 wincow)
+                        (nth 2 wincow)
                         'mouse-face 'highlight
                         'help-echo "mouse-2: select this window configuration"))
                'wincow wincow)))
     (wincows-mode)
     (goto-char (point-min))
     (goto-char (or (next-single-property-change (point) 'wincow) (point-min)))
-    (forward-char wincows-column)
+    (when (> (length wincows-list) 1)
+      (wincows-next-line))
+    (move-to-column wincows-column)
     (set-buffer-modified-p nil)
     (delete-other-windows)
     (current-buffer)))
@@ -254,6 +268,9 @@ For more information, see the function `wincows'."
   (interactive)
   (let ((current (list
                   (current-window-configuration)
+                  ;; set-window-configuration does not restore the value
+                  ;; of point in the current buffer, so record that separately.
+                  (point-marker)
                   (mapconcat
                    (lambda (w) (buffer-name (window-buffer w)))
                    (window-list)
