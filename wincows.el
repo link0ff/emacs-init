@@ -4,7 +4,7 @@
 
 ;; Author: Juri Linkov <juri@jurta.org>
 ;; Keywords: windows
-;; Version: 1.1
+;; Version: 1.2
 
 ;; This package is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -217,7 +217,10 @@ in the selected frame."
                ;; window-configuration restores point to global point
                ;; in this dired buffer, not to its window point,
                ;; but this is slightly better than 1.
-               (not (eq 1 (marker-position (nth 1 wincow)))))
+               ;; [2011-08-07] Perhaps dired is already fixed,
+               ;; so the next line is commented out:
+               ;; (not (eq 1 (marker-position (nth 1 wincow))))
+               )
       (goto-char (nth 1 wincow)))))
 
 (defun wincows-mouse-select (event)
