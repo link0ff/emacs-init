@@ -1,11 +1,11 @@
 ;;; .emacs --- Emacs init file
 
-;; Copyright (C) 1989-2010  Juri Linkov <juri@jurta.org>
+;; Copyright (C) 1989-2017  Juri Linkov <juri@jurta.org>
 
 ;; Author: Juri Linkov <juri@jurta.org>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.jurta.org/emacs/dotemacs>
-;; Version: 2010-01-17 for GNU Emacs 23.1.90 (x86_64-pc-linux-gnu)
+;; Version: 2017-05-01 for GNU Emacs 25.2.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,9 +24,9 @@
 
 ;;; Commentary:
 
-;;                                               "Show me your .emacs
-;;                                      and I'll tell you who you are."
-;;                                                -- modified proverb
+;;                                             "Show me your ~/.emacs
+;;                                    and I will tell you who you are."
+;;                                      -- old proverb modified by me
 
 
 ;;; settings
@@ -47,10 +47,18 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; If not on AC power line, then display battery status on the mode line
-(and (require 'battery nil t)
-     (functionp battery-status-function)
-     (or (equal (cdr (assoc ?L (funcall battery-status-function))) "on-line")
-         (display-battery-mode)))
+(defvar my-battery-timer nil)
+(when (and (require 'battery nil t) (functionp battery-status-function))
+  (when (and (boundp 'my-battery-timer) (timerp  my-battery-timer))
+    (cancel-timer my-battery-timer))
+  (setq my-battery-timer
+        ;; Check periodically if went off-line and
+        ;; discharging battery needs to be displayed
+        (run-at-time
+         t 600
+         (lambda ()
+           (unless (equal (cdr (assoc ?L (funcall battery-status-function))) "on-line")
+             (display-battery-mode 1))))))
 
 ;; Create display table to modify some display elements
 (or standard-display-table (setq standard-display-table (make-display-table)))
@@ -77,13 +85,14 @@
 (setq gc-cons-percentage 0.3)
 (setq print-gensym t)
 (setq print-circle t)
-(setq redisplay-dont-pause t)
 
 ;; Tabify only initial whitespace
-(setq tabify-regexp "^[ \t]+")
+(setq tabify-regexp "^\t* [ \t]+")
 
 ;; For a new non-file buffer set its major mode based on the buffer name.
 ;; http://thread.gmane.org/gmane.emacs.devel/115520/focus=115794
+;; But this has problems, e.g. in autoinsert.el that uses
+;; `(eq major-mode (default-value 'major-mode))'.
 (setq-default major-mode (lambda ()
                            (if buffer-file-name
                                (fundamental-mode)
@@ -135,17 +144,30 @@
          default-frame-alist))))
 
 
+;;; tabs
+
+(global-set-key [(control tab)]               'tab-next)
+(global-set-key [(control shift iso-lefttab)] 'tab-previous)
+
+
 ;;; mouse
 
 ;; Move the mouse to the screen corner on any keypress.
-(when (and (display-mouse-p) (require 'avoid nil t))
-  ;; Move the mouse to the lower-right corner instead of default upper-right
-  (defun mouse-avoidance-banish-destination ()
-    (cons (+ 3 (frame-width)) (frame-height)))
-  (mouse-avoidance-mode 'banish))
+;; This is commented out because now `mouse-avoidance-mode'
+;; is customized to `banish' in `custom-set-variables':
+;; (when (and (display-mouse-p) (require 'avoid nil t))
+;;   ;; Move the mouse to the lower-right corner instead of default upper-right
+;;   ;; (defun mouse-avoidance-banish-destination ()
+;;   ;;   (cons (+ 3 (frame-width)) (- (frame-height) 1)))
+;;   ;; The above is now customized for 24.2+ in `custom-set-variables' as:
+;;   ;; (mouse-avoidance-banish-position
+;;   ;;  '((frame-or-window . frame) (side . right) (side-pos . -3)
+;;   ;;    (top-or-bottom . bottom) (top-or-bottom-pos . 1)))
+;;   (mouse-avoidance-mode 'banish))
 
 ;; Show the text pointer in void text areas (no need any more)
 ;; (setq void-text-area-pointer nil)
+;; (setq make-pointer-invisible t)
 
 
 ;;; colors
@@ -164,12 +186,13 @@ i.e. in daylight or under bright electric lamps."
   (set-background-color "white")
   (set-foreground-color "black")
   (when (facep 'region)
-    (set-face-background 'region "DarkGrey" frame))
+    (set-face-background 'region "gainsboro" frame))
   (when (facep 'fringe)
     (set-face-background 'fringe (face-background 'default) frame)
     (set-face-foreground 'fringe (face-foreground 'default) frame))
   ;; When started Emacs under root, warn by red color in the modeline
   (when (and (facep 'mode-line)
+             ;; Alternative condition is (= (user-uid) 0)
              (file-exists-p "/root")
              (file-writable-p "/root"))
     (set-face-background 'mode-line "firebrick")))
@@ -219,7 +242,7 @@ i.e. in daylight or under bright electric lamps."
                                             'my-colors-light)))))
 
 ;; (my-colors-set)
-(add-to-list 'after-make-frame-functions 'my-colors-set)
+;; (add-to-list 'after-make-frame-functions 'my-colors-set)
 
 
 ;;; faces
@@ -231,24 +254,29 @@ i.e. in daylight or under bright electric lamps."
   ;; `custom-declare-face' where the variable `face' is bound locally.
   (when (boundp 'face)
     (dolist (face (face-list))
+
       ;; Make italic gray instead of black
-      (when (face-italic-p face frame)
-        (if (equal (face-foreground face frame) "black")
-            (set-face-foreground face "gray50" frame)))
-      ;; My font makes bold text unreadable,
+      ;; (when (face-italic-p face frame)
+      ;;   (if (equal (face-foreground face frame) "black")
+      ;;       (set-face-foreground face "gray50" frame)))
+
+      ;; My font makes bold text illegible,
       ;; so replace bold property with underline property
-      (when (face-bold-p face frame)
-        (set-face-bold-p face nil frame)
-        ;; (set-face-inverse-video-p face t frame)
-        (set-face-underline-p face t frame))
+      ;; (when (face-bold-p face frame)
+      ;;   (set-face-bold face nil frame)
+      ;;   ;; (set-face-inverse-video face t frame)
+      ;;   (set-face-underline face t frame))
+
       ;; Fonts with different height decrease the amount of lines
       ;; visible on screen, so remove the height property
       (when (numberp (face-attribute face :height frame))
         (set-face-attribute face frame :height 'unspecified))
+
       ;; Fonts with different width decrease the amount of characters
       ;; on the line, so remove the width property
       (when (numberp (face-attribute face :width frame))
         (set-face-attribute face frame :width 'unspecified))
+
       ;; Fonts with different weight decrease the height and width,
       ;; of the line, so remove the weight property
       ;; (when (numberp (face-attribute face :weight frame))
@@ -257,9 +285,10 @@ i.e. in daylight or under bright electric lamps."
       ;;   ;; Reset all face attributes
       ;;   (modify-face face))
       )))
+
 ;; 1. Fix existing faces
 ;; (let ((face t)) (my-faces-fix))
-;; (add-hook 'after-init-hook '(lambda () (let (face) (my-faces-fix))) t)
+;; (add-hook 'after-init-hook (lambda () (let (face) (my-faces-fix))) t)
 ;; 2. Call `my-faces-fix' every time some new face gets defined
 (add-to-list 'custom-define-hook 'my-faces-fix)
 
@@ -268,10 +297,10 @@ i.e. in daylight or under bright electric lamps."
 
 (define-key global-map [(control left)]       'backward-sexp)
 (define-key global-map [(control right)]      'forward-sexp)
+(define-key global-map [(control kp-left)]    'backward-sexp)
+(define-key global-map [(control kp-right)]   'forward-sexp)
 (define-key global-map [(control meta left)]  'backward-word)
 (define-key global-map [(control meta right)] 'forward-word)
-(define-key global-map [(meta left)]          'dired-jump)
-(define-key global-map [(meta right)]         'my-find-thing-at-point)
 
 (define-key global-map [(control meta up)]    'backward-paragraph)
 (define-key global-map [(control meta down)]  'forward-paragraph)
@@ -284,11 +313,39 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
 (define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
 
-;; TODO: currently keybindings (meta up) (meta down) are free, use them
+;; TODO: these are new overridden by `windmove',
+;; find new keyprefix for navigational keys (in Info, view, etc):
+(define-key global-map [(meta left)]
+  (lambda ()
+    (interactive)
+    ;; TODO: also check in (wincows)
+    (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+        (dired-jump)
+      ;; Go to the top to not store emacs-places.
+      (goto-char (point-min))
+      (kill-current-buffer-and-dired-jump))))
+(define-key global-map [(meta right)]         'my-find-thing-at-point)
+;; Keybindings (meta up) (meta down) are free when windmove uses `super'.
+
+;; (windmove-default-keybindings 'meta)
+(windmove-default-keybindings 'super)
+(windmove-default-keybindings 'hyper)
+
+;; TODO: bind (shift meta) to a new package that moves windows like
+;; `rotate-window-buffers' bound to `C-z C-u'
+(define-key global-map [(shift super left)]  'rotate-window-buffers)
+(define-key global-map [(shift super right)] 'rotate-window-buffers)
+(define-key global-map [(shift hyper left)]  'rotate-window-buffers)
+(define-key global-map [(shift hyper right)] 'rotate-window-buffers)
 
 ;; Actually I don't use next two keybindings, use them for something useful
 ;; (define-key global-map [(control meta prior)] 'scroll-right)
 ;; (define-key global-map [(control meta next)]  'scroll-left)
+
+(define-key global-map [(control down)] 'scroll-up-line)
+(define-key global-map [(control up)] 'scroll-down-line)
+(define-key global-map [(control kp-down)] 'scroll-up-line)
+(define-key global-map [(control kp-up)] 'scroll-down-line)
 
 ;; (define-key global-map [(control return)]
 ;;   (lambda () (interactive) (let ((use-hard-newlines t)) (newline))))
@@ -456,6 +513,7 @@ i.e. in daylight or under bright electric lamps."
   ;; Use single escape keypress instead of knocking it 3 times.
   ;; On a window system there is no need to use ESC as a prefix key.
   (define-key global-map [escape] 'keyboard-escape-quit)
+  (define-key isearch-mode-map  [escape] 'isearch-cancel)
 
   ;; Set ESC-modifier to C-z escape
   ;; This is useful to invoke `M-TAB' or `M-|' on keyboards with AltGr key,
@@ -464,23 +522,63 @@ i.e. in daylight or under bright electric lamps."
 
   (define-key my-map [(control ?u)] 'rotate-window-buffers)
   (define-key my-map "t" 'toggle-truncate-lines)
-  (define-key my-map "v" 'set-variable)
-  (define-key my-map "V" 'customize-variable)
+  (define-key my-map "v" nil)
+  (define-key my-map "vs" 'set-variable)
+  (define-key my-map "vc" 'customize-variable)
+  (define-key my-map "vtw2" (lambda () (interactive) (setq-local tab-width 2) (force-mode-line-update)))
   (define-key my-map "r" 'revert-buffer)
+  (define-key my-map "\C-q" 'quoted-insert) ; because global C-q is rebound above
+  ;; `C-z -' and `C-z C--' inserts a vertical line.
+  (define-key my-map [(control ?-)] (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
+  (define-key my-map "-" (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
   (define-key my-map "p" (lambda () (interactive) (my-shell-command "perl test.pl")))
   ;; TEST: try `C-z C-x C-x C-x C-x ...', try `C-x z C-z C-z C-z' (repeat.el)
   )
 
+;; Modify esc-map when not on a tty
 (when window-system
   ;; Insert paired characters
-  (define-key esc-map "\"" 'insert-pair)
+  (define-key esc-map "\""
+    (lambda ()
+      (interactive)
+      (let ((insert-pair-alist
+             (cons
+              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+                       (or (and comment-start (nth 4 (syntax-ppss)))
+                           (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'sgml-mode))
+                                (not (derived-mode-p 'vc-git-log-edit-mode))
+                                )
+                           ;; (derived-mode-p 'fundamental-mode)
+                           ))
+                  '(?\" ?\“ ?\”)
+                '(?\" ?\" ?\"))
+              insert-pair-alist)))
+        (call-interactively 'insert-pair))))
   ;; (define-key esc-map "`"  'insert-pair)
   ;; (define-key global-map "\M-`" 'insert-pair)
-  ;; (define-key esc-map "'"  'insert-pair)
+  (define-key esc-map "'"
+    (lambda ()
+      (interactive)
+      (let ((insert-pair-alist
+             (cons
+              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+                       (or (and comment-start (nth 4 (syntax-ppss)))
+                           (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'sgml-mode))
+                                (not (derived-mode-p 'vc-git-log-edit-mode))
+                                )
+                           ;; (derived-mode-p 'fundamental-mode)
+                           ))
+                  '(?\' ?\‘ ?\’)
+                '(?\' ?\' ?\'))
+              insert-pair-alist)))
+        (call-interactively 'insert-pair))))
+  ;; Optionally, make ' insert backquote `'.
+  ;; (add-to-list 'insert-pair-alist '(?\' ?\` ?\'))
   (define-key esc-map "["  'insert-pair)
   (define-key esc-map "{"  'insert-pair)
-  (define-key esc-map ")"  'up-list)
-  (add-to-list 'insert-pair-alist '(?\' ?\` ?\')))
+  (define-key esc-map ")"  'up-list))
 
 (define-key my-map  "`"  'insert-pair)
 (define-key my-map  "<"  'insert-pair)
@@ -586,24 +684,13 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;;; window
 
-;; Define buffers that should appear in the same window.
-(add-to-list 'same-window-buffer-names "*Apropos*")
-(add-to-list 'same-window-buffer-names "*Buffer List*")
-(add-to-list 'same-window-buffer-names "*Colors*")
-(add-to-list 'same-window-buffer-names "*Command History*")
-(add-to-list 'same-window-buffer-names "*Diff*")
-(add-to-list 'same-window-buffer-names "*Proced*")
-(add-to-list 'same-window-buffer-names "*vc-dir*")
-(add-to-list 'same-window-regexps "\\*compilation\\*\\(\\|<[0-9]+>\\)")
-(add-to-list 'same-window-regexps "\\*grep\\*\\(\\|<[0-9]+>\\)")
-(add-to-list 'same-window-regexps "\\*Help\\*\\(\\|<[0-9]+>\\)")
-
 (defun my-move-to-window-top (&optional arg)
   "Position point to the top line of the window."
   (interactive)
   (move-to-window-line 0))
 
 (define-key global-map [(control prior)] 'my-move-to-window-top)
+(define-key global-map [(control kp-prior)] 'my-move-to-window-top)
 
 (defun my-move-to-window-bottom (&optional arg)
   "Position point to the bottom line of the window."
@@ -611,6 +698,7 @@ With C-u, C-0 or M-0, cancel the timer."
   (move-to-window-line -1))
 
 (define-key global-map [(control next)]  'my-move-to-window-bottom)
+(define-key global-map [(control kp-next)]  'my-move-to-window-bottom)
 
 (defun my-windows-balance ()
   (interactive)
@@ -654,7 +742,8 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; (define-key my-map "\M-r" 'my-move-to-window-line)
 ;; (define-key global-map "\M-r" 'my-move-to-window-line)
 
-(setq recenter-position (car recenter-positions))
+(when (boundp 'recenter-positions)
+  (setq recenter-position (car recenter-positions)))
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -663,6 +752,14 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;     (if (string-match "\\*Help\\*\\(\\|<[0-9]+>\\)" (buffer-name (car (buffer-list))))
 ;;         (selected-window)
 ;;       window)))
+
+
+;;; follow
+
+(eval-after-load "follow"
+  '(progn
+     (define-key follow-mode-map [prior] 'follow-scroll-down)
+     (define-key follow-mode-map [next]  'follow-scroll-up)))
 
 
 ;;; isearch
@@ -699,8 +796,22 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;   (sit-for 0)
 ;;   (reposition-window))
 
+;; TODO: try to use `isearch-update-post-hook', e.g.
+;; (add-hook 'isearch-update-post-hook 'recenter)
+;; (add-hook 'replace-update-post-hook 'recenter)
+(defadvice isearch-update (before my-isearch-reposite activate)
+  (sit-for 0)
+  ;; While browsing patches, make the next hunk posited at the window's top:
+  (when (and (derived-mode-p 'diff-mode) isearch-regexp (equal "^revno:" isearch-string))
+    (recenter 1)))
+
+(put 'toggle-truncate-lines 'isearch-scroll t)
+
+;; TODO: propose these 2 commands but without keybindings (or maybe `M-s M-<').
+;; SEE ALSO http://www.reddit.com/r/emacs/comments/1h8zfu/incremental_search_from_beginning_of_the_buffer/
 (defun isearch-beginning-of-buffer ()
-  "Move isearch point to the beginning of the buffer."
+  "Go to the first occurrence of the current match.
+Move isearch point to the beginning of the buffer and repeat the search."
   (interactive)
   (goto-char (point-min))
   (isearch-repeat-forward))
@@ -708,7 +819,8 @@ With C-u, C-0 or M-0, cancel the timer."
 (define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
 
 (defun isearch-end-of-buffer ()
-  "Move isearch point to the end of the buffer."
+  "Go to the last occurrence of the current match.
+Move isearch point to the end of the buffer and repeat the search."
   (interactive)
   (goto-char (point-max))
   (isearch-repeat-backward))
@@ -719,6 +831,20 @@ With C-u, C-0 or M-0, cancel the timer."
 (define-key minibuffer-local-isearch-map "\t" 'isearch-complete-edit)
 
 (define-key isearch-mode-map [(control return)] 'isearch-exit)
+
+;; C-RET doesn't add the current search string to the search ring
+;; and moves point to the beginning of the found search string.
+(add-hook 'isearch-mode-end-hook
+          (lambda ()
+            ;; Exiting isearch with C-RET
+            (when (eq last-input-event 'C-return)
+              ;; Move point to the beginning of the found search string
+              (if (and isearch-forward isearch-other-end)
+                  (goto-char isearch-other-end))
+              ;; Don't add the current search string to the search ring
+              (if isearch-regexp
+                  (setq regexp-search-ring (cdr regexp-search-ring))
+                (setq search-ring (cdr search-ring))))))
 
 ;; S-RET leaves lazy-highlighted matches.
 (defun my-isearch-exit-leave-lazy-highlight ()
@@ -731,19 +857,6 @@ With C-u, C-0 or M-0, cancel the timer."
 
 (define-key isearch-mode-map [(shift return)]
                              'my-isearch-exit-leave-lazy-highlight)
-
-;; C-RET doesn't add the current search string to the history.
-(add-hook 'isearch-mode-end-hook
-          (lambda ()
-            ;; On typing C-RET
-            (when (eq last-input-char 'C-return)
-              ;; Set the point at the beginning of the search string
-              (if (and isearch-forward isearch-other-end)
-                  (goto-char isearch-other-end))
-              ;; Don't push the search string into the search ring
-              (if isearch-regexp
-                  (setq regexp-search-ring (cdr regexp-search-ring))
-                (setq search-ring (cdr search-ring))))))
 
 ;; Make Isearch mode-line string shorter, just " /" instead of " Isearch"
 ;; (add-hook 'isearch-mode-hook
@@ -760,14 +873,84 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; control characters.
 ;; The next line is bad, because \n is bad for `C-M-s SPC $'
 ;; (setq search-whitespace-regexp "[ \t\r\n]+")
-;; TRY to ignore punctuation:
-(setq search-whitespace-regexp "\\W+")
+;; TRY to ignore punctuation, BAD because C-w (`isearch-yank-word-or-char')
+;; doesn't yank punctuation characters, so use word search instead of this:
+;; (setq search-whitespace-regexp "\\W+")
+;; TRY to match newlines like in `compare-windows-whitespace':
+(setq search-whitespace-regexp "\\(\\s-\\|\n\\)+")
+;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
+(setq Info-search-whitespace-regexp "\\(\\s-\\|\n\\)+")
+
+;; TRY:
+;; Like `word-search-regexp'
+(defun search-whitespace-regexp (string &optional _lax)
+  "Return a regexp which ignores whitespace.
+Uses the value of the variable `search-whitespace-regexp'."
+  (if (or (not (stringp search-whitespace-regexp))
+          (null (if isearch-regexp
+                    isearch-regexp-lax-whitespace
+                  isearch-lax-whitespace)))
+      string
+    ;; FIXME: this is not strictly correct implementation because it ignores
+    ;; `subregexp-context-p' and replaces spaces inside char set group like
+    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(\\s-\\|\n\\)+"] !
+    (replace-regexp-in-string
+     search-whitespace-regexp
+     search-whitespace-regexp ;; or replace by " " that is handled by search-spaces-regexp
+     (regexp-quote string) nil t)))
+;; (defun search-forward-lax-whitespace (string &optional bound noerror count)
+;;   (re-search-forward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
+;; (defun search-backward-lax-whitespace (string &optional bound noerror count)
+;;   (re-search-backward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
+;; (defun re-search-forward-lax-whitespace (regexp &optional bound noerror count)
+;;   (re-search-forward (search-whitespace-regexp regexp) bound noerror count))
+;; (defun re-search-backward-lax-whitespace (regexp &optional bound noerror count)
+;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
+(setq search-default-mode #'char-fold-to-regexp)
+
+;; OBSOLETE:
+;; Decomposition search for accented letters.
+(define-key isearch-mode-map "\M-sd" 'isearch-toggle-decomposition)
+(defun isearch-toggle-decomposition ()
+  "Toggle Unicode decomposition searching on or off."
+  (interactive)
+  (setq isearch-word (unless (eq isearch-word 'isearch-decomposition-regexp)
+		       'isearch-decomposition-regexp))
+  (if isearch-word (setq isearch-regexp nil))
+  (setq isearch-success t isearch-adjusted t)
+  (isearch-update))
+(defun isearch-decomposition-regexp (string &optional _lax)
+  "Return a regexp that matches decomposed Unicode characters in STRING."
+  (let ((accents "['`\"́̋]"))
+    (mapconcat
+     (lambda (c0)
+       (concat (string c0) accents "?"))
+     (replace-regexp-in-string accents "" string) "")))
+(put 'isearch-decomposition-regexp 'isearch-message-prefix "deco ")
 
 
 ;;; occur
 
-;; Make *Occur* buffer names unique.
-(add-hook 'occur-hook (lambda () (occur-rename-buffer t)))
+;; Make *Occur* buffer names unique and writable
+;; (like in `compilation-mode-hook' below).
+(add-hook 'occur-hook
+          (lambda ()
+            (occur-rename-buffer t)
+            (setq buffer-read-only nil)))
+
+;; Based on `occur-mode-goto-occurrence-other-window'
+(defun occur-mode-goto-occurrence-kill-buffer ()
+  "Go to the occurrence the current line describes, and kill the Occur buffer."
+  (interactive)
+  (let ((buf (current-buffer))
+        (pos (occur-mode-find-occurrence)))
+    (switch-to-buffer-other-window (marker-buffer pos))
+    (goto-char pos)
+    (kill-buffer buf)
+    (run-hooks 'occur-mode-find-occurrence-hook)))
+
+;; Bind to "o" in place of `occur-mode-goto-occurrence'.
+(define-key occur-mode-map [(control return)] 'occur-mode-goto-occurrence-kill-buffer)
 
 
 ;;; replace
@@ -790,15 +973,40 @@ With C-u, C-0 or M-0, cancel the timer."
          (if (and transient-mark-mode mark-active) (region-end))))
     (error "Invalid syntax")))
 
+;; FROM http://emacs.stackexchange.com/questions/27135/search-replace-like-feature-for-swapping-text/27170#27170
+(defun query-swap-strings (from-string to-string &optional delimited start end backward region-noncontiguous-p)
+  "Swap occurrences of FROM-STRING and TO-STRING."
+  (interactive
+   (let ((common
+	  (query-replace-read-args
+	   (concat "Query swap"
+		   (if current-prefix-arg
+		       (if (eq current-prefix-arg '-) " backward" " word")
+		     "")
+		   (if (use-region-p) " in region" ""))
+	   nil)))
+     (list (nth 0 common) (nth 1 common) (nth 2 common)
+	   (if (use-region-p) (region-beginning))
+	   (if (use-region-p) (region-end))
+	   (nth 3 common)
+	   (if (use-region-p) (region-noncontiguous-p)))))
+  (perform-replace
+   (concat "\\(" (regexp-quote from-string) "\\)\\|" (regexp-quote to-string))
+   `(replace-eval-replacement replace-quote (if (match-string 1) ,to-string ,from-string))
+   t t delimited nil nil start end backward region-noncontiguous-p))
+
 
 ;;; minibuffer
+
+;; See http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
+(define-key minibuffer-local-map [S-return] 'newline)
 
 ;; Remove potentially dangerous commands from the history immediately
 (add-hook 'minibuffer-exit-hook
           (lambda ()
             (when (string-match
                    "^rm"
-                   (car (symbol-value minibuffer-history-variable)))
+                   (or (car-safe (symbol-value minibuffer-history-variable)) ""))
               (set minibuffer-history-variable
                    (cdr (symbol-value minibuffer-history-variable))))))
 
@@ -893,7 +1101,9 @@ With prefix arg, insert the current timestamp to the current buffer."
                (concat
                 (format-time-string "%Y-%m-%d %H:%M:%S %z" (current-time)) ;; ISO
                 " "
-                (aref calendar-day-abbrev-array (nth 6 (decode-time (current-time))))
+                (if (boundp 'calendar-day-abbrev-array)
+                    (aref calendar-day-abbrev-array (nth 6 (decode-time (current-time))))
+                  (format-time-string "%a" (current-time)))
                 " : "
                 (or (buffer-file-name) default-directory))))))
 
@@ -1065,39 +1275,39 @@ goes to the saved location."
   (define-key my-map "ewa" 'ee-windows-add)
   (define-key my-map "eww" 'ee-windows)
   (define-key global-map [(meta  ?\xa7)] 'ee-windows-and-add-current)
-  (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
+  ;; (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
   (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
   (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
   (eval-after-load "ee-windows"
     '(progn
        (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
-       (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
+       ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
        (define-key ee-windows-keymap [(meta     ?`)] 'ee-windows-select-and-delete-current)
        (define-key ee-windows-keymap [(super    ?`)] 'ee-windows-select-and-delete-current)
        (define-key ee-windows-keymap [( ?\xa7)] 'ee-view-record-next)
-       (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
+       ;; (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
        (define-key ee-windows-keymap [(    ?`)] 'ee-view-record-next)
        (define-key ee-windows-keymap [( ?\xbd)] 'ee-view-record-prev)
-       (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
+       ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
        (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev))))
 
 ;; Use standalone wincows.el instead
 (when (require 'wincows nil t)
   (define-key global-map [(meta  ?\xa7)] 'wincows)
-  (define-key global-map [(meta ?\x8a7)] 'wincows)
+  ;; (define-key global-map [(meta ?\x8a7)] 'wincows)
   (define-key global-map [(meta     ?`)] 'wincows)
   (define-key global-map [(super    ?`)] 'wincows)
   (eval-after-load "wincows"
     '(progn
        (define-key wincows-mode-map [(meta  ?\xa7)] 'wincows-select)
-       (define-key wincows-mode-map [(meta ?\x8a7)] 'wincows-select)
+       ;; (define-key wincows-mode-map [(meta ?\x8a7)] 'wincows-select)
        (define-key wincows-mode-map [(meta     ?`)] 'wincows-select)
        (define-key wincows-mode-map [(super    ?`)] 'wincows-select)
        (define-key wincows-mode-map [( ?\xa7)] 'wincows-next-line)
-       (define-key wincows-mode-map [(?\x8a7)] 'wincows-next-line)
+       ;; (define-key wincows-mode-map [(?\x8a7)] 'wincows-next-line)
        (define-key wincows-mode-map [(    ?`)] 'wincows-next-line)
        (define-key wincows-mode-map [( ?\xbd)] 'wincows-prev-line)
-       (define-key wincows-mode-map [(?\x8bd)] 'wincows-prev-line)
+       ;; (define-key wincows-mode-map [(?\x8bd)] 'wincows-prev-line)
        (define-key wincows-mode-map [(    ?~)] 'wincows-prev-line))))
 
 
@@ -1111,7 +1321,7 @@ Indent each line of the list starting just after point."
   (interactive "*")
   (reindent-then-newline-and-indent)
   (save-excursion
-    (backward-up-list)
+    (condition-case nil (backward-up-list) (error nil))
     (indent-sexp)))
 
 (defun my-join-line-and-indent-sexp ()
@@ -1121,7 +1331,7 @@ Indent each line of the list starting just after point."
   (interactive "*")
   (join-line)
   (save-excursion
-    (backward-up-list)
+    (condition-case nil (backward-up-list) (error nil))
     (let ((indent-sexp-function (key-binding "\e\C-q")))
       (if indent-sexp-function (call-interactively indent-sexp-function)))))
 
@@ -1131,7 +1341,7 @@ Indent each line of the list starting just after point."
   "If point is on the whitespaces at the beginning of a line,
 then join this line to previous and indent each line of the upper list.
 Otherwise, kill characters backward until encountering the end of a word."
-  (interactive "*")
+  (interactive)
   (if (save-excursion (and (skip-chars-backward " \t") (bolp)))
       (my-join-line-and-indent-sexp)
     (backward-kill-word 1)))
@@ -1160,7 +1370,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (if (fboundp 'move-beginning-of-line)
         (move-beginning-of-line arg)
       (beginning-of-line arg))))
-
+(put 'my-beginning-of-line-or-indentation 'isearch-move t)
 (define-key global-map [(control ?a)] 'my-beginning-of-line-or-indentation)
 
 (defun my-reindent-then-newline-and-indent ()
@@ -1177,6 +1387,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key global-map [(control       return)] 'reindent-then-newline-and-indent)
 (define-key global-map [(control shift return)] 'my-reindent-then-newline-and-indent)
+
+(define-key global-map [S-return] 'electric-newline-and-maybe-indent)
 
 ;; Lisp mode
 (define-key lisp-mode-map [(control return)]
@@ -1241,7 +1453,54 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   '(progn (add-hook 'clojure-mode-hook
                     (lambda ()
                       (set (make-local-variable 'inferior-lisp-program)
-                           "java -cp clojure.jar clojure.lang.Repl")))))
+                           ;; For latest version:
+                           "lein repl"
+                           ;; "java -cp /home/work/java/clojure/jar/clojure-1.7.0-alpha1.jar clojure.main"
+                           ;; "java -cp /home/work/java/clojure/jar/clojure-1.5.0-RC4.jar clojure.main"
+                           ;; For 1.2 with init file:
+                           ;; "java clojure.main -i ~/init.clj"
+                           ;; "java clojure.main"
+                           ;; For OLD version 1.0 (deprecated):
+                           ;; "java -cp clojure.jar clojure.lang.Repl"
+                           ;; For installed version in Ubuntu:
+                           ;; "clojure"
+                           )))
+
+          ;; FROM https://github.com/weavejester/compojure/wiki/Emacs-indentation
+          (define-clojure-indent
+            (defroutes 'defun)
+            (GET 2)
+            (POST 2)
+            (PUT 2)
+            (DELETE 2)
+            (HEAD 2)
+            (ANY 2)
+            (context 2))
+          ))
+
+;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
+(setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
+
+(eval-after-load "cc-mode"
+  '(progn (add-hook 'java-mode-hook
+                    (lambda ()
+                      (setq tab-width 4)))))
+
+(eval-after-load "css-mode"
+  '(progn (add-hook 'css-mode-hook
+                    (lambda ()
+                      (setq tab-width 2)))))
+
+(eval-after-load "js"
+  '(progn (add-hook 'js-mode-hook
+                    (lambda ()
+                      (setq js-indent-level 2)
+                      (setq tab-width 2)))))
+
+(eval-after-load "ruby-mode"
+  '(progn (add-hook 'ruby-mode-hook
+                    (lambda ()
+                      (set (make-local-variable 'require-final-newline) nil)))))
 
 
 ;;; snd
@@ -1255,8 +1514,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (defun run-snd ()
   (interactive)
   (run-scheme "snd -notebook" "snd"))
-
-(add-to-list 'same-window-buffer-names "*snd*")
 
 ;; Added "<" for Scheme "#<unspecified>"
 (setq inferior-lisp-prompt "^[^<> \n]*>+:? *")
@@ -1370,6 +1627,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
       'Man-cooked-hook
       (lambda ()
         ;; TODO: add to perl-mode.el? and cperl-mode.el?
+        ;; BAD: it breaks links followed with a dot!
         (if (string-match "^\\([0-9]+ *\\)?perl" Man-arguments)
             (Man-highlight-references0
              "DESCRIPTION"
@@ -1492,6 +1750,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; TODO: for Yaws templates use mumamo with erlang-mode and html-mode
 (add-to-list 'auto-mode-alist '("\\.yaws\\'" . erlang-mode))
 
+(setq erlang-inferior-shell-split-window nil)
+
 
 ;;; haskell
 
@@ -1500,6 +1760,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 
 ;;; html
+
+(add-to-list 'auto-mode-alist '("\\.mustache\\'" . html-mode))
+(add-to-list 'auto-mode-alist '("\\.ejs\\'" . html-mode))
 
 ;; These are needed to set before loading sgml-mode.el:
 ;; (setq sgml-quick-keys t)
@@ -1516,13 +1779,13 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-skeleton html-headline-1
   "HTML level 1 headline tags."
   nil
-  "<h1><a name=\"" (setq str (read-input "Name: "))
+  "<h1><a name=\"" (setq str (read-string "Name: "))
   "\" id=\"" str "\">" _ "</a></h1>")
 
 (define-skeleton html-headline-2
   "HTML level 2 headline tags."
   nil
-  "<h2><a name=\"" (setq str (read-input "Name: "))
+  "<h2><a name=\"" (setq str (read-string "Name: "))
   "\" id=\"" str "\">" _ "</a></h2>")))
 
 (add-hook 'html-mode-hook 'turn-off-auto-fill)
@@ -1564,7 +1827,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
    my-auto-insert-html-mode-language "\" />\n"
    "<meta name=\"description\" content=\"\" />\n"
    "<meta name=\"keywords\" content=\"\" />\n"
-   "<title>" (capitalize (setq str (downcase (read-input "Title: ")))) "</title>\n"
+   "<title>" (capitalize (setq str (downcase (read-string "Title: ")))) "</title>\n"
    "<link rel=\"stylesheet\" type=\"text/css\" href=\"/jurta.css\" />\n"
    "</head>\n"
    "<body>\n<h1><a name=\"" str "\" id=\"" str "\">" str "</a></h1>\n"
@@ -1690,14 +1953,16 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
  'outline-mode-hook
  (lambda ()
    ;; (hide-sublevels 1) ; alternative
-   (hide-body)))
+   ;; (hide-body)
+   ))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
  'outline-minor-mode-hook
  (lambda ()
    ;; (hide-sublevels 1) ; alternative
-   (hide-body)))
+   ;; (hide-body)
+   ))
 
 ;; this is old and bad
 ;; (defun my-outline-hide-entry-or-subtree ()
@@ -1754,23 +2019,41 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (define-key diff-mode-map [(control meta up)]   'diff-hunk-prev)
      (define-key diff-mode-map [(control meta shift down)] 'diff-file-next)
      (define-key diff-mode-map [(control meta shift up)]   'diff-file-prev)
+     (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
+
+     (add-hook 'diff-mode-hook 'rename-uniquely)
+
      ;; These commented out lines no more needed because diff-font-lock-keywords
      ;; was changed to use `diff-indicator-...' faces for that
-;;      (setcar (assoc "^!.*\n" diff-font-lock-keywords) "^!")
-;;      (setcar (assoc "^[+>].*\n" diff-font-lock-keywords) "^[+>]")
-;;      (setcar (assoc "^[-<].*\n" diff-font-lock-keywords) "^[-<]")
-;;      (setcdr (assoc "^#.*" diff-font-lock-keywords) font-lock-comment-face)
-;;      (setq diff-font-lock-keywords
-;;            (append diff-font-lock-keywords
-;;                    '(("^[!-+<>]"
-;;                       (0 diff-marker-face prepend)))))
+     ;; (setcar (assoc "^!.*\n" diff-font-lock-keywords) "^!")
+     ;; (setcar (assoc "^[+>].*\n" diff-font-lock-keywords) "^[+>]")
+     ;; (setcar (assoc "^[-<].*\n" diff-font-lock-keywords) "^[-<]")
+     ;; (setcdr (assoc "^#.*" diff-font-lock-keywords) font-lock-comment-face)
+     ;; (setq diff-font-lock-keywords
+     ;;       (append diff-font-lock-keywords
+     ;;               '(("^[!-+<>]"
+     ;;                  (0 diff-marker-face prepend)))))
+     ;; Use the colors of savannah.gnu.org WebCVS diffs.
+     ;; Commented out because the repo for 24.2 should have them.
+     ;; (set-face-background 'diff-file-header "#bbbbbb")
+     ;; (set-face-background 'diff-header  "#dddddd")
+     ;; (set-face-background 'diff-added   "#eeffee")
+     ;; (set-face-background 'diff-changed "#ffffee")
+     ;; (set-face-background 'diff-removed "#ffeeee")
+     ;; (set-face-background 'diff-indicator-added   "#eeffee")
+     ;; (set-face-background 'diff-indicator-changed "#ffffee")
+     ;; (set-face-background 'diff-indicator-removed "#ffeeee")
+     ;; (set-face-background 'diff-refine-change "#fffbbf")
+     ;; Make revision separators more noticeable:
+     (setq diff-font-lock-keywords
+           (append diff-font-lock-keywords
+                   '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend)))))))
 
-     ;; Use the colors of savannah.gnu.org WebCVS diffs
-     ;; (set-face-background 'diff-added   "#aaffaa")
-     ;; (set-face-background 'diff-changed "#ffff77")
-     ;; (set-face-background 'diff-header  "#99cccc")
-     ;; (set-face-background 'diff-removed "#ffaaaa")
-     ))
+(defun diff-goto-source-kill-buffer ()
+  (interactive)
+  (let ((buf (current-buffer)))
+    (call-interactively 'diff-goto-source)
+    (kill-buffer buf)))
 
 (define-generic-mode 'diff-generic-mode
   (list ?#)
@@ -1783,7 +2066,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   "For diffuniq and subpatch.")
 
 ;; Prevent git-diff from calling pager
-(setenv "PAGER" "/bin/cat")
+;; (setenv "PAGER" "/bin/cat")
+;; (setenv "PAGER") (getenv "PAGER")
 
 
 ;;; text
@@ -1792,25 +2076,51 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
 (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
 
+(add-hook 'text-mode-hook       'flyspell-mode)
+(add-hook 'change-log-mode-hook 'flyspell-mode)
+;; (add-hook 'prog-mode-hook       'flyspell-prog-mode)
+
+;; Flyspell only on typing, not on moving point
+;; (add-hook 'flyspell-mode-hook
+;;           (lambda ()
+;;             (remove-hook 'post-command-hook (function flyspell-post-command-hook) t)
+;;             (add-hook 'after-change-functions
+;;                       (lambda (start stop len)
+;;                         (flyspell-post-command-hook)) t t)))
+
+;; Alternative solution for Flyspell only on typing, not on moving point
+(add-hook 'flyspell-mode-hook
+          (lambda ()
+            (advice-add 'flyspell-check-pre-word-p :override (lambda () nil))
+            ;; After evaluating the next, flyspell doesn't check the last word
+            ;; in `auto-fill-mode' when typing SPC moves to the next line,
+            ;; because the order of calls in `internal_self_insert' is:
+            ;; 1. insert_and_inherit ();
+            ;; 2. Frun_hook_with_args (Qafter_change_functions);
+            ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
+            ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
+            (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
+
 
 ;;; view
 
 (eval-after-load "view"
   '(progn
-     ;; Shift-Space to scroll back.
-     (define-key view-mode-map [?\S- ] 'View-scroll-page-backward)
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key view-mode-map [?\S-\ ] 'View-scroll-page-backward)
      (define-key view-mode-map " " 'View-scroll-page-forward-set-page-size)
      (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
      (define-key view-mode-map "l" 'View-goto-line)
      (define-key view-mode-map [f2] 'toggle-truncate-lines)
      ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
      ;; global: (define-key view-mode-map [(meta right)] 'find-file-at-point)
-     (define-key view-mode-map [(meta left)]
-       (lambda ()
-         (interactive)
-         ;; Go to the top to not store emacs-places.
-         (goto-char (point-min))
-         (View-quit)))
+     ;; Commented out to use the global keybinding:
+     ;; (define-key view-mode-map [(meta left)]
+     ;;   (lambda ()
+     ;;     (interactive)
+     ;;     ;; Go to the top to not store emacs-places.
+     ;;     (goto-char (point-min))
+     ;;     (View-quit)))
      (define-key view-mode-map [(meta down)]
        (lambda ()
          (interactive)
@@ -1835,9 +2145,20 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (eval-after-load "doc-view"
   '(progn
-     ;; Shift-Space to scroll back.
-     (define-key doc-view-mode-map [?\S- ] 'doc-view-scroll-down-or-previous-page)
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
+     (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer)
      ))
+
+
+;;; image-mode
+
+(eval-after-load "image-mode"
+  '(progn
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
+     (define-key image-mode-map "q" 'quit-window-kill-buffer)
+     (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)))
 
 
 ;;; image
@@ -1948,9 +2269,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; to dired by pressing [f3] twice (same keys are used in Midnight Commander)
 (define-key dired-mode-map [f3]
   (lambda () (interactive) (let (dired-view-command-alist) (dired-view-file))))
-(define-key global-map [f3] 'kill-this-buffer)
-(define-key global-map [(control f3)] 'kill-this-buffer-and-dired-jump)
+(define-key global-map [f3] 'kill-current-buffer)
+(define-key global-map [(control f3)] 'kill-current-buffer-and-dired-jump)
 (define-key dired-mode-map [(shift f3)] 'dired-find-file-literally)
+
+;; Alternative definitions on keyboards with problematic Fn keys
+(define-key global-map "\C-q" 'quit-window-kill-buffer)
+(define-key global-map "\C-xj" 'kill-current-buffer-and-dired-jump)
+;; (define-key global-map "\C-n" 'kill-current-buffer)
+;; (define-key global-map "\C-b" 'kill-current-buffer-and-dired-jump)
+;; Other unused keys:
+;; "\C-f" (use for search?)
+;; "\C-p" (use for pretty-print)
+;; "\C-i", "\C-v", "\C-m"
 
 ;; The following two bindings allow to open file for editing by [f4],
 ;; and return back to dired without killing the buffer.
@@ -1958,6 +2289,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key global-map [f4] 'dired-jump)
 
 (define-key dired-mode-map [(shift f5)] 'dired-count-sizes)
+
+;; TEST
+;; (define-key dired-mode-map [up]   'dired-previous-line)
+;; (define-key dired-mode-map [down] 'dired-next-line)
 
 ;; The following keys resemble *Commander's bindings.
 ;; But currently I use original Emacs bindings: "C", "R", "D"
@@ -2040,43 +2375,78 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map [(control shift insert)]
   (lambda () (interactive) (dired-copy-filename-as-kill 0)))
 
-(define-key dired-mode-map "q" (lambda () (interactive) (quit-window 1)))
+;; qv http://thread.gmane.org/gmane.emacs.devel/153150/focus=153151
+(define-key dired-mode-map [remap next-line] nil)
+(define-key dired-mode-map [remap previous-line] nil)
+
+;; qv http://thread.gmane.org/gmane.emacs.devel/153150
+(define-key dired-mode-map "\M-=" 'dired-backup-diff)
+
+;; Get coding from the file, so diff will output in the correct coding:
+(defadvice dired-backup-diff (around my-dired-backup-diff act)
+  (let* ((filename (dired-get-filename t))
+         (coding-system (with-temp-buffer
+                          (insert-file-contents filename nil 0 1024)
+                          buffer-file-coding-system))
+         (coding-system-for-read coding-system)
+         (coding-system-for-write coding-system))
+    ad-do-it))
+
+;; Get coding from the file, so diff will output in the correct coding:
+(defadvice dired-diff (around my-dired-diff act)
+  (let* ((filename (dired-get-filename t))
+         (coding-system (when (file-regular-p filename)
+                          (with-temp-buffer
+                            (insert-file-contents filename nil 0 1024)
+                            buffer-file-coding-system)))
+         (coding-system-for-read coding-system)
+         (coding-system-for-write coding-system))
+    ad-do-it))
+
+;; (define-key dired-mode-map "\C-y" (lambda (&optional arg)
+;;                                     (interactive)
+;;                                     (dired-find-file)
+;;                                     (goto-char (point-max))
+;;                                     (yank arg)))
+
+(define-key dired-mode-map "q" 'quit-window-kill-buffer)
 
 (add-hook 'dired-after-readin-hook
 	  (lambda ()
 	    ;; Set name of dired buffers to absolute directory name.
 	    ;; Use `generate-new-buffer-name' for vc-directory
 	    ;; which creates duplicate buffers.
+            ;; SEE ALSO http://emacs.stackexchange.com/questions/2123/how-can-i-make-dired-buffer-names-include-the-full-path
 	    ;; TODO: Add this feature to `dired-internal-noselect' instead
 	    ;; of `(create-file-buffer (directory-file-name dirname))'.
-	    (rename-buffer (generate-new-buffer-name dired-directory))
-	    ))
+	    (when (stringp dired-directory)
+              (rename-buffer (generate-new-buffer-name dired-directory)))))
 
 (add-hook 'dired-mode-hook
           (lambda ()
             ;; Omit file extensions only in well-known directories, because
             ;; I don't want to miss omitted files in unknown directories!
             ;; Omit only in some large directories that I use often.
-            (when (string-match-p "\\(bzr\\|cvs\\)/emacs" default-directory)
-              (dired-omit-mode 1))))
+            (when (string-match-p "emacs/\\(git\\|bzr\\|cvs\\)" default-directory)
+              (dired-omit-mode 1))
+            ;; Use old "\M-o" instead of new "\C-x\M-o".
+            (define-key dired-mode-map "\M-o" 'dired-omit-mode)))
 
 (add-hook 'archive-mode-hook
           (lambda ()
-            ;; (view-mode -1) ; doesn't work here ;; see view-mode-hook
             (define-key archive-mode-map [f3] 'archive-view)
+            (define-key archive-mode-map "q" 'quit-window-kill-buffer)
             (define-key archive-mode-map [(meta right)] 'archive-view) ;; archive-extract
-            (define-key archive-mode-map [(meta left)] 'kill-this-buffer)
-            (define-key archive-mode-map "q" 'kill-this-buffer)))
+            (define-key archive-mode-map [(meta left)] 'quit-window-kill-buffer)))
 
 (add-hook 'tar-mode-hook
           (lambda ()
-            ;; (view-mode -1) ; doesn't work here ;; see view-mode-hook
-            (define-key tar-mode-map "q" 'kill-this-buffer)
             (define-key tar-mode-map [f3] 'tar-view)
+            (define-key tar-mode-map "q" 'quit-window-kill-buffer)
+            (define-key tar-mode-map [(meta right)] 'tar-view)
+            (define-key tar-mode-map [(meta left)] 'quit-window-kill-buffer)
             (define-key tar-mode-map [(meta up)] 'tar-previous-line)
-            (define-key tar-mode-map [(meta down)] 'tar-next-line)
-            (define-key tar-mode-map [(meta left)] 'kill-this-buffer)
-            (define-key tar-mode-map [(meta right)] 'tar-view)))
+            (define-key tar-mode-map [(meta down)] 'tar-next-line)))
 
 
 ;;; wdired
@@ -2094,16 +2464,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (eval-after-load "wdired"
   '(progn
      (define-key wdired-mode-map [return] 'wdired-finish-edit)
-     ;; bind in wdired.el to wdired-exit
-     ;; (define-key wdired-mode-map "\C-x\C-q" 'wdired-finish-edit)
-     (define-key wdired-mode-map [escape] 'wdired-abort-changes)))
+     ;; BAD, better to add a new rule at the end of `keyboard-escape-quit':
+     ;; (define-key wdired-mode-map [escape] 'wdired-abort-changes)
+     ))
 
 
 ;;; locate
-
-;; This doesn't work because `locate' uses `switch-to-buffer-other-window'
-;; instead of `pop-to-buffer'.  TODO: Make a bug report.
-(add-to-list 'same-window-buffer-names "*Locate*")
 
 ;; Redefine `locate-default-make-command-line'.
 (defun locate-make-command-line-ignore-case (search-string)
@@ -2132,18 +2498,22 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; shell
 
-(add-to-list 'same-window-regexps "\\*Shell Command Output\\*\\(\\|<[0-9]+>\\)")
+(add-hook 'shell-mode-hook 'rename-uniquely)
+;; Turn off dirtrack because it fails in Bash on Heroku.
+(add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
 
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
+;; TODO: Another idea from http://thread.gmane.org/gmane.emacs.bugs/4533
+;;       Use M-RETURN to run `async-shell-command'.
 (defadvice shell-command (around my-shell-command-around act)
   (let ((messages-buffer-max-lines
          ;; Don't add output to the *Messages* buffer
          ;; when S-RET displays the *Shell Command Output* buffer.
-         (unless (memq last-input-char '(S-return ?\C-j))
+         (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
     ad-do-it
-    (when (memq last-input-char '(S-return ?\C-j))
+    (when (memq last-input-event '(S-return ?\C-j))
       (message "") ;; Clear the echo area
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
@@ -2151,10 +2521,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; The same as the previous defadvice.
 (defadvice dired-do-shell-command (around my-dired-do-shell-command act)
   (let ((messages-buffer-max-lines
-         (unless (memq last-input-char '(S-return ?\C-j))
+         (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
     ad-do-it
-    (when (memq last-input-char '(S-return ?\C-j))
+    (when (memq last-input-event '(S-return ?\C-j))
       (message "")
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
@@ -2162,10 +2532,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; The same as the previous defadvice.
 (defadvice dired-smart-shell-command (around my-dired-smart-shell-command act)
   (let ((messages-buffer-max-lines
-         (unless (memq last-input-char '(S-return ?\C-j))
+         (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
     ad-do-it
-    (when (memq last-input-char '(S-return ?\C-j))
+    (when (memq last-input-event '(S-return ?\C-j))
       (message "")
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
@@ -2181,15 +2551,18 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (add-hook 'comint-mode-hook ;; 'comint-load-hook
           (lambda ()
+            ;; See http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
+            (define-key comint-mode-map [S-return] 'newline)
             ;; (define-key comint-mode-map "\C-zo" 'comint-kill-output-since-last-prompt)
             ;; define M-up and M-down instead of C-up and C-down
             (define-key comint-mode-map [(meta down)] 'comint-next-prompt)
             (define-key comint-mode-map [(meta up)] 'comint-previous-prompt)
             (define-key comint-mode-map [C-up]   nil)
-            (define-key comint-mode-map [C-down] nil)))
+            (define-key comint-mode-map [C-down] nil)
+            (define-key comint-mode-map "\er" 'comint-history-isearch-backward)))
 
-(if delete-selection-mode
-    (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
+(when delete-selection-mode
+  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
 
 
 ;;; compile/grep
@@ -2213,8 +2586,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   '(progn
      (add-hook 'compilation-mode-hook
                (lambda ()
-                 ;; See http://thread.gmane.org/gmane.emacs.devel/108353
-                 (setq compilation-environment '("LANG=C"))
                  ;; (rename-uniquely)
                  (setq buffer-read-only nil)))))
 
@@ -2245,12 +2616,26 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (setq compilation-buffer-name-function
           'my-compilation-buffer-name-function))
 
+(eval-after-load "grep"
+  '(progn
+     (push '("rb" . "*.rb") grep-files-aliases)
+     (push '("js" . "*.js") grep-files-aliases)
+     (push '("clj" . "*.clj") grep-files-aliases)
+     ))
+
+
+;;; proced
+
+(defadvice proced (after my-proced activate)
+  (goto-char (point-max))
+  (recenter -1))
+
 
 ;;; switch
 
 ;; Experiment with more convenient keys than `C-x o' and `M-- C-x o'.
-(define-key global-map [(control ?\x8a7)] 'other-window)
-(define-key global-map [(control ?\x8bd)] (lambda () (interactive) (other-window -1)))
+;; (define-key global-map [(control ?\x8a7)] 'other-window)
+;; (define-key global-map [(control ?\x8bd)] (lambda () (interactive) (other-window -1)))
 (define-key global-map [(control ?\247)] 'other-window)
 (define-key global-map [(control ?\275)] (lambda () (interactive) (other-window -1)))
 (define-key global-map [(control ?`)] 'other-window)
@@ -2311,6 +2696,7 @@ Example:
 
 ;;; help
 
+;; TODO: same-window-buffer-names and same-window-regexps are obsolete.
 (defun describe-function-other-window ()
   (interactive)
   (let (same-window-buffer-names same-window-regexps)
@@ -2341,7 +2727,8 @@ Example:
           ;; (overlay-put (make-overlay (match-beginning 0) (match-end 0) nil t)
           ;;              'before-string (make-string 64 ?-))
           )))
-    (set (make-local-variable 'outline-regexp) "^.*:$")
+    ;; Comment out to remove startup warnings:
+    ;; (set (make-local-variable 'outline-regexp) "^.*:$")
     ;; (outline-minor-mode 1)
     ))
 
@@ -2384,8 +2771,8 @@ Example:
   '(progn
      (define-key Info-mode-map [(control shift insert)]
        (lambda () (interactive) (Info-copy-current-node-name 0)))
-     ;; Shift-Space to scroll back.
-     (define-key Info-mode-map [?\S- ] 'Info-scroll-down)
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key Info-mode-map [?\S-\ ] 'Info-scroll-down)
      ;; Mozilla-like navigation:
      (define-key Info-mode-map [(meta right)] 'my-Info-forward)
      (define-key Info-mode-map [(meta left)]  'Info-last)
@@ -2435,9 +2822,14 @@ Example:
 
 (eval-after-load "man"
   '(progn
+     ;; Don't use `man-mode-syntax-table' that sets word syntax to `.', `_', `:'.
+     (add-hook 'Man-mode-hook
+               (lambda ()
+                 (set-syntax-table text-mode-syntax-table)))
      ;; Mozilla-like navigation:
      (define-key Man-mode-map [(meta right)] 'push-button) ;; 'man-follow
-     (define-key Man-mode-map [(meta left)] 'quit-window)
+     ;; No need to kill Man buffer because it is not saved to desktop.
+     (define-key Man-mode-map [(meta left)]  'quit-window)
      ;; Lynx-like navigation:
      (define-key Man-mode-map [(meta up)]
        (lambda ()
@@ -2572,7 +2964,19 @@ then output is inserted in the current buffer."
               (or (cdr word) (thing-at-point 'word))))))
     (switch-to-buffer (get-buffer-create dictem-buffer-name))
     (dictem-mode)
-    (dictem-run 'dictem-base-search "*" query "."))
+    (dictem-run 'dictem-base-search "*" query ".")
+    (goto-char (point-max))
+    (recenter-top-bottom -1))
+
+  (defun my-dictem-run-search-from-clipboard-or-word-at-point ()
+    (interactive)
+    (my-dictem-run-search
+     (or (and kill-ring
+              (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
+              (current-kill 0))
+         (thing-at-point 'word)
+         (dictem-read-query)))
+    (goto-char (point-max)))
 
   (add-hook 'dictem-postprocess-match-hook
             'dictem-postprocess-match)
@@ -2595,8 +2999,6 @@ then output is inserted in the current buffer."
   (setq dictem-use-existing-buffer t)
   (setq dictem-empty-initial-input t))
 
-(add-to-list 'same-window-regexps "\\*dictem.*")
-
 ;; TODO: get default words from selected region
 
 
@@ -2608,7 +3010,7 @@ then output is inserted in the current buffer."
 
 ;;; diary
 
-(add-hook 'diary-hook 'appt-make-list)
+(add-hook 'diary-hook 'appt-activate)
 ;; (add-hook 'diary-display-hook 'fancy-diary-display)
 
 ;; My diary entries are only in ISO date format, so override all other formats
@@ -2714,9 +3116,9 @@ then output is inserted in the current buffer."
          (list (car profiles))
        (list (read-directory-name "Select profile directory name: "
                                   "~/.mozilla/firefox/" nil t nil)))))
-  (let ((sql-sqlite-program "sqlite3"))
-    ;; This doesn't work with `sql-product-interactive'.
-    (sql-sqlite profile-dir)))
+  (let ((sql-sqlite-program "sqlite3")
+        (sql-database (expand-file-name "places.sqlite" profile-dir)))
+    (sql-sqlite)))
 
 
 ;;; gnus
@@ -2767,8 +3169,8 @@ then output is inserted in the current buffer."
      ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20n%]%) %s\n")
      (setq gnus-summary-line-format
            "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
-     ;; Shift-Space to scroll back.
-     (define-key gnus-summary-mode-map [?\S- ] 'gnus-summary-prev-page)
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
      (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
      (define-key gnus-summary-mode-map [(shift iso-lefttab)]
                                        'gnus-summary-prev-unread-article)
@@ -2791,7 +3193,7 @@ then output is inserted in the current buffer."
 
      ;; (define-key gnus-summary-mode-map "\C-l" 'my-recenter)
 
-     ;; Disable dangeruos key bindings
+     ;; Disable dangerous key bindings
      (define-key gnus-summary-mode-map [(meta ?g)] nil)
      (define-key gnus-summary-mode-map "x" nil)
      (define-key gnus-summary-mode-map "\C-x\C-s" nil)
@@ -2833,10 +3235,12 @@ then output is inserted in the current buffer."
             gnus-emphasis-alist))
      (add-hook 'gnus-article-mode-hook
                (lambda ()
-                 (toggle-truncate-lines -1)
+                 (visual-line-mode)
                  (setq bug-reference-url-format "http://debbugs.gnu.org/%s")
                  (bug-reference-mode 1))
                t)
+     ;; Shift-Space to scroll back (already added in bug#2145).
+     ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
      (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
      ;; RET scrolls the article one line at a time.
      (define-key gnus-article-mode-map [return]
@@ -2920,15 +3324,16 @@ The difference between N and the number of articles ticked is returned."
 ;; (add-hook 'message-send-hook 'ispell-message)
 ;; Bilingual spell-checking of the mail message.
 (add-hook 'message-send-hook
-          '(lambda ()
-             (ispell-change-dictionary "american")
-             (ispell-message)
-             (ispell-change-dictionary "russian")
-             (ispell-message)))
+          (lambda ()
+            (ispell-change-dictionary "american")
+            (ispell-message)
+            ;; (ispell-change-dictionary "russian")
+            ;; (ispell-message)
+            ))
 
 (add-hook 'message-mode-hook
           (lambda ()
-            (turn-on-auto-fill)
+            (auto-fill-mode 1)
             ;; Prevent premature sending when `C-c C-s'
             ;; is typed instead of `C-x C-s'
             (define-key message-mode-map "\C-c\C-s" nil)))
@@ -2940,12 +3345,6 @@ The difference between N and the number of articles ticked is returned."
 (when (require 'mm nil t)
   (mm-parse-mailcaps)
   (mm-parse-mimetypes))
-
-
-;;; smtpmail
-
-;; Load patched smtpmail
-(load "smtpmail.el") ;;(load-library "smtpmail") ;;(require 'smtpmail)
 
 
 ;;; bbdb
@@ -3013,11 +3412,24 @@ The difference between N and the number of articles ticked is returned."
 ;; (add-hook 'change-log-mode-hook 'bug-reference-mode)
 
 
+;;; messages
+
+(add-hook 'messages-buffer-mode-hook
+          (lambda ()
+            (setq buffer-read-only nil)
+            (fundamental-mode)))
+
+
 ;;; css
 
 ;; If there is no css-mode available already, use c-mode for .css files.
 (unless (rassoc 'css-mode auto-mode-alist)
   (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
+
+(add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
+(add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
+(add-to-list 'auto-mode-alist '("\\.haml\\'" . javascript-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
 
 
 ;;; wget
@@ -3035,7 +3447,7 @@ The difference between N and the number of articles ticked is returned."
    (list
     (read-string "URI: "
                  (if (and kill-ring
-                          (string-match "^[hf]t?tp:" (current-kill 0)))
+                          (string-match "^[hf]t?tps?:" (current-kill 0)))
                      (current-kill 0)
                    (require 'thingatpt)
                    (thing-at-point-url-at-point)))
@@ -3047,6 +3459,13 @@ The difference between N and the number of articles ticked is returned."
 (setenv "WGETRC" (expand-file-name "~/.wgetrc-emacs"))
 ;; where the file ~/.wgetrc-emacs contains just one line:
 ;; progress=dot
+
+
+;;; dropbox
+
+;; Don't make auto-saves and backups in the Dropbox directory:
+(add-to-list 'auto-save-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
+(add-to-list 'backup-directory-alist '("\\`.*/Dropbox/.*" . "/tmp/"))
 
 
 ;;; scroll-lock
@@ -3064,7 +3483,6 @@ The difference between N and the number of articles ticked is returned."
 ;;       (lambda ()
 ;;         (interactive)
 ;;         (message "%s" (cookie ".../talker.msg" nil nil))))
-(fset 'undefined 'yow)
 ;; The previous line redefines standard function 'undefined', which
 ;; is invoked, when key binding is suppressed in read-only buffers.
 ;; So unexpected funny messages can greatly confuse :-)
@@ -3080,6 +3498,7 @@ The difference between N and the number of articles ticked is returned."
 ;; contains a collection of such excuses.  Some examples are:
 ;; 'Electromagnetic energy loss', 'disks spinning backwards -
 ;; toggle the hemisphere jumper.'
+;; or (fset 'undefined 'yow)
 
 (eval-after-load "tetris"
   '(progn
@@ -3134,15 +3553,16 @@ Cancel the clock if called with C-u."
 (setq save-place-skip-check-regexp
       (concat
        save-place-skip-check-regexp
-       "\\|\\.\\(arc\\|lzh\\|zip\\|zoo\\)$"
+       "\\|\\.\\(7z\\|apk\\|arc\\|jar\\|lzh\\|zip\\|zoo\\)$"
        "\\|\\.t\\(ar\\.\\)?gz$"
        "\\|\\.t\\(ar\\.bz2\\|bz\\)$"))
 
 
 ;;; desktop
 
-(and (boundp 'desktop-modes-not-to-save)
-     (add-to-list 'desktop-modes-not-to-save 'dired-mode))
+(when (boundp 'desktop-modes-not-to-save)
+  (add-to-list 'desktop-modes-not-to-save 'dired-mode)
+  (add-to-list 'desktop-modes-not-to-save 'vc-dir-mode))
 
 ;; Add more globals to save between sessions.
 (if (boundp 'desktop-globals-to-save)
@@ -3165,6 +3585,7 @@ Cancel the clock if called with C-u."
               minibuffer-history
               minibuffer-history-search-history
               query-replace-history
+              query-replace-defaults
               read-expression-history
               regexp-history
               dired-shell-command-history ;; TODO: merge with shell-command-history
@@ -3188,14 +3609,24 @@ Cancel the clock if called with C-u."
 
 ;; There are different ways to maximize initial frame after loading .emacs
 ;; "emacs -mm" that sets (setq initial-frame-alist '((fullscreen . maximized)))
-;; (set-frame-size (selected-frame) 200 80)
-;; But below is the only way that works reliably:
+;; or (add-to-list 'default-frame-alist '(fullscreen . maximized))
+;; or (toggle-frame-maximized) or (set-frame-size (selected-frame) 200 80)
+;; But below is the only way that works reliably on GNU/Linux:
 (add-hook 'after-init-hook
           (lambda ()
+            ;; (set-frame-size (selected-frame) 210 80)
+            ;; This works only in KDE.
             (run-at-time
              "1 second" nil
              'shell-command-to-string   ; to not overwrite the echo area
-             "wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz"))
+             "wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz")
+            ;; FIX a recent bug that breaks frame dimensions after desktop frame restore:
+            ;; I get a maximized frame visually, but internally with unmaximized dimenstions,
+            ;; i.e. mouse avoidance moves the mouse pointer to the middle of the frame
+            ;; instead to the edges, etc.
+            ;; (toggle-frame-maximized)
+            ;; (toggle-frame-maximized)
+            )
           t)
 
 ;; Display the time of the Emacs initialization.
@@ -3206,9 +3637,9 @@ Cancel the clock if called with C-u."
 ;;; Local Variables:
 ;;; mode: emacs-lisp
 ;;; outline-regexp: ";;;;* "
-;;; eval: (add-hook 'before-save-hook 'time-stamp)
+;;; eval: (add-hook 'before-save-hook 'time-stamp nil t)
 ;;; time-stamp-start: "Version: "
-;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 23.1.90 (x86_64-pc-linux-gnu)"
+;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 25.2.50 (x86_64-pc-linux-gnu)"
 ;;; time-stamp-end: "$"
 ;;; time-stamp-line-limit: 15
 ;;; End:
