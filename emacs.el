@@ -1,11 +1,11 @@
 ;;; .emacs --- Emacs init file
 
-;; Copyright (C) 1989-2017  Juri Linkov <juri@jurta.org>
+;; Copyright (C) 1989-2018  Juri Linkov <juri@linkov.net>
 
-;; Author: Juri Linkov <juri@jurta.org>
+;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
-;; URL: <http://www.jurta.org/emacs/dotemacs>
-;; Version: 2017-05-01 for GNU Emacs 25.2.50 (x86_64-pc-linux-gnu)
+;; URL: <http://www.linkov.net/emacs/dotemacs>
+;; Version: 2018-03-05 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -216,6 +216,9 @@ i.e. in daylight or under bright electric lamps."
 
 (define-key global-map [f6 ?c ?d] 'my-colors-dark)
 
+(defvar my-sunset-timer nil)
+(defvar my-sunrise-timer nil)
+
 ;; Automatically switch to dark background after sunset
 ;; and to light background after sunrise.
 ;; (Note that `calendar-latitude' and `calendar-longitude'
@@ -243,6 +246,9 @@ i.e. in daylight or under bright electric lamps."
 
 ;; (my-colors-set)
 ;; (add-to-list 'after-make-frame-functions 'my-colors-set)
+
+(add-to-list 'after-make-frame-functions
+             'toggle-frame-maximized)
 
 
 ;;; faces
@@ -310,8 +316,9 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [end]  'end-of-visual-line)
 (define-key global-map [up]   'previous-line)
 (define-key global-map [down] 'next-line)
-(define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
-(define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
+;; This is BAD because C-n/C-p are useful in the multi-line minibuffer:
+;; (define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
+;; (define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
 
 ;; TODO: these are new overridden by `windmove',
 ;; find new keyprefix for navigational keys (in Info, view, etc):
@@ -330,6 +337,9 @@ i.e. in daylight or under bright electric lamps."
 ;; (windmove-default-keybindings 'meta)
 (windmove-default-keybindings 'super)
 (windmove-default-keybindings 'hyper)
+;; (windmove-default-keybindings '(meta shift))
+
+(winner-mode)
 
 ;; TODO: bind (shift meta) to a new package that moves windows like
 ;; `rotate-window-buffers' bound to `C-z C-u'
@@ -370,6 +380,11 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(control shift kp-5)] 'goto-line)
 (define-key global-map [(control kp-begin)] 'goto-line)
 
+;; Use new dwim case commands
+(define-key esc-map "u" 'upcase-dwim)
+(define-key esc-map "l" 'downcase-dwim)
+(define-key esc-map "c" 'capitalize-dwim)
+
 ;; These following two keybindings are standard default:
 ;; (define-key global-map [(meta /)] 'dabbrev-expand)
 ;; (define-key global-map [(control meta /)] 'dabbrev-completion)
@@ -386,7 +401,7 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [f1] 'info)
 (define-key global-map [(control f1)] 'info-lookup-symbol)
 (define-key global-map [f2] 'save-buffer)
-(define-key global-map [f9] 'call-last-kbd-macro)
+;; (define-key global-map [f9] 'call-last-kbd-macro)
 (define-key global-map [(control f9)] 'compile)
 (define-key global-map [(meta f7)] 'grep) ; Commander-like
 (define-key global-map [(meta shift f7)] 'grep-find)
@@ -429,6 +444,16 @@ i.e. in daylight or under bright electric lamps."
     (kill-buffer my-next-error-prev-buffer))
   (setq my-next-error-prev-buffer (current-buffer)))
 (add-hook 'next-error-hook 'my-next-error)
+
+;; See bug#20489: 25.0.50; next-error-find-buffer chooses non-current buffer without good reason
+;; See bug#28864: 25.3.50; next-error-no-select does select
+;; (setq next-error-find-buffer-function
+;;       (lambda (&optional avoid-current extra-test-inclusive extra-test-exclusive)
+;; 	(window-parameter nil 'next-error-buffer)))
+;; (add-hook 'next-error-hook
+;; 	  (lambda ()
+;; 	    (set-window-parameter
+;; 	     nil 'next-error-buffer next-error-last-buffer)))
 
 ;; TODO: currently key (control escape) is free, bind it to something useful,
 ;; unless it is used by the window manager
@@ -597,7 +622,7 @@ i.e. in daylight or under bright electric lamps."
 
 ;;; cursor
 
-;; USE (setq default-cursor-type ...) INSTEAD OF THE NEXT FUNCTION
+;; USE (setq-default cursor-type ...) INSTEAD OF THE NEXT FUNCTION
 ;; (defun set-cursor-type (cursor-type)
 ;;   "Set the text cursor type of the selected frame to CURSOR-TYPE.
 ;; When called interactively, prompt for the name of the type to use.
@@ -627,7 +652,7 @@ i.e. in daylight or under bright electric lamps."
          ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
                                "DarkGrey")
          (t                    "black")))
-  (setq default-cursor-type ;; set-cursor-type
+  (setq-default cursor-type
    (cond (overwrite-mode       'box)
          (t                    'bar))))
 (add-hook 'post-command-hook 'my-change-cursor)
@@ -753,6 +778,41 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;         (selected-window)
 ;;       window)))
 
+(defun split-window-horizontally-3 ()
+  (interactive)
+  (delete-other-windows)
+  (split-window-horizontally)
+  (split-window-horizontally)
+  (balance-windows)
+  (other-window -1))
+
+(defun follow-mode-3 ()
+  (interactive)
+  (split-window-horizontally-3)
+  (follow-mode 1)
+  (goto-char (point-min)))
+
+(define-key my-map "3" 'split-window-horizontally-3)
+(define-key my-map "f3" 'follow-mode-3)
+
+(defun split-window-horizontally-4 ()
+  (interactive)
+  (delete-other-windows)
+  (split-window-horizontally)
+  (split-window-horizontally)
+  (other-window 2)
+  (split-window-horizontally)
+  (other-window 2))
+
+(defun follow-mode-4 ()
+  (interactive)
+  (split-window-horizontally-4)
+  (follow-mode 1)
+  (goto-char (point-min)))
+
+(define-key my-map "4" 'split-window-horizontally-4)
+(define-key my-map "f4" 'follow-mode-4)
+
 
 ;;; follow
 
@@ -763,6 +823,16 @@ With C-u, C-0 or M-0, cancel the timer."
 
 
 ;;; isearch
+
+;; Save and restore window start positions on returning to previous search
+(setq isearch-push-state-function
+      (lambda ()
+	;; Recenter new search hits outside of window boundaries
+        (when (and isearch-success (not (pos-visible-in-window-p)))
+          (recenter (round (* 0.15 (window-height)))))
+        `(lambda (cmd)
+           (when isearch-success
+             (set-window-start nil ,(window-start))))))
 
 ;; Wrap without failing, posted to
 ;; http://stackoverflow.com/questions/285660/automatically-wrapping-i-search#287067
@@ -861,13 +931,6 @@ Move isearch point to the end of the buffer and repeat the search."
 ;; Make Isearch mode-line string shorter, just " /" instead of " Isearch"
 ;; (add-hook 'isearch-mode-hook
 ;;           (lambda () (setq isearch-mode " /") (force-mode-line-update)))
-
-;; BAD:
-;; (define-key isearch-mode-map [(left)]  'isearch-del-char)
-;; (define-key isearch-mode-map [(right)] 'isearch-yank-char)
-;; (define-key isearch-mode-map [(control right)] 'isearch-yank-word)
-;; `C-w' is better than `M-f':
-;; (define-key isearch-mode-map "\M-f" 'isearch-yank-word)
 
 ;; Do not use customization to not corrupt .emacs with literal
 ;; control characters.
@@ -1207,7 +1270,7 @@ pasted in another buffer that stores bookmarks.
 Otherwise, after typing `C-x C-e' on the bookmark funcall
 goes to the saved location."
   (interactive)
-  (if (called-interactively-p)
+  (if (called-interactively-p 'any)
       (kill-new
        (message "%s"
                 (concat "(qv "
@@ -1359,7 +1422,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                      (not (eq (region-beginning) (region-end)))))
            (memq (char-syntax (preceding-char)) (list ?w ?_))
            (not (bobp)))
-      (lisp-complete-symbol)
+      (completion-at-point)
     (indent-for-tab-command arg)))
 
 (defun my-beginning-of-line-or-indentation (arg)
@@ -1370,7 +1433,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (if (fboundp 'move-beginning-of-line)
         (move-beginning-of-line arg)
       (beginning-of-line arg))))
-(put 'my-beginning-of-line-or-indentation 'isearch-move t)
+;; (put 'my-beginning-of-line-or-indentation 'isearch-move t)
 (define-key global-map [(control ?a)] 'my-beginning-of-line-or-indentation)
 
 (defun my-reindent-then-newline-and-indent ()
@@ -1723,7 +1786,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
         (progn
           (goto-char (point-min))
           (re-search-forward str nil t)))
-    (show-entry) ;?
+    (outline-show-entry) ;?
     (message str)))
 
 ;; for PROLOG manual:
@@ -1751,6 +1814,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'auto-mode-alist '("\\.yaws\\'" . erlang-mode))
 
 (setq erlang-inferior-shell-split-window nil)
+
+(eval-after-load "erlang"
+  '(progn (add-hook 'erlang-mode-hook
+                    (lambda ()
+                      (setq tab-width 2)
+                      (alchemist-mode 1)))))
+
+(eval-after-load "alchemist"
+  '(progn
+     ;; (global-company-mode)
+     ;; (define-key elixir-mode-map "\M-\t" 'company-complete)
+     ;; (define-key company-active-map [escape] 'company-abort)
+     ))
 
 
 ;;; haskell
@@ -1919,14 +1995,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;   (define-key outline-mode-map [(control meta up)]   'outline-up-heading)
 ;;     (define-key outline-mode-map [(meta up)]    'my-outline-prev-or-up)
 ;;     (define-key outline-mode-map [(meta left)]
-;;       (lambda () (interactive) (hide-subtree))) ;; (hide-entry)
+;;       (lambda () (interactive) (outline-hide-subtree))) ;; (outline-hide-entry)
 ;;     (define-key outline-mode-map [(meta right)]
-;;       (lambda () (interactive) (show-children) (show-entry)))
+;;       (lambda () (interactive) (outline-show-children) (outline-show-entry)))
 ;; Use `C-M-l' or `C-l' instead of `f5'
 ;;     (define-key outline-mode-map [f5]
-;;       (lambda () (interactive) (recenter 0) (show-entry) (beginning-of-line)))
+;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
      (define-key outline-mode-map [(control ?*)]
-       (lambda () (interactive) (show-branches)))
+       (lambda () (interactive) (outline-show-branches)))
      (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
 ;;   (define-key outline-minor-mode-map [(control meta left)]
 ;;               'my-outline-hide-entry-or-subtree)
@@ -1938,30 +2014,30 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;   (define-key outline-minor-mode-map [(control meta up)]   'outline-up-heading)
 ;;     (define-key outline-minor-mode-map [(meta up)]    'my-outline-prev-or-up)
 ;;     (define-key outline-minor-mode-map [(meta left)]
-;;       (lambda () (interactive) (hide-subtree))) ;; (hide-entry)
+;;       (lambda () (interactive) (outline-hide-subtree))) ;; (outline-hide-entry)
 ;;     (define-key outline-minor-mode-map [(meta right)]
-;;       (lambda () (interactive) (show-children) (show-entry)))
+;;       (lambda () (interactive) (outline-show-children) (outline-show-entry)))
 ;; Use `C-M-l' or `C-l' instead of `f5'
 ;;     (define-key outline-minor-mode-map [f5]
-;;       (lambda () (interactive) (recenter 0) (show-entry) (beginning-of-line)))
+;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
      (define-key outline-minor-mode-map [(control ?*)]
-       (lambda () (interactive) (show-branches)))
+       (lambda () (interactive) (outline-show-branches)))
      (require 'foldout)))
 
 ;; Start outline mode with hidden sublevels or hidden body
 (add-hook
  'outline-mode-hook
  (lambda ()
-   ;; (hide-sublevels 1) ; alternative
-   ;; (hide-body)
+   ;; (outline-hide-sublevels 1) ; alternative
+   ;; (outline-hide-body)
    ))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
  'outline-minor-mode-hook
  (lambda ()
-   ;; (hide-sublevels 1) ; alternative
-   ;; (hide-body)
+   ;; (outline-hide-sublevels 1) ; alternative
+   ;; (outline-hide-body)
    ))
 
 ;; this is old and bad
@@ -1969,8 +2045,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;   (interactive)
 ;;   (if (save-excursion (next-line 1) (looking-at outline-regexp))
 ;;       ;; (save-excursion (outline-end-of-heading) (outline-visible))
-;;       (hide-subtree)
-;;     (progn (hide-entry) (beginning-of-line))))
+;;       (outline-hide-subtree)
+;;     (progn (outline-hide-entry) (beginning-of-line))))
 
 (defun my-outline-hide-entry-or-subtree ()
   (interactive)
@@ -1981,8 +2057,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
           (if (= (funcall outline-level) 1)
               (goto-char (point-min))
             (outline-up-heading 1))
-        (hide-subtree))
-    (progn (hide-entry) (beginning-of-line))))
+        (outline-hide-subtree))
+    (progn (outline-hide-entry) (beginning-of-line))))
 
 (defun my-outline-show-entry-or-subtree ()
   (interactive)
@@ -1992,8 +2068,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                              (outline-next-visible-heading 1) ; (next-line 1)
                              (point))
                            t))
-      (show-children)
-    (show-entry)))
+      (outline-show-children)
+    (outline-show-entry)))
 
 ;;  (defun my-outline-prev-or-up ()
 ;;    (interactive)
@@ -2007,7 +2083,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;  (defun my-outline-hide-or-up ()
 ;;    (interactive)
 ;;    (if (save-excursion (outline-end-of-heading) (outline-visible))
-;;        (hide-subtree)
+;;        (outline-hide-subtree)
 ;;      (outline-up-heading 1)))
 
 
@@ -2498,9 +2574,23 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; shell
 
-(add-hook 'shell-mode-hook 'rename-uniquely)
-;; Turn off dirtrack because it fails in Bash on Heroku.
-(add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
+(eval-after-load "shell"
+  '(progn
+     (add-hook 'shell-mode-hook 'rename-uniquely)
+     ;; Turn off dirtrack because it fails in Bash on Heroku.
+     (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
+     (define-key shell-mode-map "\C-d"
+       (lambda (&optional arg)
+	 (interactive "p")
+	 ;; (let* ((proc (get-buffer-process (current-buffer)))))
+	 (if (and (eobp)
+		  (save-excursion
+		    (let ((inhibit-field-text-motion t))
+		      (goto-char (line-beginning-position))
+		      (looking-at-p "^iex.*>\s*$"))))
+	     (let ((process (get-buffer-process (current-buffer))))
+	       (process-send-string process ":init.stop()\n"))
+	   (comint-delchar-or-maybe-eof arg))))))
 
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
@@ -2760,6 +2850,12 @@ Example:
 ;;                      (point)))))
             ))
 
+;; Clicking a link from the *Help* buffer opens source code in the same window.
+;; This supposes display-buffer-alist to be customized to contain:
+;; '((display-buffer-condition-from-help display-buffer-same-window) ...)
+(defun display-buffer-condition-from-help (_buffer-name _action)
+  (string-match-p "\\`\\*\\(Help\\)\\*\\(\\|<[0-9]+>\\)\\'" (buffer-name (current-buffer))))
+
 
 ;;; info
 
@@ -2802,7 +2898,7 @@ Example:
            ;; (View-scroll-line-forward)
            (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line)))))
      ;; ThinkPad additional keys, try to use them
-     (when (equal (upcase system-name) "THINKPAD")
+     (when (equal (upcase (system-name)) "THINKPAD")
        (define-key Info-mode-map [osfPrior] 'Info-last)
        (define-key Info-mode-map [osfNext] 'Info-follow-nearest-node))))
 
@@ -3010,7 +3106,9 @@ then output is inserted in the current buffer."
 
 ;;; diary
 
-(add-hook 'diary-hook 'appt-activate)
+;; Problem: 'appt-activate commented out because it causes diary to be called twice
+;; (the second call overrides the correct date entries with the current date):
+;; (add-hook 'diary-hook 'appt-activate)
 ;; (add-hook 'diary-display-hook 'fancy-diary-display)
 
 ;; My diary entries are only in ISO date format, so override all other formats
@@ -3388,6 +3486,12 @@ The difference between N and the number of articles ticked is returned."
             (setq tab-width 8)))
 
 
+;;; xterm
+
+(when (featurep 'xterm)
+  (xterm-mouse-mode))
+
+
 ;;; time-stamp
 
 ;; MOVED TO Local Variables:
@@ -3427,9 +3531,14 @@ The difference between N and the number of articles ticked is returned."
   (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
-(add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
+;; 'scss-mode' was added to Emacs 25.1
+;; (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
 (add-to-list 'auto-mode-alist '("\\.haml\\'" . javascript-mode))
-(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
+;; '.jsx' was added to auto-mode-alist in the new version of Emacs
+;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
+(add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
 
 
 ;;; wget
@@ -3476,6 +3585,10 @@ The difference between N and the number of articles ticked is returned."
   (unless (lookup-key (current-global-map) (read-kbd-macro key))
     (define-key (current-global-map) (read-kbd-macro key) 'scroll-lock-mode)))
 
+;; [2010-08-05] After recent changes in scrolling, this setting causes
+;; very slow regexp search "C-M-s ^raven" in /usr/share/dictd/mueller7accent.dict.dz
+;; (setq scroll-conservatively 1000000)
+
 
 ;;; fun
 
@@ -3504,6 +3617,9 @@ The difference between N and the number of articles ticked is returned."
   '(progn
      (define-key tetris-mode-map [up]   'tetris-rotate-next)
      (define-key tetris-mode-map [down] 'tetris-move-bottom)))
+
+(defvar my-digital-clock-timer nil)
+(defvar my-digital-clock-frame nil)
 
 (defun my-digital-clock (&optional arg)
   "Show digital clock in the separate Emacs frame.
@@ -3538,7 +3654,7 @@ Cancel the clock if called with C-u."
                (background-color . "black")
                ,(cond
                  ((eq window-system 'x)
-                  '(font . "-*-Fixed-Medium-R-*--64-*-*-*-C-*-*-*")))
+                  '(font . "-misc-fixed-bold-r-normal--18-*-*-*-*-*-iso8859-1")))
                (cursor-color . "gray2")
                (cursor-type . bar)
                (auto-lower . nil)
@@ -3639,7 +3755,7 @@ Cancel the clock if called with C-u."
 ;;; outline-regexp: ";;;;* "
 ;;; eval: (add-hook 'before-save-hook 'time-stamp nil t)
 ;;; time-stamp-start: "Version: "
-;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 25.2.50 (x86_64-pc-linux-gnu)"
+;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)"
 ;;; time-stamp-end: "$"
 ;;; time-stamp-line-limit: 15
 ;;; End:
