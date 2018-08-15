@@ -1,1 +1,14 @@
-This is my GNU Emacs init configuration.
+|-------------------------------------------------------------------------------|
+|                                                      "Show me your ~/.emacs   |
+|                                               and I'll tell you who you are." |
+|                                               -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] modified by me   |
+|-------------------------------------------------------------------------------|
+
+* Most significant Emacs customizations:
+
+1. Full-screen Emacs desktop.
+2. Efficient navigation in different modes and between buffers.
+  - Lynx-like navigation in Info, Man, Dired, W3, W3M modes
+3. Disabled most of the default limitations.
+4. Improved many standard Emacs commands and modes.
+5. Added new functionality and new keybindings.
