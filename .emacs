@@ -27,7 +27,7 @@
       (append grep-find-ignored-directories
 	      '(
 		;; Elixir
-		"_build"
+		"_build" "deps"
 		;; Clojure
 	        "target"
 		;; Ruby
@@ -38,11 +38,18 @@
 		;; JavaScript
 		"dist" "bower_components" "node_modules" ".sass-cache" ".tmp")))
 
+(setq grep-find-ignored-files
+      (append grep-find-ignored-files
+	      '(
+		;; Phoenix assets
+	        "app.css" "jquery.js"
+		;; Ruby "i18n"
+		"translations.js"
+		)))
+
 (when (>= emacs-major-version 24)
   (require 'package)
-  (package-initialize)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t))
+  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+  (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t))
 
-(require 'wget)
-
-(require 'erlang-start)
+(require 'erlang-start nil t)

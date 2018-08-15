@@ -4,8 +4,8 @@
 
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
-;; URL: <http://www.linkov.net/emacs/dotemacs>
-;; Version: 2018-03-05 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; URL: <http://www.linkov.net/emacs>
+;; Version: 2018-08-15 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -249,6 +249,9 @@ i.e. in daylight or under bright electric lamps."
 
 (add-to-list 'after-make-frame-functions
              'toggle-frame-maximized)
+
+;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
+(modify-frame-parameters nil '((undecorated t)))
 
 
 ;;; faces
@@ -571,6 +574,7 @@ i.e. in daylight or under bright electric lamps."
               (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
                        (or (and comment-start (nth 4 (syntax-ppss)))
                            (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
                                 )
@@ -590,6 +594,7 @@ i.e. in daylight or under bright electric lamps."
               (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
                        (or (and comment-start (nth 4 (syntax-ppss)))
                            (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
                                 )
@@ -1024,7 +1029,7 @@ Uses the value of the variable `search-whitespace-regexp'."
    (list
     (read-from-minibuffer "Substitute regexp: " '("s///g" . 3) nil nil
                           'query-replace-history nil t)))
-  (if (string-match "^s/\\(.*\\)/\\(.*\\)/\\([gi]*\\)" substitution)
+  (if (string-match "\\`s/\\(.*\\)/\\(.*\\)/\\([gi]*\\)" substitution)
       (let* ((sregex (match-string 1 substitution))
              (ssubst (match-string 2 substitution))
              (sflags (match-string 3 substitution))
@@ -1065,10 +1070,17 @@ Uses the value of the variable `search-whitespace-regexp'."
 (define-key minibuffer-local-map [S-return] 'newline)
 
 ;; Remove potentially dangerous commands from the history immediately
+;; Also like in Bash HISTCONTROL: "A colon-separated list of values controlling
+;; how commands are saved on the history list.  If the list of values includes
+;; ignorespace, lines which begin with a space character are not saved in the
+;; history list.  A value of ignoredups causes lines matching the previous
+;; history entry to not be saved."
+;; TODO: We already have ‘history-delete-duplicates’ that corresponds to ‘ignoredups’,
+;; but still no option that would corresponds to ‘ignorespace.’
 (add-hook 'minibuffer-exit-hook
           (lambda ()
             (when (string-match
-                   "^rm"
+                   "\\`\\(?:rm\\| \\)"
                    (or (car-safe (symbol-value minibuffer-history-variable)) ""))
               (set minibuffer-history-variable
                    (cdr (symbol-value minibuffer-history-variable))))))
@@ -1427,7 +1439,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (defun my-beginning-of-line-or-indentation (arg)
   "Jump to the beginning of the line or to the indentation (like `M-m')."
-  (interactive "p")
+  (interactive "^p")
   (if (bolp)
       (beginning-of-line-text arg) ; (back-to-indentation) ?
     (if (fboundp 'move-beginning-of-line)
@@ -1543,27 +1555,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
 (setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
-
-(eval-after-load "cc-mode"
-  '(progn (add-hook 'java-mode-hook
-                    (lambda ()
-                      (setq tab-width 4)))))
-
-(eval-after-load "css-mode"
-  '(progn (add-hook 'css-mode-hook
-                    (lambda ()
-                      (setq tab-width 2)))))
-
-(eval-after-load "js"
-  '(progn (add-hook 'js-mode-hook
-                    (lambda ()
-                      (setq js-indent-level 2)
-                      (setq tab-width 2)))))
-
-(eval-after-load "ruby-mode"
-  '(progn (add-hook 'ruby-mode-hook
-                    (lambda ()
-                      (set (make-local-variable 'require-final-newline) nil)))))
 
 
 ;;; snd
@@ -1691,7 +1682,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
       (lambda ()
         ;; TODO: add to perl-mode.el? and cperl-mode.el?
         ;; BAD: it breaks links followed with a dot!
-        (if (string-match "^\\([0-9]+ *\\)?perl" Man-arguments)
+        (if (string-match "\\`\\([0-9]+ *\\)?perl" Man-arguments)
             (Man-highlight-references0
              "DESCRIPTION"
              "\\(perl\\(?:[a-z0-9]+[a-z]\\|[a-z][a-z0-9]+\\)\\)[^a-z0-9]"
@@ -1917,6 +1908,47 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;; (global-set-key [print] 'htmlize-buffer)
 (global-set-key [print] 'htmlfontify-buffer)
+
+
+;;; web development
+
+(eval-after-load "cc-mode"
+  '(progn (add-hook 'java-mode-hook
+                    (lambda ()
+                      (setq tab-width 4)))))
+
+(eval-after-load "css-mode"
+  '(progn (add-hook 'css-mode-hook
+                    (lambda ()
+                      (setq tab-width 2)))))
+
+(eval-after-load "js"
+  '(progn (add-hook 'js-mode-hook
+                    (lambda ()
+                      (setq js-indent-level 2)
+                      (setq tab-width 2)))))
+
+(eval-after-load "ruby-mode"
+  '(progn (add-hook 'ruby-mode-hook
+                    (lambda ()
+                      (set (make-local-variable 'require-final-newline) nil)))))
+
+
+;;; css
+
+;; If there is no css-mode available already, use c-mode for .css files.
+(unless (rassoc 'css-mode auto-mode-alist)
+  (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
+
+(add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
+;; 'scss-mode' was added to Emacs 25.1
+;; (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
+(add-to-list 'auto-mode-alist '("\\.haml\\'" . javascript-mode))
+;; '.jsx' was added to auto-mode-alist in the new version of Emacs
+;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
+(add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
 
 
 ;;; debug
@@ -2451,11 +2483,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map [(control shift insert)]
   (lambda () (interactive) (dired-copy-filename-as-kill 0)))
 
-;; qv http://thread.gmane.org/gmane.emacs.devel/153150/focus=153151
 (define-key dired-mode-map [remap next-line] nil)
 (define-key dired-mode-map [remap previous-line] nil)
 
-;; qv http://thread.gmane.org/gmane.emacs.devel/153150
+;; qv http://thread.gmane.org/gmane.emacs.devel/153150/focus=153151
 (define-key dired-mode-map "\M-=" 'dired-backup-diff)
 
 ;; Get coding from the file, so diff will output in the correct coding:
@@ -3253,7 +3284,7 @@ then output is inserted in the current buffer."
                        (not group)
                        (and (stringp group)
                             (or (eq (length group) 0)
-                                (string-match "^nnml:list\." gnus-newsgroup-name)
+                                (string-match "^nnml:list\\." gnus-newsgroup-name)
                                 (not (string-match "^nnml:" gnus-newsgroup-name)))))
                    "nnml:archive"
                  group))))
@@ -3524,23 +3555,6 @@ The difference between N and the number of articles ticked is returned."
             (fundamental-mode)))
 
 
-;;; css
-
-;; If there is no css-mode available already, use c-mode for .css files.
-(unless (rassoc 'css-mode auto-mode-alist)
-  (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
-
-(add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
-;; 'scss-mode' was added to Emacs 25.1
-;; (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
-(add-to-list 'auto-mode-alist '("\\.haml\\'" . javascript-mode))
-;; '.jsx' was added to auto-mode-alist in the new version of Emacs
-;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
-(add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
-(add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
-
-
 ;;; wget
 
 (require 'wget nil t)
@@ -3694,7 +3708,8 @@ Cancel the clock if called with C-u."
               file-name-history
               find-args-history
               grep-history
-              grep-find-history
+              grep-files-history
+              ;; grep-find-history
               ;; Info-search-history
               ;; locate-history-list
               my-dict-history
