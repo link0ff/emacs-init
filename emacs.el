@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-08-15 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-09-18 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -186,7 +186,7 @@ i.e. in daylight or under bright electric lamps."
   (set-background-color "white")
   (set-foreground-color "black")
   (when (facep 'region)
-    (set-face-background 'region "gainsboro" frame))
+    (set-face-background 'region "gray90" frame))
   (when (facep 'fringe)
     (set-face-background 'fringe (face-background 'default) frame)
     (set-face-foreground 'fringe (face-foreground 'default) frame))
@@ -382,6 +382,19 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(control kp-end)]  'end-of-buffer)
 (define-key global-map [(control shift kp-5)] 'goto-line)
 (define-key global-map [(control kp-begin)] 'goto-line)
+
+;; When M-w (kill-ring-save) is called without region, copy text at point.
+(advice-add 'kill-ring-save :before
+	    (lambda (beg end &optional region)
+	      (unless (use-region-p)
+		(let ((bounds (or (bounds-of-thing-at-point 'url)
+				  (bounds-of-thing-at-point 'filename)
+				  (bounds-of-thing-at-point 'symbol)
+				  (bounds-of-thing-at-point 'sexp))))
+		  (goto-char (car bounds))
+		  (push-mark (cdr bounds) t t)
+		  (message "Copied text \"%s\"" (buffer-substring-no-properties
+						 (car bounds) (cdr bounds)))))))
 
 ;; Use new dwim case commands
 (define-key esc-map "u" 'upcase-dwim)
@@ -817,6 +830,23 @@ With C-u, C-0 or M-0, cancel the timer."
 
 (define-key my-map "4" 'split-window-horizontally-4)
 (define-key my-map "f4" 'follow-mode-4)
+
+
+;;; mark-active-window
+
+;; Make mark buffer-and-window-local
+;; Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
+
+(defvar-local mark-active-window nil)
+
+(add-hook 'activate-mark-hook   (lambda () (setq mark-active-window (selected-window))))
+(add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
+
+(defun redisplay--update-mark-active-window (window)
+  (when mark-active-window
+    (setq mark-active (eq mark-active-window window))))
+
+(add-to-list 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 
 
 ;;; follow
@@ -1554,7 +1584,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
           ))
 
 ;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
-(setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
+;; (setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
 
 
 ;;; snd
@@ -2062,7 +2092,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
  (lambda ()
    ;; (outline-hide-sublevels 1) ; alternative
    ;; (outline-hide-body)
-   ))
+   ;; Workaround a bug in NEWS files where Symbol search fails.
+   ;; Use solution like in change-log-mode-syntax-table.
+   ;; See more at https://debbugs.gnu.org/31231
+   (when (string-match-p "^NEWS" (buffer-name))
+     (let ((table (make-syntax-table)))
+       (modify-syntax-entry ?` "'   " table)
+       (modify-syntax-entry ?' "'   " table)
+       (set-syntax-table table)))))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
@@ -2129,7 +2166,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (define-key diff-mode-map [(control meta shift up)]   'diff-file-prev)
      (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
 
+     ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
+     ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
      (add-hook 'diff-mode-hook 'rename-uniquely)
+     (add-hook 'log-view-mode-hook 'rename-uniquely)
 
      ;; These commented out lines no more needed because diff-font-lock-keywords
      ;; was changed to use `diff-indicator-...' faces for that
@@ -2312,6 +2352,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; dired
 
+(require 'dired-aux) ;; For `dired-shell-stuff-it'
 (require 'dired-x)
 
 ;; HINT: the following expression is useful for `M-(' `dired-mark-sexp'
@@ -2330,7 +2371,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                     (mm-extension-to-mime (file-name-extension file))))))
         (if (and command (stringp command))
             ;; always return `t' for `cond'
-            (or (ignore (shell-command (concat (format command file) "&")))
+            (or (ignore (async-shell-command (concat (format command file) "&")))
                 t))))
      ;; ((string-match "\\.html?$" file) (w3-open-local file))
      ((string-match "\\.html?$" file)
@@ -2351,7 +2392,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
         (if (listp command)
             (setq command (car command)))
         (if command
-            (shell-command
+            (async-shell-command
              (dired-shell-stuff-it command file-list nil 0)))))
      (t
       (message file)))))
@@ -2527,6 +2568,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 	    ;; TODO: Add this feature to `dired-internal-noselect' instead
 	    ;; of `(create-file-buffer (directory-file-name dirname))'.
 	    (when (stringp dired-directory)
+	      ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
               (rename-buffer (generate-new-buffer-name dired-directory)))))
 
 (add-hook 'dired-mode-hook
@@ -2544,7 +2586,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
             (define-key archive-mode-map [f3] 'archive-view)
             (define-key archive-mode-map "q" 'quit-window-kill-buffer)
             (define-key archive-mode-map [(meta right)] 'archive-view) ;; archive-extract
-            (define-key archive-mode-map [(meta left)] 'quit-window-kill-buffer)))
+            (define-key archive-mode-map [(meta left)] 'quit-window-kill-buffer)
+            (define-key archive-mode-map [(meta up)] 'archive-previous-line)
+            (define-key archive-mode-map [(meta down)] 'archive-next-line)))
 
 (add-hook 'tar-mode-hook
           (lambda ()
@@ -2614,14 +2658,22 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
        (lambda (&optional arg)
 	 (interactive "p")
 	 ;; (let* ((proc (get-buffer-process (current-buffer)))))
-	 (if (and (eobp)
-		  (save-excursion
-		    (let ((inhibit-field-text-motion t))
-		      (goto-char (line-beginning-position))
-		      (looking-at-p "^iex.*>\s*$"))))
-	     (let ((process (get-buffer-process (current-buffer))))
-	       (process-send-string process ":init.stop()\n"))
-	   (comint-delchar-or-maybe-eof arg))))))
+	 (cond ((and (eobp)
+		     (save-excursion
+		       (let ((inhibit-field-text-motion t))
+			 (goto-char (line-beginning-position))
+			 (looking-at-p "^iex.*>\s*$"))))
+		(let ((process (get-buffer-process (current-buffer))))
+		  (process-send-string process ":init.stop()\n")))
+	       ((and (eobp)
+		     (save-excursion
+		       (let ((inhibit-field-text-motion t))
+			 (goto-char (line-beginning-position))
+			 (looking-at-p "^cljs\\..*=>\s*$"))))
+		(let ((process (get-buffer-process (current-buffer))))
+		  (process-send-string process ":cljs/quit\n")))
+	       (t
+		(comint-delchar-or-maybe-eof arg)))))))
 
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
@@ -2741,7 +2793,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   '(progn
      (push '("rb" . "*.rb") grep-files-aliases)
      (push '("js" . "*.js") grep-files-aliases)
-     (push '("clj" . "*.clj") grep-files-aliases)
+     (push '("clj" . "*.clj*") grep-files-aliases)
      ))
 
 
@@ -2857,29 +2909,29 @@ Example:
 ;; because it uses 'message' instead of 'error' if "No cross references".
 (eval-after-load "help"
   '(progn
-    ;; View mode steals key bindings from us.
-    ;; doesn't work (set (make-local-variable 'overriding-local-map)
-    ;;                   (copy-keymap view-mode-map))
-    ;; Does a better method than (car (current-minor-mode-maps)) exist?
-    ;; Mozilla-like navigation:
-;; DOESN'T WORK (current-minor-mode-maps)
-;;         (define-key (car (current-minor-mode-maps)) [(meta left)]  'help-go-back)
-;;         (define-key (car (current-minor-mode-maps)) [(meta right)] 'help-follow)
-    ;; Lynx-like navigation:
-;; DOESN'T WORK (current-minor-mode-maps)
-;;             (define-key (car (current-minor-mode-maps)) [(meta up)]
-;;               (lambda () (interactive)
-;;                  (my-prev-link-or-scroll-page-backward
-;;                    (save-excursion
-;;                      (ignore-errors (help-previous-ref))
-;;                      (point)))))
-;;             (define-key (car (current-minor-mode-maps)) [(meta down)]
-;;               (lambda () (interactive)
-;;                  (my-next-link-or-scroll-page-forward
-;;                    (save-excursion
-;;                      (ignore-errors (help-next-ref))
-;;                      (point)))))
-            ))
+     ;; Mozilla-like navigation:
+     (define-key help-mode-map [(meta left)]  'help-go-back)
+     (define-key help-mode-map [(meta right)] 'my-help-follow)
+     ;; Lynx-like navigation:
+     (define-key help-mode-map [(meta up)]
+       (lambda () (interactive)
+         (my-prev-link-or-scroll-page-backward
+          (save-excursion
+            (ignore-errors (backward-button 1))
+            (point)))))
+     (define-key help-mode-map [(meta down)]
+       (lambda () (interactive)
+         (my-next-link-or-scroll-page-forward
+          (save-excursion
+            (ignore-errors (forward-button 1))
+            (point)))))))
+
+(defun my-help-follow ()
+  "Either follow the link, or go forward in history."
+  (interactive)
+  (if (button-at (point))
+      (push-button)
+    (help-go-forward)))
 
 ;; Clicking a link from the *Help* buffer opens source code in the same window.
 ;; This supposes display-buffer-alist to be customized to contain:
@@ -3368,20 +3420,33 @@ then output is inserted in the current buffer."
                  (setq bug-reference-url-format "http://debbugs.gnu.org/%s")
                  (bug-reference-mode 1))
                t)
+     ;; Put point after headers, so TAB will browse article buttons
+     (add-hook 'gnus-article-prepare-hook
+               (lambda ()
+		 (let ((window (get-buffer-window gnus-article-buffer)))
+		   (when window
+		     (with-current-buffer (window-buffer window)
+		       ;; (forward-paragraph)
+		       (set-window-point window (point))))))
+               t)
      ;; Shift-Space to scroll back (already added in bug#2145).
      ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
      (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
      ;; RET scrolls the article one line at a time.
-     (define-key gnus-article-mode-map [return]
-       (lambda ()
-         (interactive)
-         (if (or (not (get-char-property (point) 'button))
-                 ;; or point is on the bottom of the window while scrolling
-                 (eq (point) (save-excursion (move-to-window-line -1) (point))))
-             (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
-           (widget-button-press (point)))))
+     (define-key gnus-article-mode-map [return] 'my-gnus-article-press-or-scroll)
+     (define-key gnus-article-mode-map [(meta right)] 'my-gnus-article-press-or-scroll)
+     (define-key gnus-article-mode-map [(meta down)] 'widget-forward)
+     (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
      ;; Disable dangeruos key bindings
      (define-key gnus-article-mode-map [(meta ?g)] nil)))
+
+(defun my-gnus-article-press-or-scroll ()
+  (interactive)
+  (if (or (not (get-char-property (point) 'button))
+          ;; or point is on the bottom of the window while scrolling
+          (eq (point) (save-excursion (move-to-window-line -1) (point))))
+      (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
+    (widget-button-press (point))))
 
 ;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
 (defun my-gnus-copy-link-gnu-lists (&optional arg)
@@ -3463,6 +3528,9 @@ The difference between N and the number of articles ticked is returned."
 (add-hook 'message-mode-hook
           (lambda ()
             (auto-fill-mode 1)
+	    ;; Support search of `symbol'
+	    (modify-syntax-entry ?` "'   " message-mode-syntax-table)
+	    (modify-syntax-entry ?' "'   " message-mode-syntax-table)
             ;; Prevent premature sending when `C-c C-s'
             ;; is typed instead of `C-x C-s'
             (define-key message-mode-map "\C-c\C-s" nil)))
