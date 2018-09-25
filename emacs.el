@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-09-18 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-09-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -54,11 +54,11 @@
   (setq my-battery-timer
         ;; Check periodically if went off-line and
         ;; discharging battery needs to be displayed
-        (run-at-time
-         t 600
-         (lambda ()
-           (unless (equal (cdr (assoc ?L (funcall battery-status-function))) "on-line")
-             (display-battery-mode 1))))))
+        (run-at-time t 600 (lambda ()
+			     (display-battery-mode
+			      (if (member (cdr (assoc ?L (funcall battery-status-function)))
+					  '("AC" "on-line"))
+				  0 1))))))
 
 ;; Create display table to modify some display elements
 (or standard-display-table (setq standard-display-table (make-display-table)))
@@ -108,6 +108,9 @@
 ;; Emacs text screen resolution 168 columns x 75 lines.
 ;; `split-window-horizontally' gives two windows with 83 columns x 75 lines.
 ;; And `follow-mode' displays one buffer with 83 columns x 150 lines.
+;; On 1366x768 this gives 225 columns x 75 lines, this means either
+;; 2 horizontally split windows each 112 columns wide, or
+;; 3 horizontally split windows each 75 columns wide.
 
 (cond
  ((eq window-system 'x)
@@ -126,12 +129,14 @@
            ;;     (window-put w 'type 'unframed)
            ;;     (maximize-window w)))
            ;; (add-hook 'before-add-window-hook my-customize-emacs-window t)
-           (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso8859-1")
            ;;(font . "-*-*-medium-r-normal--10-*-*-*-c-60-fontset-koi8_r_10")
            ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
            ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-*-*")
            ;; (font . "-misc-fixed-medium-r-normal--10-100-75-75-c-60-iso10646-1")
            ;; (font . "-*-*-medium-r-*--10-*-*-*-*-*-fontset-iso8859_1_10")
+           ;; (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso8859-1")
+           ;; Unlike iso8859-1, iso10646-* correctly combines accented chars
+           (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso10646-*")
            (cursor-type . bar)
            ;; To win a lot of screen pixels:
            (vertical-scroll-bars . nil)
@@ -247,11 +252,15 @@ i.e. in daylight or under bright electric lamps."
 ;; (my-colors-set)
 ;; (add-to-list 'after-make-frame-functions 'my-colors-set)
 
+(add-to-list 'after-make-frame-functions 'toggle-frame-maximized)
 (add-to-list 'after-make-frame-functions
-             'toggle-frame-maximized)
+             (lambda (frame)
+               (set-frame-parameter nil 'undecorated t)
+               ;; For some OS window managers that don't put focus to new frames:
+               (select-frame-set-input-focus frame)))
 
 ;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
-(modify-frame-parameters nil '((undecorated t)))
+(set-frame-parameter nil 'undecorated t)
 
 
 ;;; faces
@@ -308,8 +317,8 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(control right)]      'forward-sexp)
 (define-key global-map [(control kp-left)]    'backward-sexp)
 (define-key global-map [(control kp-right)]   'forward-sexp)
-(define-key global-map [(control meta left)]  'backward-word)
-(define-key global-map [(control meta right)] 'forward-word)
+(define-key global-map [(control meta left)]  'left-word)
+(define-key global-map [(control meta right)] 'right-word)
 
 (define-key global-map [(control meta up)]    'backward-paragraph)
 (define-key global-map [(control meta down)]  'forward-paragraph)
@@ -385,16 +394,27 @@ i.e. in daylight or under bright electric lamps."
 
 ;; When M-w (kill-ring-save) is called without region, copy text at point.
 (advice-add 'kill-ring-save :before
-	    (lambda (beg end &optional region)
-	      (unless (use-region-p)
-		(let ((bounds (or (bounds-of-thing-at-point 'url)
-				  (bounds-of-thing-at-point 'filename)
-				  (bounds-of-thing-at-point 'symbol)
-				  (bounds-of-thing-at-point 'sexp))))
-		  (goto-char (car bounds))
-		  (push-mark (cdr bounds) t t)
-		  (message "Copied text \"%s\"" (buffer-substring-no-properties
-						 (car bounds) (cdr bounds)))))))
+	    (lambda (&rest _args)
+	      (interactive (lambda (spec)
+			     (unless (use-region-p)
+			       (let ((bounds (or (bounds-of-thing-at-point 'url)
+						 (bounds-of-thing-at-point 'filename)
+						 (bounds-of-thing-at-point 'symbol)
+						 (bounds-of-thing-at-point 'sexp))))
+				 (goto-char (car bounds))
+				 (push-mark (cdr bounds) t t)))
+			     (advice-eval-interactive-spec spec)))))
+
+;; Indicate copied region, especially needed when
+;; the region was activated by the advice above
+(advice-add 'kill-ring-save :after
+	    (lambda (&rest _args)
+	      (let ((text (substring-no-properties (current-kill 0))))
+		(message "Copied text \"%s\""
+			 (query-replace-descr ; don't show newlines literally
+			  (if (> (length text) 64)
+			      (concat (substring text 0 64) "..." (substring text -16))
+			    text))))))
 
 ;; Use new dwim case commands
 (define-key esc-map "u" 'upcase-dwim)
@@ -578,7 +598,7 @@ i.e. in daylight or under bright electric lamps."
 
 ;; Modify esc-map when not on a tty
 (when window-system
-  ;; Insert paired characters
+  ;; Insert paired characters (either ''/"" or ‘’/“” depending on mode)
   (define-key esc-map "\""
     (lambda ()
       (interactive)
@@ -636,6 +656,18 @@ i.e. in daylight or under bright electric lamps."
 ;;     (call-interactively 'insert-pair)))
 ;; (define-key esc-map "[" 'insert-pair-without-space)
 ;; (define-key esc-map "(" 'insert-pair-with-space)
+
+
+;;; advices
+
+;; Allow set-variable to set internal variables, not only customizable ones:
+(advice-add 'set-variable :around
+	    (lambda (orig &rest args)
+	      (interactive (lambda (spec)
+			     (flet ((custom-variable-p (variable) t))
+			       (advice-eval-interactive-spec spec))))
+	      (flet ((custom-variable-p (variable) t))
+		(apply orig args))))
 
 
 ;;; cursor
@@ -839,8 +871,20 @@ With C-u, C-0 or M-0, cancel the timer."
 
 (defvar-local mark-active-window nil)
 
-(add-hook 'activate-mark-hook   (lambda () (setq mark-active-window (selected-window))))
-(add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
+;; (add-hook 'activate-mark-hook   (lambda () (setq mark-active-window (selected-window))))
+(advice-add 'activate-mark :after
+	    (lambda (&rest _args)
+	      (setq mark-active-window (selected-window))))
+
+;; Can't use deactivate-mark-hook because when clicking mouse in another window
+;; with the same buffer it calls both activate-mark and deactivate-mark,
+;; but deactivate-mark checks if the region is active (region-active-p),
+;; and doesn't advance further because mark-active was set to nil in the redisplay
+;; hook below.  OTOH, the advice is used unconditionally.
+;; (add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
+(advice-add 'deactivate-mark :after
+	    (lambda (&rest _args)
+	      (setq mark-active-window nil)))
 
 (defun redisplay--update-mark-active-window (window)
   (when mark-active-window
@@ -2397,6 +2441,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (t
       (message file)))))
 
+(define-key dired-mode-map [(control enter)]  'my-dired-run-find-file)
 (define-key dired-mode-map [(control return)] 'my-dired-run-find-file)
 
 ;; Add different directory sorting keys
@@ -3399,6 +3444,15 @@ then output is inserted in the current buffer."
 
 (eval-after-load "gnus-art"
   '(progn
+     ;; Set more human-readable time units:
+     (setq article-time-units
+	   `((year   . ,(* 60 60 24 365.25))
+	     (month  . ,(* 60 60 24 30))
+	     (week   . ,(* 60 60 24 7))
+	     (day    . ,(* 60 60 24))
+	     (hour   . ,(* 60 60))
+	     (minute .     60)
+	     (second .     1)))
      ;; I'm curious about what news readers do people use (Gnus or not ;)
      (setq gnus-visible-headers
            (append
@@ -3790,7 +3844,12 @@ Cancel the clock if called with C-u."
               dired-shell-command-history ;; TODO: merge with shell-command-history
               shell-command-history
               search-ring
-              regexp-search-ring)
+              regexp-search-ring
+              ;; A possible problem is that `wincows-list' has references to buffers
+              ;; that are restored after restoring `wincows-list', thus unavailable
+              ;; at the time when `wincows-list' is restored.
+              wincows-list
+              )
             (delq 'register-alist desktop-globals-to-save)))))
 
 ;; Prepare Emacs desktop after loading Emacs.
