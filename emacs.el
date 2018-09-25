@@ -670,44 +670,6 @@ i.e. in daylight or under bright electric lamps."
 		(apply orig args))))
 
 
-;;; cursor
-
-;; USE (setq-default cursor-type ...) INSTEAD OF THE NEXT FUNCTION
-;; (defun set-cursor-type (cursor-type)
-;;   "Set the text cursor type of the selected frame to CURSOR-TYPE.
-;; When called interactively, prompt for the name of the type to use.
-;; To get the frame's current cursor type, use `frame-parameters'."
-;;   ;; see `fringe-query-style'
-;;   (interactive (list (intern (completing-read
-;;                            "Cursor type: "
-;;                            '("box" "hollow" "bar" "hbar" nil)))))
-;;   (modify-frame-parameters (selected-frame)
-;;                         (list (cons 'cursor-type cursor-type))))
-
-;; Currently cursor color is frame-local, but should be buffer-local like
-;; cursor-type (or maybe even window-local).
-;; Also background color should be buffer-local
-;; (maybe this is already fixed in the tiled-background branch?).
-
-;; (defadvice toggle-input-method (after my-toggle-input-method activate)
-;;   (if current-input-method
-;;       (set-cursor-color "red") ; "AntiqueWhite4"
-;;     (set-cursor-color "black")))
-
-;; Use box cursor for overwrite-mode, and red cursor for quail active input.
-(defun my-change-cursor ()
-  "Change cursor color and type depending on insertion mode and input method."
-  (set-cursor-color
-   (cond (current-input-method "red3") ; "AntiqueWhite4"
-         ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
-                               "DarkGrey")
-         (t                    "black")))
-  (setq-default cursor-type
-   (cond (overwrite-mode       'box)
-         (t                    'bar))))
-(add-hook 'post-command-hook 'my-change-cursor)
-
-
 ;;; functions
 
 (defun my-find-thing-at-point ()
@@ -755,6 +717,44 @@ With C-u, C-0 or M-0, cancel the timer."
       (setq my-scroll-auto-timer (run-at-time t arg 'scroll-up 1))))
 
 (define-key my-map "s" 'my-scroll-auto)
+
+
+;;; cursor
+
+;; USE (setq-default cursor-type ...) INSTEAD OF THE NEXT FUNCTION
+;; (defun set-cursor-type (cursor-type)
+;;   "Set the text cursor type of the selected frame to CURSOR-TYPE.
+;; When called interactively, prompt for the name of the type to use.
+;; To get the frame's current cursor type, use `frame-parameters'."
+;;   ;; see `fringe-query-style'
+;;   (interactive (list (intern (completing-read
+;;                            "Cursor type: "
+;;                            '("box" "hollow" "bar" "hbar" nil)))))
+;;   (modify-frame-parameters (selected-frame)
+;;                         (list (cons 'cursor-type cursor-type))))
+
+;; Currently cursor color is frame-local, but should be buffer-local like
+;; cursor-type (or maybe even window-local).
+;; Also background color should be buffer-local
+;; (maybe this is already fixed in the tiled-background branch?).
+
+;; (defadvice toggle-input-method (after my-toggle-input-method activate)
+;;   (if current-input-method
+;;       (set-cursor-color "red") ; "AntiqueWhite4"
+;;     (set-cursor-color "black")))
+
+;; Use box cursor for overwrite-mode, and red cursor for quail active input.
+(defun my-change-cursor ()
+  "Change cursor color and type depending on insertion mode and input method."
+  (set-cursor-color
+   (cond (current-input-method "red3") ; "AntiqueWhite4"
+         ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
+                               "DarkGrey")
+         (t                    "black")))
+  (setq-default cursor-type
+   (cond (overwrite-mode       'box)
+         (t                    'bar))))
+(add-hook 'post-command-hook 'my-change-cursor)
 
 
 ;;; window
