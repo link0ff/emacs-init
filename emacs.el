@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-09-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-09-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -250,14 +250,14 @@ i.e. in daylight or under bright electric lamps."
                                             'my-colors-light)))))
 
 ;; (my-colors-set)
-;; (add-to-list 'after-make-frame-functions 'my-colors-set)
+;; (add-hook 'after-make-frame-functions 'my-colors-set)
 
-(add-to-list 'after-make-frame-functions 'toggle-frame-maximized)
-(add-to-list 'after-make-frame-functions
-             (lambda (frame)
-               (set-frame-parameter nil 'undecorated t)
-               ;; For some OS window managers that don't put focus to new frames:
-               (select-frame-set-input-focus frame)))
+(add-hook 'after-make-frame-functions 'toggle-frame-maximized)
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (set-frame-parameter nil 'undecorated t)
+            ;; For some OS window managers that don't put focus to new frames:
+            (select-frame-set-input-focus frame)))
 
 ;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
 (set-frame-parameter nil 'undecorated t)
@@ -308,7 +308,7 @@ i.e. in daylight or under bright electric lamps."
 ;; (let ((face t)) (my-faces-fix))
 ;; (add-hook 'after-init-hook (lambda () (let (face) (my-faces-fix))) t)
 ;; 2. Call `my-faces-fix' every time some new face gets defined
-(add-to-list 'custom-define-hook 'my-faces-fix)
+(add-hook 'custom-define-hook 'my-faces-fix)
 
 
 ;;; keybindings
@@ -392,29 +392,40 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(control shift kp-5)] 'goto-line)
 (define-key global-map [(control kp-begin)] 'goto-line)
 
+(defvar kill-ring-save-set-region-p nil)
+
 ;; When M-w (kill-ring-save) is called without region, copy text at point.
 (advice-add 'kill-ring-save :before
 	    (lambda (&rest _args)
 	      (interactive (lambda (spec)
+			     (setq kill-ring-save-set-region-p nil)
 			     (unless (use-region-p)
 			       (let ((bounds (or (bounds-of-thing-at-point 'url)
 						 (bounds-of-thing-at-point 'filename)
 						 (bounds-of-thing-at-point 'symbol)
 						 (bounds-of-thing-at-point 'sexp))))
+				 (unless bounds
+				   (signal 'mark-inactive nil))
 				 (goto-char (car bounds))
-				 (push-mark (cdr bounds) t t)))
-			     (advice-eval-interactive-spec spec)))))
+				 (push-mark (cdr bounds) t t)
+				 (setq kill-ring-save-set-region-p t)))
+			     (advice-eval-interactive-spec spec))))
+	    '((name . set-region-if-inactive)))
 
 ;; Indicate copied region, especially needed when
 ;; the region was activated by the advice above
 (advice-add 'kill-ring-save :after
 	    (lambda (&rest _args)
-	      (let ((text (substring-no-properties (current-kill 0))))
-		(message "Copied text \"%s\""
-			 (query-replace-descr ; don't show newlines literally
-			  (if (> (length text) 64)
-			      (concat (substring text 0 64) "..." (substring text -16))
-			    text))))))
+	      ;; When the region was set by the advice above,
+	      ;; only then display its text.
+	      (when kill-ring-save-set-region-p
+		(let ((text (substring-no-properties (current-kill 0))))
+		  (message "Copied text \"%s\""
+			   (query-replace-descr ; don't show newlines literally
+			    (if (> (length text) 64)
+				(concat (substring text 0 64) "..." (substring text -16))
+			      text))))))
+	    '((name . indicate-copied-region)))
 
 ;; Use new dwim case commands
 (define-key esc-map "u" 'upcase-dwim)
@@ -662,12 +673,13 @@ i.e. in daylight or under bright electric lamps."
 
 ;; Allow set-variable to set internal variables, not only customizable ones:
 (advice-add 'set-variable :around
-	    (lambda (orig &rest args)
+	    (lambda (orig-fun &rest args)
 	      (interactive (lambda (spec)
 			     (flet ((custom-variable-p (variable) t))
 			       (advice-eval-interactive-spec spec))))
 	      (flet ((custom-variable-p (variable) t))
-		(apply orig args))))
+		(apply orig-fun args)))
+	    '((name . override-custom-variable)))
 
 
 ;;; functions
@@ -894,10 +906,11 @@ With negative N, does this in the reverse order."
 
 (defvar-local mark-active-window nil)
 
-;; (add-hook 'activate-mark-hook   (lambda () (setq mark-active-window (selected-window))))
+;; (add-hook 'activate-mark-hook (lambda () (setq mark-active-window (selected-window))))
 (advice-add 'activate-mark :after
 	    (lambda (&rest _args)
-	      (setq mark-active-window (selected-window))))
+	      (setq mark-active-window (selected-window)))
+	    '((name . mark-active-window)))
 
 ;; Can't use deactivate-mark-hook because when clicking mouse in another window
 ;; with the same buffer it calls both activate-mark and deactivate-mark,
@@ -907,13 +920,14 @@ With negative N, does this in the reverse order."
 ;; (add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
 (advice-add 'deactivate-mark :after
 	    (lambda (&rest _args)
-	      (setq mark-active-window nil)))
+	      (setq mark-active-window nil))
+	    '((name . mark-active-window)))
 
 (defun redisplay--update-mark-active-window (window)
   (when mark-active-window
     (setq mark-active (eq mark-active-window window))))
 
-(add-to-list 'pre-redisplay-functions #'redisplay--update-mark-active-window)
+(add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 
 
 ;;; follow
@@ -2373,7 +2387,20 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      ;; Shift-Space to scroll back (already added in bug#2145).
      ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
      (define-key image-mode-map "q" 'quit-window-kill-buffer)
-     (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)))
+     (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
+     ;; Browse prev/next images according to their order in Dired
+     (define-key image-mode-map [(left)]
+       (lambda ()
+	 (interactive)
+	 (kill-current-buffer-and-dired-jump)
+	 (dired-previous-line 1)
+	 (dired-view-file)))
+     (define-key image-mode-map [(right)]
+       (lambda ()
+	 (interactive)
+	 (kill-current-buffer-and-dired-jump)
+	 (dired-next-line 1)
+	 (dired-view-file)))))
 
 
 ;;; image
