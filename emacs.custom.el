@@ -145,6 +145,7 @@
  '(list-matching-lines-buffer-name-face 'header-line)
  '(list-matching-lines-current-line-face 'region)
  '(list-matching-lines-jump-to-current-line t)
+ '(load-prefer-newer t)
  '(log-edit-confirm t)
  '(log-edit-hook
    '(log-edit-insert-changelog log-edit-insert-filenames-without-changelog))

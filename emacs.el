@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-09-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-10-16 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -220,6 +220,7 @@ i.e. in daylight or under bright electric lamps."
     (set-face-foreground 'fringe (face-foreground 'default) frame)))
 
 (define-key global-map [f6 ?c ?d] 'my-colors-dark)
+(define-key global-map [Multi_key] [t]) ; don't beep on accidental keypress
 
 (defvar my-sunset-timer nil)
 (defvar my-sunrise-timer nil)
@@ -355,10 +356,10 @@ i.e. in daylight or under bright electric lamps."
 
 ;; TODO: bind (shift meta) to a new package that moves windows like
 ;; `rotate-window-buffers' bound to `C-z C-u'
-(define-key global-map [(shift super left)]  'rotate-window-buffers)
-(define-key global-map [(shift super right)] 'rotate-window-buffers)
-(define-key global-map [(shift hyper left)]  'rotate-window-buffers)
-(define-key global-map [(shift hyper right)] 'rotate-window-buffers)
+(define-key global-map [(shift super left)]  'window-swap-states)
+(define-key global-map [(shift super right)] 'window-swap-states)
+(define-key global-map [(shift hyper left)]  'window-swap-states)
+(define-key global-map [(shift hyper right)] 'window-swap-states)
 
 ;; Actually I don't use next two keybindings, use them for something useful
 ;; (define-key global-map [(control meta prior)] 'scroll-right)
@@ -592,7 +593,7 @@ i.e. in daylight or under bright electric lamps."
   ;; as `C-z ESC TAB' or `C-z ESC |'
   (define-key my-map [escape] esc-map)
 
-  (define-key my-map [(control ?u)] 'rotate-window-buffers)
+  (define-key my-map [(control ?u)] 'window-swap-states)
   (define-key my-map "t" 'toggle-truncate-lines)
   (define-key my-map "v" nil)
   (define-key my-map "vs" 'set-variable)
@@ -774,6 +775,7 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; Prev version posted to emacs-devel Subject: Re: Include buffer-move.el
 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00685.html
 ;; Maybe add recipe to http://www.emacswiki.org/cgi-bin/wiki/TransposeWindows
+;; Now I use the standard command `window-swap-states' instead of this.
 (defun rotate-window-buffers (&optional n)
   "Exchange buffers in all windows N times.
 With positive N, it uses the window order of `window-list'.
@@ -854,6 +856,17 @@ With negative N, does this in the reverse order."
 
 (when (boundp 'recenter-positions)
   (setq recenter-position (car recenter-positions)))
+
+;; Instead of the default hook that recenters to the middle of the screen,
+;; add hooks that recenter to the middle of the top half of the screen
+(defun recenter-top ()
+  (interactive)
+  (recenter (round (* recenter-position (window-height)))))
+
+(remove-hook 'xref-after-jump-hook 'recenter)
+(add-hook 'xref-after-jump-hook 'recenter-top)
+(add-hook 'xref-after-return-hook 'recenter-top)
+(add-hook 'find-function-after-hook 'recenter-top)
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -941,11 +954,12 @@ With negative N, does this in the reverse order."
 ;;; isearch
 
 ;; Save and restore window start positions on returning to previous search
+;; TODO: try to use ‘add-function’
 (setq isearch-push-state-function
       (lambda ()
 	;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
-          (recenter (round (* 0.15 (window-height)))))
+          (recenter-top))
         `(lambda (cmd)
            (when isearch-success
              (set-window-start nil ,(window-start))))))
@@ -2498,15 +2512,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (mapc (lambda (elt)
         (define-key dired-mode-map (car elt)
           `(lambda ()
-            (interactive)
-            (dired-sort-other (concat dired-listing-switches ,(cadr elt))))))
+             (interactive)
+             (dired-sort-other (concat dired-listing-switches ,(cadr elt))))))
       '(([(control f3)]       ""     "by name")
         ([(control f4)]       " -X"  "by extension")
-        ([(control f5)]       " -t"  "by date")
+        ([(control f5)]       " -t"  "by time")
         ([(control f6)]       " -S"  "by size")
         ([(control shift f3)] " -r"  "by reverse name")
         ([(control shift f4)] " -rX" "by reverse extension")
-        ([(control shift f5)] " -rt" "by reverse date")
+        ([(control shift f5)] " -rt" "by reverse time")
         ([(control shift f6)] " -rS" "by reverse size")))
 
 ;; The following two bindings allow to quickly look to the file and return back
@@ -2764,7 +2778,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 		     (save-excursion
 		       (let ((inhibit-field-text-motion t))
 			 (goto-char (line-beginning-position))
-			 (looking-at-p "^cljs\\..*=>\s*$"))))
+			 ;; e.g. “dev:cljs.user=> ”
+			 (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
 		(let ((process (get-buffer-process (current-buffer))))
 		  (process-send-string process ":cljs/quit\n")))
 	       (t
