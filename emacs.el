@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-10-16 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-11-08 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -333,12 +333,10 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
 ;; (define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
 
-;; TODO: these are new overridden by `windmove',
-;; find new keyprefix for navigational keys (in Info, view, etc):
 (define-key global-map [(meta left)]
   (lambda ()
     (interactive)
-    ;; TODO: also check in (wincows)
+    ;; TODO: also check in (wincows-states)
     (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
         (dired-jump)
       ;; Go to the top to not store emacs-places.
@@ -347,19 +345,10 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(meta right)]         'my-find-thing-at-point)
 ;; Keybindings (meta up) (meta down) are free when windmove uses `super'.
 
-;; (windmove-default-keybindings 'meta)
-(windmove-default-keybindings 'super)
-(windmove-default-keybindings 'hyper)
-;; (windmove-default-keybindings '(meta shift))
-
-(winner-mode)
-
-;; TODO: bind (shift meta) to a new package that moves windows like
-;; `rotate-window-buffers' bound to `C-z C-u'
 (define-key global-map [(shift super left)]  'window-swap-states)
 (define-key global-map [(shift super right)] 'window-swap-states)
-(define-key global-map [(shift hyper left)]  'window-swap-states)
-(define-key global-map [(shift hyper right)] 'window-swap-states)
+;; (define-key global-map [(shift hyper left)]  'window-swap-states)
+;; (define-key global-map [(shift hyper right)] 'window-swap-states)
 
 ;; Actually I don't use next two keybindings, use them for something useful
 ;; (define-key global-map [(control meta prior)] 'scroll-right)
@@ -392,41 +381,6 @@ i.e. in daylight or under bright electric lamps."
 (define-key global-map [(control kp-end)]  'end-of-buffer)
 (define-key global-map [(control shift kp-5)] 'goto-line)
 (define-key global-map [(control kp-begin)] 'goto-line)
-
-(defvar kill-ring-save-set-region-p nil)
-
-;; When M-w (kill-ring-save) is called without region, copy text at point.
-(advice-add 'kill-ring-save :before
-	    (lambda (&rest _args)
-	      (interactive (lambda (spec)
-			     (setq kill-ring-save-set-region-p nil)
-			     (unless (use-region-p)
-			       (let ((bounds (or (bounds-of-thing-at-point 'url)
-						 (bounds-of-thing-at-point 'filename)
-						 (bounds-of-thing-at-point 'symbol)
-						 (bounds-of-thing-at-point 'sexp))))
-				 (unless bounds
-				   (signal 'mark-inactive nil))
-				 (goto-char (car bounds))
-				 (push-mark (cdr bounds) t t)
-				 (setq kill-ring-save-set-region-p t)))
-			     (advice-eval-interactive-spec spec))))
-	    '((name . set-region-if-inactive)))
-
-;; Indicate copied region, especially needed when
-;; the region was activated by the advice above
-(advice-add 'kill-ring-save :after
-	    (lambda (&rest _args)
-	      ;; When the region was set by the advice above,
-	      ;; only then display its text.
-	      (when kill-ring-save-set-region-p
-		(let ((text (substring-no-properties (current-kill 0))))
-		  (message "Copied text \"%s\""
-			   (query-replace-descr ; don't show newlines literally
-			    (if (> (length text) 64)
-				(concat (substring text 0 64) "..." (substring text -16))
-			      text))))))
-	    '((name . indicate-copied-region)))
 
 ;; Use new dwim case commands
 (define-key esc-map "u" 'upcase-dwim)
@@ -530,6 +484,56 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map [?'] 'forward-char)
 
 
+;;; copy-paste
+
+(defvar kill-ring-save-set-region-p nil)
+
+;; When M-w (kill-ring-save) is called without region, copy text at point.
+(advice-add 'kill-ring-save :before
+	    (lambda (&rest _args)
+	      (interactive (lambda (spec)
+			     (setq kill-ring-save-set-region-p nil)
+			     (unless (use-region-p)
+			       (let ((bounds (or (bounds-of-thing-at-point 'url)
+						 (bounds-of-thing-at-point 'filename)
+						 (bounds-of-thing-at-point 'symbol)
+						 (bounds-of-thing-at-point 'sexp))))
+				 (unless bounds
+				   (signal 'mark-inactive nil))
+				 (goto-char (car bounds))
+				 (push-mark (cdr bounds) t t)
+				 (setq kill-ring-save-set-region-p t)))
+			     (advice-eval-interactive-spec spec))))
+	    '((name . set-region-if-inactive)))
+
+;; Indicate copied region, especially needed when
+;; the region was activated by the advice above
+(advice-add 'kill-ring-save :after
+	    (lambda (&rest _args)
+	      ;; When the region was set by the advice above,
+	      ;; only then display its text.
+	      (when kill-ring-save-set-region-p
+		(let ((text (substring-no-properties (current-kill 0))))
+		  (message "Copied text \"%s\""
+			   (query-replace-descr ; don't show newlines literally
+			    (if (> (length text) 64)
+				(concat (substring text 0 64) "..." (substring text -16))
+			      text))))))
+	    '((name . indicate-copied-region)))
+
+(defun insert-yank-from-kill-ring (string)
+  "Insert the selected item from the kill-ring in the minibuffer history.
+Use minibuffer navigation and search commands to browse the kill-ring
+in the minibuffer history."
+  (interactive (list (read-string "Yank from kill-ring: " nil 'kill-ring)))
+  (insert-for-yank string))
+
+(global-set-key "\M-\C-y" 'insert-yank-from-kill-ring)
+
+(when delete-selection-mode
+  (put 'insert-yank-from-kill-ring 'delete-selection t))
+
+
 ;;; quail
 
 ;; The default key `C-\' is difficult to type on AltGr keyboards.
@@ -593,7 +597,7 @@ i.e. in daylight or under bright electric lamps."
   ;; as `C-z ESC TAB' or `C-z ESC |'
   (define-key my-map [escape] esc-map)
 
-  (define-key my-map [(control ?u)] 'window-swap-states)
+  ;; (define-key my-map [(control ?u)] 'window-swap-states)
   (define-key my-map "t" 'toggle-truncate-lines)
   (define-key my-map "v" nil)
   (define-key my-map "vs" 'set-variable)
@@ -676,7 +680,8 @@ i.e. in daylight or under bright electric lamps."
 (advice-add 'set-variable :around
 	    (lambda (orig-fun &rest args)
 	      (interactive (lambda (spec)
-			     (flet ((custom-variable-p (variable) t))
+			     (cl-flet ((custom-variable-p (v)
+					(and (symbolp v) (boundp v))))
 			       (advice-eval-interactive-spec spec))))
 	      (flet ((custom-variable-p (variable) t))
 		(apply orig-fun args)))
@@ -772,29 +777,47 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;;; window
 
+(winner-mode)
+
+;; (windmove-default-keybindings '(meta shift))
+;; (windmove-default-keybindings 'hyper)
+(windmove-default-keybindings 'super)
+(windmove-display-default-keybindings '(super meta))
+
+;; TODO: add to windmove.el
+(defun my-windelete ()
+  "Delete window in the specified direction."
+  (interactive)
+  (let ((dir (event-basic-type (aref (this-command-keys) 1))))
+    (delete-window (window-in-direction dir))))
+
+(let ((modifiers '(super)))
+  (dolist (key '(left right up down))
+    (define-key ctl-x-map  (vector (append modifiers (list key))) 'my-windelete)))
+
 ;; Prev version posted to emacs-devel Subject: Re: Include buffer-move.el
 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00685.html
 ;; Maybe add recipe to http://www.emacswiki.org/cgi-bin/wiki/TransposeWindows
 ;; Now I use the standard command `window-swap-states' instead of this.
-(defun rotate-window-buffers (&optional n)
-  "Exchange buffers in all windows N times.
-With positive N, it uses the window order of `window-list'.
-With negative N, does this in the reverse order."
-  (interactive "p")
-  (let* ((ws (window-list))
-         (ls (mapcar (lambda (w)
-                       (list (window-buffer w)
-                             (window-point w)
-                             (window-next-buffers w)
-                             (window-prev-buffers w)))
-                     ws))
-         (n  (mod (or n 1) (length ws))))
-    (dolist (w (append (last ws n) (butlast ws n)))
-      (let ((l (pop ls)))
-        (set-window-buffer w (nth 0 l))
-        (set-window-point  w (nth 1 l))
-        (set-window-next-buffers w (nth 2 l))
-        (set-window-prev-buffers w (nth 3 l))))))
+;; (defun rotate-window-buffers (&optional n)
+;;   "Exchange buffers in all windows N times.
+;; With positive N, it uses the window order of `window-list'.
+;; With negative N, does this in the reverse order."
+;;   (interactive "p")
+;;   (let* ((ws (window-list))
+;;          (ls (mapcar (lambda (w)
+;;                        (list (window-buffer w)
+;;                              (window-point w)
+;;                              (window-next-buffers w)
+;;                              (window-prev-buffers w)))
+;;                      ws))
+;;          (n  (mod (or n 1) (length ws))))
+;;     (dolist (w (append (last ws n) (butlast ws n)))
+;;       (let ((l (pop ls)))
+;;         (set-window-buffer w (nth 0 l))
+;;         (set-window-point  w (nth 1 l))
+;;         (set-window-next-buffers w (nth 2 l))
+;;         (set-window-prev-buffers w (nth 3 l))))))
 
 (defun my-move-to-window-top (&optional arg)
   "Position point to the top line of the window."
@@ -867,6 +890,20 @@ With negative N, does this in the reverse order."
 (add-hook 'xref-after-jump-hook 'recenter-top)
 (add-hook 'xref-after-return-hook 'recenter-top)
 (add-hook 'find-function-after-hook 'recenter-top)
+
+(advice-add 'beginning-of-defun :around
+	    (lambda (orig-fun &rest args)
+	      (let ((w-s (window-start))
+		    (w-e (window-end)))
+		(apply orig-fun args)
+		(when (and
+		       ;; Only when used interactively
+		       (eq this-command 'beginning-of-defun)
+		       ;; And only when jumping outside of window
+		       ;; to the center of the window
+		       (or (< (point) w-s) (> (point) w-e)))
+		  (recenter-top))))
+	    '((name . recenter-top)))
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -2451,6 +2488,24 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
         " ")))
     thumb-file))
 
+;; Allow image-mode to open WEBP images.
+;; After installing `sudo apt-get install webp`, the command
+;; `identify -list delegate` confirms it's supported:
+;; webp => "dwebp' -pam '%i' -o '%o"
+
+(add-to-list 'imagemagick-enabled-types 'WEBP)
+
+(advice-add 'imagemagick-types :around
+	    (lambda (orig-fun &rest args)
+	      (append (apply orig-fun args) '(WEBP)))
+	    '((name . add-webp)))
+
+(imagemagick-register-types)
+
+;; But what's BAD is that it writes to ~/.xsession-errors such info:
+;; Decoded /tmp/magick-2449whQo5ntkvXs3. Dimensions: 635 x 846 . Format: lossy. Now saving...
+;; Saved file /tmp/magick-2449WjsPHiXypqga
+
 
 ;;; thumbs
 
@@ -2901,8 +2956,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (eval-after-load "grep"
   '(progn
-     (push '("rb" . "*.rb") grep-files-aliases)
      (push '("js" . "*.js") grep-files-aliases)
+     (push '("rb" . "*.rb *.rake") grep-files-aliases)
+     (push '("ex" . "*.ex*") grep-files-aliases)
      (push '("clj" . "*.clj*") grep-files-aliases)
      ))
 
@@ -3910,10 +3966,7 @@ Cancel the clock if called with C-u."
               shell-command-history
               search-ring
               regexp-search-ring
-              ;; A possible problem is that `wincows-list' has references to buffers
-              ;; that are restored after restoring `wincows-list', thus unavailable
-              ;; at the time when `wincows-list' is restored.
-              wincows-list
+              wincows-states
               )
             (delq 'register-alist desktop-globals-to-save)))))
 
