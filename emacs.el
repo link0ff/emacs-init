@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-11-08 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-12-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -521,17 +521,20 @@ i.e. in daylight or under bright electric lamps."
 			      text))))))
 	    '((name . indicate-copied-region)))
 
-(defun insert-yank-from-kill-ring (string)
-  "Insert the selected item from the kill-ring in the minibuffer history.
+(defun yank-from-kill-ring (string)
+  "Insert the kill-ring item selected from the minibuffer history.
 Use minibuffer navigation and search commands to browse the kill-ring
-in the minibuffer history."
-  (interactive (list (read-string "Yank from kill-ring: " nil 'kill-ring)))
+in the minibuffer history before typing RET to insert the item."
+  (interactive (list (let ((history-add-new-input nil))
+		       (read-string "Yank from kill-ring: " nil 'kill-ring))))
+  (setq yank-window-start (window-start))
+  (push-mark)
   (insert-for-yank string))
 
-(global-set-key "\M-\C-y" 'insert-yank-from-kill-ring)
+(global-set-key "\M-\C-y" 'yank-from-kill-ring)
 
 (when delete-selection-mode
-  (put 'insert-yank-from-kill-ring 'delete-selection t))
+  (put 'yank-from-kill-ring 'delete-selection t))
 
 
 ;;; quail
@@ -734,7 +737,7 @@ With C-u, C-0 or M-0, cancel the timer."
   (if (not (or (eq arg 0) (equal arg '(4))))
       (setq my-scroll-auto-timer (run-at-time t arg 'scroll-up 1))))
 
-(define-key my-map "s" 'my-scroll-auto)
+;; (define-key my-map "s" 'my-scroll-auto)
 
 
 ;;; cursor
@@ -783,17 +786,7 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; (windmove-default-keybindings 'hyper)
 (windmove-default-keybindings 'super)
 (windmove-display-default-keybindings '(super meta))
-
-;; TODO: add to windmove.el
-(defun my-windelete ()
-  "Delete window in the specified direction."
-  (interactive)
-  (let ((dir (event-basic-type (aref (this-command-keys) 1))))
-    (delete-window (window-in-direction dir))))
-
-(let ((modifiers '(super)))
-  (dolist (key '(left right up down))
-    (define-key ctl-x-map  (vector (append modifiers (list key))) 'my-windelete)))
+(windmove-delete-default-keybindings nil 'super)
 
 ;; Prev version posted to emacs-devel Subject: Re: Include buffer-move.el
 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00685.html
@@ -887,10 +880,12 @@ With C-u, C-0 or M-0, cancel the timer."
   (recenter (round (* recenter-position (window-height)))))
 
 (remove-hook 'xref-after-jump-hook 'recenter)
-(add-hook 'xref-after-jump-hook 'recenter-top)
-(add-hook 'xref-after-return-hook 'recenter-top)
-(add-hook 'find-function-after-hook 'recenter-top)
+(add-hook 'xref-after-jump-hook 'reposition-window)
+(add-hook 'xref-after-return-hook 'reposition-window)
+(add-hook 'find-function-after-hook 'reposition-window)
 
+;; Let `C-M-a' (beginning-of-defun) not scroll the window
+;; when after jump point stays within current window bounds
 (advice-add 'beginning-of-defun :around
 	    (lambda (orig-fun &rest args)
 	      (let ((w-s (window-start))
@@ -996,10 +991,30 @@ With C-u, C-0 or M-0, cancel the timer."
       (lambda ()
 	;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
-          (recenter-top))
+          (reposition-window))
         `(lambda (cmd)
            (when isearch-success
              (set-window-start nil ,(window-start))))))
+
+(defun isearch-refresh-state ()
+  "Refrest the last search state.
+This might be necessary when e.g. the window was manually recentered with
+`C-l C-l', so new window-start should be updated in push-state-function above
+before searching for the next hit."
+  ;; Pop and discard the previous state
+  (pop isearch-cmds)
+  ;; Push a new state
+  (isearch-push-state))
+
+(advice-add 'isearch-repeat-forward :before
+	    (lambda (&rest _args)
+	      (isearch-refresh-state))
+	    '((name . refresh-state)))
+
+(advice-add 'isearch-repeat-backward :before
+	    (lambda (&rest _args)
+	      (isearch-refresh-state))
+	    '((name . refresh-state)))
 
 ;; Wrap without failing, posted to
 ;; http://stackoverflow.com/questions/285660/automatically-wrapping-i-search#287067
@@ -1043,25 +1058,9 @@ With C-u, C-0 or M-0, cancel the timer."
     (recenter 1)))
 
 (put 'toggle-truncate-lines 'isearch-scroll t)
-
-;; TODO: propose these 2 commands but without keybindings (or maybe `M-s M-<').
-;; SEE ALSO http://www.reddit.com/r/emacs/comments/1h8zfu/incremental_search_from_beginning_of_the_buffer/
-(defun isearch-beginning-of-buffer ()
-  "Go to the first occurrence of the current match.
-Move isearch point to the beginning of the buffer and repeat the search."
-  (interactive)
-  (goto-char (point-min))
-  (isearch-repeat-forward))
+(put 'comint-show-output 'isearch-scroll t) ;; bound to `C-M-l'
 
 (define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
-
-(defun isearch-end-of-buffer ()
-  "Go to the last occurrence of the current match.
-Move isearch point to the end of the buffer and repeat the search."
-  (interactive)
-  (goto-char (point-max))
-  (isearch-repeat-backward))
-
 (define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
 
 (define-key isearch-mode-map             "\t" 'isearch-complete)
@@ -1157,6 +1156,20 @@ Uses the value of the variable `search-whitespace-regexp'."
        (concat (string c0) accents "?"))
      (replace-regexp-in-string accents "" string) "")))
 (put 'isearch-decomposition-regexp 'isearch-message-prefix "deco ")
+
+(isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
+Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
+
+(defun diff-hunk-to-regexp (string &optional _lax from)
+  (replace-regexp-in-string
+   "[[:space:]]+" "[[:space:]]+"
+   (replace-regexp-in-string
+    "^\\(\\\\+\\|-\\)" "\\(^\\)[+-]"
+    (regexp-quote string) nil t)))
+
+(add-hook 'diff-mode-hook
+	  (lambda ()
+	    (set (make-local-variable 'search-default-mode) 'diff-hunk-to-regexp)))
 
 
 ;;; occur
@@ -1974,6 +1987,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                       (setq tab-width 2)
                       (alchemist-mode 1)))))
 
+(add-to-list 'auto-mode-alist '("\\.eex\\'" . html-erb-mode))
+
 (eval-after-load "alchemist"
   '(progn
      ;; (global-company-mode)
@@ -2111,6 +2126,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
 (add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . conf-mode))
 
 
 ;;; debug
@@ -2303,6 +2319,13 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (add-hook 'diff-mode-hook 'rename-uniquely)
      (add-hook 'log-view-mode-hook 'rename-uniquely)
 
+     (add-hook 'diff-mode-hook
+	       (lambda ()
+		 (set (make-local-variable 'beginning-of-defun-function)
+		      #'diff-beginning-of-hunk)
+		 (set (make-local-variable 'end-of-defun-function)
+		      #'diff-end-of-hunk)))
+
      ;; These commented out lines no more needed because diff-font-lock-keywords
      ;; was changed to use `diff-indicator-...' faces for that
      ;; (setcar (assoc "^!.*\n" diff-font-lock-keywords) "^!")
@@ -2358,7 +2381,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (add-hook 'text-mode-hook       'flyspell-mode)
 (add-hook 'change-log-mode-hook 'flyspell-mode)
-;; (add-hook 'prog-mode-hook       'flyspell-prog-mode)
+(add-hook 'prog-mode-hook       'flyspell-prog-mode)
 
 ;; Flyspell only on typing, not on moving point
 ;; (add-hook 'flyspell-mode-hook
@@ -2779,6 +2802,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (eval-after-load "wdired"
   '(progn
      (define-key wdired-mode-map [return] 'wdired-finish-edit)
+     (define-key wdired-mode-map [kp-enter] 'wdired-finish-edit)
      ;; BAD, better to add a new rule at the end of `keyboard-escape-quit':
      ;; (define-key wdired-mode-map [escape] 'wdired-abort-changes)
      ))
@@ -2812,6 +2836,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 
 ;;; shell
+
+(define-key my-map "s" 'shell)
 
 (eval-after-load "shell"
   '(progn
@@ -2956,9 +2982,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (eval-after-load "grep"
   '(progn
-     (push '("js" . "*.js") grep-files-aliases)
-     (push '("rb" . "*.rb *.rake") grep-files-aliases)
-     (push '("ex" . "*.ex*") grep-files-aliases)
+     (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
+     (push '("rb" . "*.rb *.erb *.rake") grep-files-aliases)
+     (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
      (push '("clj" . "*.clj*") grep-files-aliases)
      ))
 
@@ -3073,7 +3099,7 @@ Example:
 
 ;; Please note that 'help-next-ref' is better than 'Info-next-reference'
 ;; because it uses 'message' instead of 'error' if "No cross references".
-(eval-after-load "help"
+(eval-after-load "help-mode"
   '(progn
      ;; Mozilla-like navigation:
      (define-key help-mode-map [(meta left)]  'help-go-back)
@@ -3514,8 +3540,11 @@ then output is inserted in the current buffer."
      ;;       "%U%R%z%I%(%[%1L: %1,1~(cut 1)L %4,4~(cut 4)o: %-20,20f%]%) %s\n")
      ;; (setq gnus-summary-line-format
      ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20n%]%) %s\n")
+     ;; (setq gnus-summary-line-format
+     ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+     ;; Add 2-digit year:
      (setq gnus-summary-line-format
-           "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+           "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
      ;; Shift-Space to scroll back (already added in bug#2145).
      ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
      (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
@@ -3526,7 +3555,9 @@ then output is inserted in the current buffer."
      (define-key gnus-summary-mode-map [delete] 'gnus-summary-delete-article)
      ;; (define-key gnus-summary-mode-map [f6] 'gnus-summary-move-article)
      ;; (define-key gnus-summary-mode-map "!" 'my-gnus-summary-tick-article-forward)
-     (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
+     ;; Commented out because sometimes I mistype "r" without the Shift key:
+     ;; (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
+     (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
      (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
 
      ;; Use standard keybinding instead of stupid `gnus-summary-show-thread'
