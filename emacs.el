@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-12-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2018-12-30 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -991,13 +991,17 @@ With C-u, C-0 or M-0, cancel the timer."
       (lambda ()
 	;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
-          (reposition-window))
+	  ;; reposition-window takes too much time in large buffers
+          (if (or (eq major-mode 'fundamental-mode)
+                  (> (buffer-size) 1000000))
+	      (recenter-top)
+	    (reposition-window)))
         `(lambda (cmd)
            (when isearch-success
              (set-window-start nil ,(window-start))))))
 
 (defun isearch-refresh-state ()
-  "Refrest the last search state.
+  "Refresh the last search state.
 This might be necessary when e.g. the window was manually recentered with
 `C-l C-l', so new window-start should be updated in push-state-function above
 before searching for the next hit."
@@ -1137,6 +1141,8 @@ Uses the value of the variable `search-whitespace-regexp'."
 ;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
 (setq search-default-mode #'char-fold-to-regexp)
 
+;;;; isearch-decomposition
+
 ;; OBSOLETE:
 ;; Decomposition search for accented letters.
 (define-key isearch-mode-map "\M-sd" 'isearch-toggle-decomposition)
@@ -1156,6 +1162,8 @@ Uses the value of the variable `search-whitespace-regexp'."
        (concat (string c0) accents "?"))
      (replace-regexp-in-string accents "" string) "")))
 (put 'isearch-decomposition-regexp 'isearch-message-prefix "deco ")
+
+;;;; isearch-diff-hunk
 
 (isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
 Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
@@ -2316,6 +2324,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
      ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
      ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
+     ;; because it renames internal buffers, so they can't be reused.
      (add-hook 'diff-mode-hook 'rename-uniquely)
      (add-hook 'log-view-mode-hook 'rename-uniquely)
 
@@ -2326,27 +2335,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 		 (set (make-local-variable 'end-of-defun-function)
 		      #'diff-end-of-hunk)))
 
-     ;; These commented out lines no more needed because diff-font-lock-keywords
-     ;; was changed to use `diff-indicator-...' faces for that
-     ;; (setcar (assoc "^!.*\n" diff-font-lock-keywords) "^!")
-     ;; (setcar (assoc "^[+>].*\n" diff-font-lock-keywords) "^[+>]")
-     ;; (setcar (assoc "^[-<].*\n" diff-font-lock-keywords) "^[-<]")
-     ;; (setcdr (assoc "^#.*" diff-font-lock-keywords) font-lock-comment-face)
-     ;; (setq diff-font-lock-keywords
-     ;;       (append diff-font-lock-keywords
-     ;;               '(("^[!-+<>]"
-     ;;                  (0 diff-marker-face prepend)))))
-     ;; Use the colors of savannah.gnu.org WebCVS diffs.
-     ;; Commented out because the repo for 24.2 should have them.
-     ;; (set-face-background 'diff-file-header "#bbbbbb")
-     ;; (set-face-background 'diff-header  "#dddddd")
-     ;; (set-face-background 'diff-added   "#eeffee")
-     ;; (set-face-background 'diff-changed "#ffffee")
-     ;; (set-face-background 'diff-removed "#ffeeee")
-     ;; (set-face-background 'diff-indicator-added   "#eeffee")
-     ;; (set-face-background 'diff-indicator-changed "#ffffee")
-     ;; (set-face-background 'diff-indicator-removed "#ffeeee")
-     ;; (set-face-background 'diff-refine-change "#fffbbf")
      ;; Make revision separators more noticeable:
      (setq diff-font-lock-keywords
            (append diff-font-lock-keywords
@@ -3589,7 +3577,7 @@ then output is inserted in the current buffer."
         ;; I don't need line and column numbers in the summary buffer
         (set (make-variable-buffer-local 'line-number-mode) nil)
         (set (make-variable-buffer-local 'column-number-mode) nil)))
-     ;; Zerba stripes for the summary buffer
+     ;; Zebra stripes for the summary buffer
      ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
      ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
      ))
@@ -3643,7 +3631,7 @@ then output is inserted in the current buffer."
      (define-key gnus-article-mode-map [(meta right)] 'my-gnus-article-press-or-scroll)
      (define-key gnus-article-mode-map [(meta down)] 'widget-forward)
      (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
-     ;; Disable dangeruos key bindings
+     ;; Disable dangerous key bindings
      (define-key gnus-article-mode-map [(meta ?g)] nil)))
 
 (defun my-gnus-article-press-or-scroll ()
@@ -4028,7 +4016,7 @@ Cancel the clock if called with C-u."
              'shell-command-to-string   ; to not overwrite the echo area
              "wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz")
             ;; FIX a recent bug that breaks frame dimensions after desktop frame restore:
-            ;; I get a maximized frame visually, but internally with unmaximized dimenstions,
+            ;; I get a maximized frame visually, but internally with unmaximized dimensions,
             ;; i.e. mouse avoidance moves the mouse pointer to the middle of the frame
             ;; instead to the edges, etc.
             ;; (toggle-frame-maximized)
