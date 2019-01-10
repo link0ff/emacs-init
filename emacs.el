@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2018-12-31 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-01-10 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1143,6 +1143,9 @@ Uses the value of the variable `search-whitespace-regexp'."
 
 ;;;; isearch-lazy-hints
 
+(defcustom isearch-lazy-hints nil
+  "Show numeric hints on isearch lazy-highlighted matches.")
+
 (defface isearch-lazy-hint
   '((t :inherit lazy-highlight))
   "Face for lazy highlighting of counter hints."
@@ -1156,52 +1159,74 @@ Uses the value of the variable `search-whitespace-regexp'."
     (delete-overlay (pop isearch-lazy-hints-overlays))))
 
 (defun isearch-lazy-hint (pos count)
-  (let* ((ov (make-overlay pos pos))
+  (let* ((ov (make-overlay pos pos)
+             ;; (if (or (and isearch-forward (> count 0))
+             ;;         (and (not isearch-forward) (< count 0)))
+             ;;     (make-overlay (1- pos) pos)
+             ;;   (make-overlay pos (1+ pos)))
+             )
          (hint (number-to-string count)))
     (set-text-properties 0 (length hint)
                          '(face isearch-lazy-hint
                            display ((height 0.7) (raise 0.3)))
                          hint)
     (overlay-put ov 'after-string hint)
+    ;; (overlay-put ov 'display hint)
     (overlay-put ov 'priority 1000)
     (overlay-put ov 'window (selected-window))
     (push ov isearch-lazy-hints-overlays)))
 
 (defun isearch-lazy-hints ()
-  (isearch-lazy-hints-cleanup)
-  (let* ((wgs (window-group-start))
-         (wge (window-group-end))
-         (window-overlays
-          (seq-filter (lambda (ov) (and (>= (overlay-start ov) wgs)
-                                        (<= (overlay-end   ov) wge)))
-                      isearch-lazy-highlight-overlays))
-         (grouped-overlays
-          (seq-group-by (lambda (ov) (> (overlay-end ov) isearch-other-end))
-                        window-overlays)))
-    (seq-map-indexed
-     (lambda (ov index)
-       (isearch-lazy-hint (if isearch-forward (overlay-end ov) (overlay-start ov))
-                          (1+ index)))
-     (cdr
-      ;; Skip the current match
-      (seq-sort-by #'overlay-start (if isearch-forward #'< #'>)
-                   (cdr (assq (if isearch-forward t nil)
-                              grouped-overlays)))))
-    (seq-map-indexed
-     (lambda (ov index)
-       (isearch-lazy-hint (if isearch-forward (overlay-start ov) (overlay-end ov))
-                          (- (1+ index))))
-     (seq-sort-by #'overlay-start (if isearch-forward #'> #'<)
-                  (cdr (assq (if isearch-forward nil t)
-                             grouped-overlays))))))
+  (when isearch-lazy-hints
+    (isearch-lazy-hints-cleanup)
+    (let* ((wgs (window-group-start))
+           (wge (window-group-end))
+           (p (or isearch-other-end (point)))
+           (grouped-overlays
+            (seq-group-by (lambda (ov)
+                            (let* ((os (overlay-start ov))
+                                   (oe (overlay-end   ov)))
+                              (cond
+                               ((or (< os wgs) (> oe wge)) nil)
+                               ((> oe p) 'after)
+                               (t 'before))))
+                          isearch-lazy-highlight-overlays)))
+      (seq-map-indexed
+       (lambda (ov index)
+	 (isearch-lazy-hint (if isearch-forward (overlay-end ov) (overlay-start ov))
+                            (1+ index)))
+       (cdr
+	;; Skip the current match
+	(seq-sort-by #'overlay-start (if isearch-forward #'< #'>)
+                     (cdr (assq (if isearch-forward 'after 'before)
+				grouped-overlays)))))
+      (seq-map-indexed
+       (lambda (ov index)
+	 (isearch-lazy-hint (if isearch-forward (overlay-start ov) (overlay-end ov))
+                            (- (1+ index))))
+       (seq-sort-by #'overlay-start (if isearch-forward #'> #'<)
+                    (cdr (assq (if isearch-forward 'before 'after)
+                               grouped-overlays)))))))
 
-(add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
+(defun isearch-toggle-lazy-hints ()
+  (interactive)
+  (when isearch-lazy-hints
+    (isearch-lazy-hints-cleanup))
+  (setq isearch-lazy-hints (not isearch-lazy-hints))
+  (when isearch-lazy-hints
+    (isearch-lazy-hints)))
+
+;; (add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
+;; To clean also after ispell lazy-highlight
+(advice-add 'lazy-highlight-cleanup :after (lambda (&optional _ _) (isearch-lazy-hints-cleanup)))
 
 ;; TODO: add to the end of isearch-lazy-highlight-new-loop
 (add-hook 'isearch-update-post-hook 'isearch-lazy-hints)
 
 ;; TODO: call isearch-lazy-hint from isearch-lazy-highlight-update?
 (advice-add 'isearch-lazy-highlight-update :after 'isearch-lazy-hints)
+
+(define-key isearch-mode-map (kbd "C-0") 'isearch-toggle-lazy-hints)
 
 ;;;; isearch-decomposition
 

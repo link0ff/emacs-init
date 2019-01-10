@@ -119,7 +119,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find . <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color -inH -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color -inH -e <R>")
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
  '(highlight-nonselected-windows t)
@@ -234,6 +234,7 @@
  '(vc-bzr-status-switches nil)
  '(vc-command-messages t)
  '(vc-find-revision-no-save t)
+ '(vc-git-diff-switches '("--diff-algorithm=patience"))
  '(vc-git-print-log-follow t)
  '(view-inhibit-help-message t)
  '(view-read-only t)
