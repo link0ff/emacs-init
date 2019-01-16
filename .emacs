@@ -23,6 +23,8 @@
 
 (load "emacs");;loaded twice because of custom-file by startup.el
 
+(load "emacs.patches")
+
 (setq grep-find-ignored-directories
       (append grep-find-ignored-directories
 	      '(
