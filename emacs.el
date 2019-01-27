@@ -1,11 +1,11 @@
 ;;; .emacs --- Emacs init file
 
-;; Copyright (C) 1989-2018  Juri Linkov <juri@linkov.net>
+;; Copyright (C) 1989-2019  Juri Linkov <juri@linkov.net>
 
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-01-10 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-01-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -879,7 +879,6 @@ With C-u, C-0 or M-0, cancel the timer."
   (interactive)
   (recenter (round (* recenter-position (window-height)))))
 
-(remove-hook 'xref-after-jump-hook 'recenter)
 (add-hook 'xref-after-jump-hook 'reposition-window)
 (add-hook 'xref-after-return-hook 'reposition-window)
 (add-hook 'find-function-after-hook 'reposition-window)
@@ -995,7 +994,10 @@ With C-u, C-0 or M-0, cancel the timer."
           (if (or (eq major-mode 'fundamental-mode)
                   (> (buffer-size) 1000000))
 	      (recenter-top)
-	    (reposition-window)))
+	    (condition-case nil
+		;; Prevent errors from reposition-window
+		(reposition-window)
+	      (error nil))))
         `(lambda (cmd)
            (when isearch-success
              (set-window-start nil ,(window-start))))))
@@ -1259,7 +1261,7 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
   (replace-regexp-in-string
    "[[:space:]]+" "[[:space:]]+"
    (replace-regexp-in-string
-    "^\\(\\\\+\\|-\\)" "\\(^\\)[+-]"
+    "^\\(\\\\\\+\\|-\\)" "\\(^\\)[+-]"
     (regexp-quote string) nil t)))
 
 (add-hook 'diff-mode-hook

@@ -19,7 +19,7 @@
 ;;    )
 ;;   )
 
-(load (setq custom-file "emacs.custom.el"))
+(load (setq custom-file (or custom-file "emacs.custom.el")))
 
 (load "emacs");;loaded twice because of custom-file by startup.el
 

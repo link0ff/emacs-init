@@ -629,6 +629,9 @@ delete flagged files.\n\n"))))))
 
 ;;; vc-mergebase
 
+(require 'vc)
+(require 'vc-git)
+
 (defun vc-diff-mergebase (_files rev1 rev2)
   "Report diffs between the merge base of REV1 and REV2 revisions.
 The merge base is a common ancestor between REV1 and REV2 revisions."
