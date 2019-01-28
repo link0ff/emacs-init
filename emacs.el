@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-01-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-01-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2448,6 +2448,24 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; Prevent git-diff from calling pager
 ;; (setenv "PAGER" "/bin/cat")
 ;; (setenv "PAGER") (getenv "PAGER")
+
+
+;;; ediff
+
+(eval-after-load "ediff-ptch"
+  '(progn
+     ;; Date-based backup extension with tilde omitted in dired-x
+     (setq ediff-default-backup-extension (format-time-string ".~ediff-%Y-%m-%d~" (current-time)))
+     (custom-reevaluate-setting 'ediff-backup-extension)
+     (custom-reevaluate-setting 'ediff-backup-specs)))
+
+
+;;; vc
+
+(eval-after-load "vc-hooks"
+  '(progn
+     ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
+     (define-key vc-prefix-map "+" 'vc-diff)))
 
 
 ;;; text

@@ -271,6 +271,8 @@
  '(cvs-marked ((t (:foreground "DarkRed"))))
  '(cvs-need-action ((((class color) (background light)) (:foreground "darkgreen"))))
  '(diary ((((class color)) (:foreground "blue"))))
+ '(diff-refine-added ((t (:inherit diff-refine-changed :background "#ccffcc"))))
+ '(diff-refine-removed ((t (:inherit diff-refine-changed :background "#ffdddd"))))
  '(dired-directory ((t (:inherit link :underline nil))))
  '(eshell-prompt ((t (:foreground "DarkRed" :underline t :weight normal))))
  '(font-lock-builtin-face ((((class color) (background light)) (:foreground "Sienna")) (((class color) (background dark)) (:foreground "Sienna"))))
