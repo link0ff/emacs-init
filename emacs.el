@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-01-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-02-02 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -256,7 +256,8 @@ i.e. in daylight or under bright electric lamps."
 (add-hook 'after-make-frame-functions 'toggle-frame-maximized)
 (add-hook 'after-make-frame-functions
           (lambda (frame)
-            (set-frame-parameter nil 'undecorated t)
+            (modify-frame-parameters frame (list (cons 'background-color "white")))
+            (set-frame-parameter frame 'undecorated t)
             ;; For some OS window managers that don't put focus to new frames:
             (select-frame-set-input-focus frame)))
 
@@ -525,8 +526,18 @@ i.e. in daylight or under bright electric lamps."
   "Insert the kill-ring item selected from the minibuffer history.
 Use minibuffer navigation and search commands to browse the kill-ring
 in the minibuffer history before typing RET to insert the item."
-  (interactive (list (let ((history-add-new-input nil))
-		       (read-string "Yank from kill-ring: " nil 'kill-ring))))
+  (interactive
+   (list (let ((history-add-new-input nil)
+	       ;; Remove keymaps from text properties of copied string,
+	       ;; because typing RET in the minibuffer might call
+	       ;; an irrelevant command from the map of copied string.
+	       (history (mapcar (lambda (h)
+				  (remove-list-of-text-properties
+				   0 (length h)
+				   '(keymap local-map) h)
+				  h)
+				kill-ring)))
+	   (read-string "Yank from kill-ring: " nil 'history))))
   (setq yank-window-start (window-start))
   (push-mark)
   (insert-for-yank string))
@@ -629,6 +640,7 @@ in the minibuffer history before typing RET to insert the item."
                                 (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
+                                (not (derived-mode-p 'yaml-mode))
                                 )
                            ;; (derived-mode-p 'fundamental-mode)
                            ))
@@ -649,6 +661,7 @@ in the minibuffer history before typing RET to insert the item."
                                 (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
+                                (not (derived-mode-p 'yaml-mode))
                                 )
                            ;; (derived-mode-p 'fundamental-mode)
                            ))
@@ -686,6 +699,7 @@ in the minibuffer history before typing RET to insert the item."
 			     (cl-flet ((custom-variable-p (v)
 					(and (symbolp v) (boundp v))))
 			       (advice-eval-interactive-spec spec))))
+	      (require 'cl) ; for `flet'
 	      (flet ((custom-variable-p (variable) t))
 		(apply orig-fun args)))
 	    '((name . override-custom-variable)))
@@ -2205,7 +2219,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (eval-after-load "ruby-mode"
   '(progn (add-hook 'ruby-mode-hook
                     (lambda ()
-                      (set (make-local-variable 'require-final-newline) nil)))))
+                      (set (make-local-variable 'require-final-newline) nil)
+                      (flymake-mode)))))
 
 
 ;;; css
@@ -2466,6 +2481,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   '(progn
      ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
      (define-key vc-prefix-map "+" 'vc-diff)))
+
+(eval-after-load "vc-dir"
+  '(progn
+     ;; Because ‘=’ is easily mistyped as ‘+’
+     (define-key vc-dir-mode-map "+" 'vc-diff)))
 
 
 ;;; text
@@ -3078,7 +3098,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (eval-after-load "grep"
   '(progn
      (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-     (push '("rb" . "*.rb *.erb *.rake") grep-files-aliases)
+     (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml") grep-files-aliases)
      (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
      (push '("clj" . "*.clj*") grep-files-aliases)
      ))
