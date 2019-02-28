@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-02-02 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-02-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -261,6 +261,11 @@ i.e. in daylight or under bright electric lamps."
             ;; For some OS window managers that don't put focus to new frames:
             (select-frame-set-input-focus frame)))
 
+(advice-add 'make-frame-on-monitor :around
+	    (lambda (orig-fun monitor &optional display parameters)
+	      (funcall orig-fun monitor display '((undecorated . t))))
+	    '((name . make-frame-on-monitor-undecorated)))
+
 ;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
 (set-frame-parameter nil 'undecorated t)
 
@@ -345,11 +350,6 @@ i.e. in daylight or under bright electric lamps."
       (kill-current-buffer-and-dired-jump))))
 (define-key global-map [(meta right)]         'my-find-thing-at-point)
 ;; Keybindings (meta up) (meta down) are free when windmove uses `super'.
-
-(define-key global-map [(shift super left)]  'window-swap-states)
-(define-key global-map [(shift super right)] 'window-swap-states)
-;; (define-key global-map [(shift hyper left)]  'window-swap-states)
-;; (define-key global-map [(shift hyper right)] 'window-swap-states)
 
 ;; Actually I don't use next two keybindings, use them for something useful
 ;; (define-key global-map [(control meta prior)] 'scroll-right)
@@ -611,7 +611,6 @@ in the minibuffer history before typing RET to insert the item."
   ;; as `C-z ESC TAB' or `C-z ESC |'
   (define-key my-map [escape] esc-map)
 
-  ;; (define-key my-map [(control ?u)] 'window-swap-states)
   (define-key my-map "t" 'toggle-truncate-lines)
   (define-key my-map "v" nil)
   (define-key my-map "vs" 'set-variable)
@@ -796,11 +795,10 @@ With C-u, C-0 or M-0, cancel the timer."
 
 (winner-mode)
 
-;; (windmove-default-keybindings '(meta shift))
-;; (windmove-default-keybindings 'hyper)
 (windmove-default-keybindings 'super)
 (windmove-display-default-keybindings '(super meta))
 (windmove-delete-default-keybindings nil 'super)
+(windmove-swap-states-default-keybindings '(shift super)) ; like 15 puzzle
 
 ;; Prev version posted to emacs-devel Subject: Re: Include buffer-move.el
 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00685.html
@@ -2952,7 +2950,23 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; shell
 
-(define-key my-map "s" 'shell)
+(defun shell-in-project-root ()
+  "Run shell in project root directory."
+  (interactive)
+  (let* ((project (project-current))
+         (root (and project (car (project-roots project))))
+         (default-directory (or (and root (file-directory-p root) root)
+                                default-directory)))
+    (shell)))
+
+(define-key my-map "s" 'shell-in-project-root)
+
+;; Use alternative shell history file:
+(define-key my-map "S" (lambda ()
+                         (interactive)
+                         (let ((process-environment (copy-sequence process-environment)))
+                           (setenv "HISTFILE" (expand-file-name ".bash_history_2" (getenv "HOME")))
+                           (shell-in-project-root))))
 
 (eval-after-load "shell"
   '(progn
@@ -3102,6 +3116,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
      (push '("clj" . "*.clj*") grep-files-aliases)
      ))
+
+(defun wrgrep ()
+  "Word-based version of `rgrep'.
+Modifies the grep-find template to add the option `-w' that matches whole words."
+  (interactive)
+  (let ((grep-host-defaults-alist nil)
+        (grep-find-template
+         "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color -winH -e <R>"))
+    (call-interactively 'rgrep)))
 
 
 ;;; proced
