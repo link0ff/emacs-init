@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-02-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-03-17 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -988,10 +988,9 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;;; follow
 
-(eval-after-load "follow"
-  '(progn
-     (define-key follow-mode-map [prior] 'follow-scroll-down)
-     (define-key follow-mode-map [next]  'follow-scroll-up)))
+(with-eval-after-load 'follow
+  (define-key follow-mode-map [prior] 'follow-scroll-down)
+  (define-key follow-mode-map [next]  'follow-scroll-up))
 
 
 ;;; isearch
@@ -1637,18 +1636,17 @@ goes to the saved location."
   ;; (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
   (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
   (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
-  (eval-after-load "ee-windows"
-    '(progn
-       (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
-       ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
-       (define-key ee-windows-keymap [(meta     ?`)] 'ee-windows-select-and-delete-current)
-       (define-key ee-windows-keymap [(super    ?`)] 'ee-windows-select-and-delete-current)
-       (define-key ee-windows-keymap [( ?\xa7)] 'ee-view-record-next)
-       ;; (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
-       (define-key ee-windows-keymap [(    ?`)] 'ee-view-record-next)
-       (define-key ee-windows-keymap [( ?\xbd)] 'ee-view-record-prev)
-       ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
-       (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev))))
+  (with-eval-after-load 'ee-windows
+    (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
+    ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
+    (define-key ee-windows-keymap [(meta     ?`)] 'ee-windows-select-and-delete-current)
+    (define-key ee-windows-keymap [(super    ?`)] 'ee-windows-select-and-delete-current)
+    (define-key ee-windows-keymap [( ?\xa7)] 'ee-view-record-next)
+    ;; (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
+    (define-key ee-windows-keymap [(    ?`)] 'ee-view-record-next)
+    (define-key ee-windows-keymap [( ?\xbd)] 'ee-view-record-prev)
+    ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
+    (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev)))
 
 ;; Use standalone wincows.el instead
 (when (require 'wincows nil t)
@@ -1656,18 +1654,17 @@ goes to the saved location."
   ;; (define-key global-map [(meta ?\x8a7)] 'wincows)
   (define-key global-map [(meta     ?`)] 'wincows)
   (define-key global-map [(super    ?`)] 'wincows)
-  (eval-after-load "wincows"
-    '(progn
-       (define-key wincows-mode-map [(meta  ?\xa7)] 'wincows-select)
-       ;; (define-key wincows-mode-map [(meta ?\x8a7)] 'wincows-select)
-       (define-key wincows-mode-map [(meta     ?`)] 'wincows-select)
-       (define-key wincows-mode-map [(super    ?`)] 'wincows-select)
-       (define-key wincows-mode-map [( ?\xa7)] 'wincows-next-line)
-       ;; (define-key wincows-mode-map [(?\x8a7)] 'wincows-next-line)
-       (define-key wincows-mode-map [(    ?`)] 'wincows-next-line)
-       (define-key wincows-mode-map [( ?\xbd)] 'wincows-prev-line)
-       ;; (define-key wincows-mode-map [(?\x8bd)] 'wincows-prev-line)
-       (define-key wincows-mode-map [(    ?~)] 'wincows-prev-line))))
+  (with-eval-after-load 'wincows
+    (define-key wincows-mode-map [(meta  ?\xa7)] 'wincows-select)
+    ;; (define-key wincows-mode-map [(meta ?\x8a7)] 'wincows-select)
+    (define-key wincows-mode-map [(meta     ?`)] 'wincows-select)
+    (define-key wincows-mode-map [(super    ?`)] 'wincows-select)
+    (define-key wincows-mode-map [( ?\xa7)] 'wincows-next-line)
+    ;; (define-key wincows-mode-map [(?\x8a7)] 'wincows-next-line)
+    (define-key wincows-mode-map [(    ?`)] 'wincows-next-line)
+    (define-key wincows-mode-map [( ?\xbd)] 'wincows-prev-line)
+    ;; (define-key wincows-mode-map [(?\x8bd)] 'wincows-prev-line)
+    (define-key wincows-mode-map [(    ?~)] 'wincows-prev-line)))
 
 
 ;;; lisp
@@ -1797,45 +1794,43 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                               ,(make-char 'greek-iso8859-7 107))
               nil)))))
 
-(eval-after-load "scheme"
-  '(progn
-     (define-key scheme-mode-map [(control return)]
-                 'my-reindent-then-newline-and-indent-and-indent-sexp)
-     ;; (define-key scheme-mode-map [(control backspace)]
-     ;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
-     ))
+(with-eval-after-load 'scheme
+  (define-key scheme-mode-map [(control return)]
+    'my-reindent-then-newline-and-indent-and-indent-sexp)
+  ;; (define-key scheme-mode-map [(control backspace)]
+  ;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
+  )
 
 
 ;;; clojure
 
-(eval-after-load "clojure-mode"
-  '(progn (add-hook 'clojure-mode-hook
-                    (lambda ()
-                      (set (make-local-variable 'inferior-lisp-program)
-                           ;; For latest version:
-                           "lein repl"
-                           ;; "java -cp /home/work/java/clojure/jar/clojure-1.7.0-alpha1.jar clojure.main"
-                           ;; "java -cp /home/work/java/clojure/jar/clojure-1.5.0-RC4.jar clojure.main"
-                           ;; For 1.2 with init file:
-                           ;; "java clojure.main -i ~/init.clj"
-                           ;; "java clojure.main"
-                           ;; For OLD version 1.0 (deprecated):
-                           ;; "java -cp clojure.jar clojure.lang.Repl"
-                           ;; For installed version in Ubuntu:
-                           ;; "clojure"
-                           )))
+(with-eval-after-load 'clojure-mode
+  (add-hook 'clojure-mode-hook
+            (lambda ()
+              (set (make-local-variable 'inferior-lisp-program)
+                   ;; For latest version:
+                   "lein repl"
+                   ;; "java -cp /home/work/java/clojure/jar/clojure-1.7.0-alpha1.jar clojure.main"
+                   ;; "java -cp /home/work/java/clojure/jar/clojure-1.5.0-RC4.jar clojure.main"
+                   ;; For 1.2 with init file:
+                   ;; "java clojure.main -i ~/init.clj"
+                   ;; "java clojure.main"
+                   ;; For OLD version 1.0 (deprecated):
+                   ;; "java -cp clojure.jar clojure.lang.Repl"
+                   ;; For installed version in Ubuntu:
+                   ;; "clojure"
+                   )))
 
-          ;; FROM https://github.com/weavejester/compojure/wiki/Emacs-indentation
-          (define-clojure-indent
-            (defroutes 'defun)
-            (GET 2)
-            (POST 2)
-            (PUT 2)
-            (DELETE 2)
-            (HEAD 2)
-            (ANY 2)
-            (context 2))
-          ))
+  ;; FROM https://github.com/weavejester/compojure/wiki/Emacs-indentation
+  (define-clojure-indent
+    (defroutes 'defun)
+    (GET 2)
+    (POST 2)
+    (PUT 2)
+    (DELETE 2)
+    (HEAD 2)
+    (ANY 2)
+    (context 2)))
 
 ;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
 ;; (setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
@@ -1926,12 +1921,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (tempo-define-template "perl-print-skeleton" '("print \"$_" p "\\n\";"))
 (tempo-define-template "perl-while-skeleton" '("while (<>) {\n  chomp;\n  " p "\n}\n"))
 
-(eval-after-load "perl-mode"
-  '(progn
-     ;; (define-auto-insert 'perl-mode (lambda () (tempo-template-perl-skeleton)))
-     (define-key perl-mode-map "\C-ziw" 'tempo-template-perl-while-skeleton)
-     (define-key perl-mode-map "\C-zip" 'tempo-template-perl-print-skeleton)
-     (define-key perl-mode-map "\C-zis" 'tempo-template-perl-s-skeleton)))
+(with-eval-after-load 'perl-mode
+  ;; (define-auto-insert 'perl-mode (lambda () (tempo-template-perl-skeleton)))
+  (define-key perl-mode-map "\C-ziw" 'tempo-template-perl-while-skeleton)
+  (define-key perl-mode-map "\C-zip" 'tempo-template-perl-print-skeleton)
+  (define-key perl-mode-map "\C-zis" 'tempo-template-perl-s-skeleton))
 
 ;; Try to distinguish between Perl and Prolog file types
 ;; TODO: make/use external programs (a-la 'file')
@@ -1959,18 +1953,17 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; (add-hook 'find-file-hooks 'my-pl-find-file-hook)
 
 ;; Create Perl links in the *Man* buffer
-(eval-after-load "man"
-  '(progn
-     (add-hook
-      'Man-cooked-hook
-      (lambda ()
-        ;; TODO: add to perl-mode.el? and cperl-mode.el?
-        ;; BAD: it breaks links followed with a dot!
-        (if (string-match "\\`\\([0-9]+ *\\)?perl" Man-arguments)
-            (Man-highlight-references0
-             "DESCRIPTION"
-             "\\(perl\\(?:[a-z0-9]+[a-z]\\|[a-z][a-z0-9]+\\)\\)[^a-z0-9]"
-             1 0 'Man-xref-man-page))))))
+(with-eval-after-load 'man
+  (add-hook
+   'Man-cooked-hook
+   (lambda ()
+     ;; TODO: add to perl-mode.el? and cperl-mode.el?
+     ;; BAD: it breaks links followed with a dot!
+     (if (string-match "\\`\\([0-9]+ *\\)?perl" Man-arguments)
+         (Man-highlight-references0
+          "DESCRIPTION"
+          "\\(perl\\(?:[a-z0-9]+[a-z]\\|[a-z][a-z0-9]+\\)\\)[^a-z0-9]"
+          1 0 'Man-xref-man-page)))))
 
 
 ;;; prolog
@@ -2090,20 +2083,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (setq erlang-inferior-shell-split-window nil)
 
-(eval-after-load "erlang"
-  '(progn (add-hook 'erlang-mode-hook
-                    (lambda ()
-                      (setq tab-width 2)
-                      (alchemist-mode 1)))))
+(with-eval-after-load 'erlang
+  (add-hook 'erlang-mode-hook
+            (lambda ()
+              (setq tab-width 2)
+              (alchemist-mode 1))))
 
 (add-to-list 'auto-mode-alist '("\\.eex\\'" . html-erb-mode))
 
-(eval-after-load "alchemist"
-  '(progn
-     ;; (global-company-mode)
-     ;; (define-key elixir-mode-map "\M-\t" 'company-complete)
-     ;; (define-key company-active-map [escape] 'company-abort)
-     ))
+(with-eval-after-load 'alchemist
+  ;; (global-company-mode)
+  ;; (define-key elixir-mode-map "\M-\t" 'company-complete)
+  ;; (define-key company-active-map [escape] 'company-abort)
+  )
 
 
 ;;; haskell
@@ -2120,26 +2112,24 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; These are needed to set before loading sgml-mode.el:
 ;; (setq sgml-quick-keys t)
 (setq html-quick-keys t)
-(eval-after-load "sgml-mode"
-  '(progn
-     (modify-syntax-entry ?. "." sgml-mode-syntax-table)
-     (modify-syntax-entry ?: "." sgml-mode-syntax-table)
-     (setq html-tag-face-alist (append '(("a" . underline))
-                                       html-tag-face-alist))))
+(with-eval-after-load 'sgml-mode
+  (modify-syntax-entry ?. "." sgml-mode-syntax-table)
+  (modify-syntax-entry ?: "." sgml-mode-syntax-table)
+  (setq html-tag-face-alist (append '(("a" . underline))
+                                    html-tag-face-alist)))
 
-(eval-after-load "sgml-mode"
-  '(progn
-(define-skeleton html-headline-1
-  "HTML level 1 headline tags."
-  nil
-  "<h1><a name=\"" (setq str (read-string "Name: "))
-  "\" id=\"" str "\">" _ "</a></h1>")
+(with-eval-after-load 'sgml-mode
+  (define-skeleton html-headline-1
+    "HTML level 1 headline tags."
+    nil
+    "<h1><a name=\"" (setq str (read-string "Name: "))
+    "\" id=\"" str "\">" _ "</a></h1>")
 
-(define-skeleton html-headline-2
-  "HTML level 2 headline tags."
-  nil
-  "<h2><a name=\"" (setq str (read-string "Name: "))
-  "\" id=\"" str "\">" _ "</a></h2>")))
+  (define-skeleton html-headline-2
+    "HTML level 2 headline tags."
+    nil
+    "<h2><a name=\"" (setq str (read-string "Name: "))
+    "\" id=\"" str "\">" _ "</a></h2>"))
 
 (add-hook 'html-mode-hook 'turn-off-auto-fill)
 (add-hook 'html-mode-hook
@@ -2198,27 +2188,27 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; web development
 
-(eval-after-load "cc-mode"
-  '(progn (add-hook 'java-mode-hook
-                    (lambda ()
-                      (setq tab-width 4)))))
+(with-eval-after-load 'cc-mode
+  (add-hook 'java-mode-hook
+            (lambda ()
+              (setq tab-width 4))))
 
-(eval-after-load "css-mode"
-  '(progn (add-hook 'css-mode-hook
-                    (lambda ()
-                      (setq tab-width 2)))))
+(with-eval-after-load 'css-mode
+  (add-hook 'css-mode-hook
+            (lambda ()
+              (setq tab-width 2))))
 
-(eval-after-load "js"
-  '(progn (add-hook 'js-mode-hook
-                    (lambda ()
-                      (setq js-indent-level 2)
-                      (setq tab-width 2)))))
+(with-eval-after-load 'js
+  (add-hook 'js-mode-hook
+            (lambda ()
+              (setq js-indent-level 2)
+              (setq tab-width 2))))
 
-(eval-after-load "ruby-mode"
-  '(progn (add-hook 'ruby-mode-hook
-                    (lambda ()
-                      (set (make-local-variable 'require-final-newline) nil)
-                      (flymake-mode)))))
+(with-eval-after-load 'ruby-mode
+  (add-hook 'ruby-mode-hook
+            (lambda ()
+              (set (make-local-variable 'require-final-newline) nil)
+              (flymake-mode))))
 
 
 ;;; css
@@ -2302,9 +2292,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key global-map [(shift f5)] 'outline-minor-mode)
 
-(eval-after-load "outline"
-  '(progn
-     (define-key outline-mode-map [(control ?o)] outline-mode-prefix-map)
+(with-eval-after-load 'outline
+  (define-key outline-mode-map [(control ?o)] outline-mode-prefix-map)
 ;;   (define-key outline-mode-map [(control meta left)]
 ;;               'my-outline-hide-entry-or-subtree)
 ;;   (define-key outline-mode-map [(control meta right)]
@@ -2321,9 +2310,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; Use `C-M-l' or `C-l' instead of `f5'
 ;;     (define-key outline-mode-map [f5]
 ;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
-     (define-key outline-mode-map [(control ?*)]
-       (lambda () (interactive) (outline-show-branches)))
-     (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
+  (define-key outline-mode-map [(control ?*)]
+    (lambda () (interactive) (outline-show-branches)))
+  (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
 ;;   (define-key outline-minor-mode-map [(control meta left)]
 ;;               'my-outline-hide-entry-or-subtree)
 ;;   (define-key outline-minor-mode-map [(control meta right)]
@@ -2340,9 +2329,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; Use `C-M-l' or `C-l' instead of `f5'
 ;;     (define-key outline-minor-mode-map [f5]
 ;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
-     (define-key outline-minor-mode-map [(control ?*)]
-       (lambda () (interactive) (outline-show-branches)))
-     (require 'foldout)))
+  (define-key outline-minor-mode-map [(control ?*)]
+    (lambda () (interactive) (outline-show-branches)))
+  (require 'foldout))
 
 ;; Start outline mode with hidden sublevels or hidden body
 (add-hook
@@ -2416,31 +2405,30 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; diff
 
-(eval-after-load "diff-mode"
-  '(progn
-     (define-key diff-mode-map [(control meta down)] 'diff-hunk-next)
-     (define-key diff-mode-map [(control meta up)]   'diff-hunk-prev)
-     (define-key diff-mode-map [(control meta shift down)] 'diff-file-next)
-     (define-key diff-mode-map [(control meta shift up)]   'diff-file-prev)
-     (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
+(with-eval-after-load 'diff-mode
+  (define-key diff-mode-map [(control meta down)] 'diff-hunk-next)
+  (define-key diff-mode-map [(control meta up)]   'diff-hunk-prev)
+  (define-key diff-mode-map [(control meta shift down)] 'diff-file-next)
+  (define-key diff-mode-map [(control meta shift up)]   'diff-file-prev)
+  (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
 
-     ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
-     ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
-     ;; because it renames internal buffers, so they can't be reused.
-     (add-hook 'diff-mode-hook 'rename-uniquely)
-     (add-hook 'log-view-mode-hook 'rename-uniquely)
+  ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
+  ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
+  ;; because it renames internal buffers, so they can't be reused.
+  (add-hook 'diff-mode-hook 'rename-uniquely)
+  (add-hook 'log-view-mode-hook 'rename-uniquely)
 
-     (add-hook 'diff-mode-hook
-	       (lambda ()
-		 (set (make-local-variable 'beginning-of-defun-function)
-		      #'diff-beginning-of-hunk)
-		 (set (make-local-variable 'end-of-defun-function)
-		      #'diff-end-of-hunk)))
+  (add-hook 'diff-mode-hook
+	    (lambda ()
+	      (set (make-local-variable 'beginning-of-defun-function)
+		   #'diff-beginning-of-hunk)
+	      (set (make-local-variable 'end-of-defun-function)
+		   #'diff-end-of-hunk)))
 
-     ;; Make revision separators more noticeable:
-     (setq diff-font-lock-keywords
-           (append diff-font-lock-keywords
-                   '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend)))))))
+  ;; Make revision separators more noticeable:
+  (setq diff-font-lock-keywords
+        (append diff-font-lock-keywords
+                '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend))))))
 
 (defun diff-goto-source-kill-buffer ()
   (interactive)
@@ -2465,25 +2453,22 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; ediff
 
-(eval-after-load "ediff-ptch"
-  '(progn
-     ;; Date-based backup extension with tilde omitted in dired-x
-     (setq ediff-default-backup-extension (format-time-string ".~ediff-%Y-%m-%d~" (current-time)))
-     (custom-reevaluate-setting 'ediff-backup-extension)
-     (custom-reevaluate-setting 'ediff-backup-specs)))
+(with-eval-after-load 'ediff-ptch
+  ;; Date-based backup extension with tilde omitted in dired-x
+  (setq ediff-default-backup-extension (format-time-string ".~ediff-%Y-%m-%d~" (current-time)))
+  (custom-reevaluate-setting 'ediff-backup-extension)
+  (custom-reevaluate-setting 'ediff-backup-specs))
 
 
 ;;; vc
 
-(eval-after-load "vc-hooks"
-  '(progn
-     ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
-     (define-key vc-prefix-map "+" 'vc-diff)))
+(with-eval-after-load 'vc-hooks
+  ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
+  (define-key vc-prefix-map "+" 'vc-diff))
 
-(eval-after-load "vc-dir"
-  '(progn
-     ;; Because ‘=’ is easily mistyped as ‘+’
-     (define-key vc-dir-mode-map "+" 'vc-diff)))
+(with-eval-after-load 'vc-dir
+  ;; Because ‘=’ is easily mistyped as ‘+’
+  (define-key vc-dir-mode-map "+" 'vc-diff))
 
 
 ;;; text
@@ -2520,74 +2505,69 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; view
 
-(eval-after-load "view"
-  '(progn
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key view-mode-map [?\S-\ ] 'View-scroll-page-backward)
-     (define-key view-mode-map " " 'View-scroll-page-forward-set-page-size)
-     (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
-     (define-key view-mode-map "l" 'View-goto-line)
-     (define-key view-mode-map [f2] 'toggle-truncate-lines)
-     ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
-     ;; global: (define-key view-mode-map [(meta right)] 'find-file-at-point)
-     ;; Commented out to use the global keybinding:
-     ;; (define-key view-mode-map [(meta left)]
-     ;;   (lambda ()
-     ;;     (interactive)
-     ;;     ;; Go to the top to not store emacs-places.
-     ;;     (goto-char (point-min))
-     ;;     (View-quit)))
-     (define-key view-mode-map [(meta down)]
-       (lambda ()
-         (interactive)
-         (if (>= (window-end) (point-max))
-             (goto-char (point-max))
-           (View-scroll-page-forward-set-page-size))))
-     (define-key view-mode-map [(meta up)]
-       (lambda ()
-         (interactive)
-         (if (<= (window-start) (point-min))
-             (goto-char (point-min))
-           (View-scroll-page-backward-set-page-size))))
-     ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
-     (defadvice View-scroll-line-forward (after my-View-scroll-line-forward activate)
-       "Fix point position to be at the bottom line."
-       (move-to-window-line -1)
-       (beginning-of-line))
-     ))
+(with-eval-after-load 'view
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key view-mode-map [?\S-\ ] 'View-scroll-page-backward)
+  (define-key view-mode-map " " 'View-scroll-page-forward-set-page-size)
+  (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
+  (define-key view-mode-map "l" 'View-goto-line)
+  (define-key view-mode-map [f2] 'toggle-truncate-lines)
+  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; global: (define-key view-mode-map [(meta right)] 'find-file-at-point)
+  ;; Commented out to use the global keybinding:
+  ;; (define-key view-mode-map [(meta left)]
+  ;;   (lambda ()
+  ;;     (interactive)
+  ;;     ;; Go to the top to not store emacs-places.
+  ;;     (goto-char (point-min))
+  ;;     (View-quit)))
+  (define-key view-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (if (>= (window-end) (point-max))
+          (goto-char (point-max))
+        (View-scroll-page-forward-set-page-size))))
+  (define-key view-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (if (<= (window-start) (point-min))
+          (goto-char (point-min))
+        (View-scroll-page-backward-set-page-size))))
+  ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
+  (defadvice View-scroll-line-forward (after my-View-scroll-line-forward activate)
+    "Fix point position to be at the bottom line."
+    (move-to-window-line -1)
+    (beginning-of-line)))
 
 
 ;;; doc-view
 
-(eval-after-load "doc-view"
-  '(progn
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
-     (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer)
-     ))
+(with-eval-after-load 'doc-view
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
+  (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer))
 
 
 ;;; image-mode
 
-(eval-after-load "image-mode"
-  '(progn
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
-     (define-key image-mode-map "q" 'quit-window-kill-buffer)
-     (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
-     ;; Browse prev/next images according to their order in Dired
-     (define-key image-mode-map [(left)]
-       (lambda ()
-	 (interactive)
-	 (kill-current-buffer-and-dired-jump)
-	 (dired-previous-line 1)
-	 (dired-view-file)))
-     (define-key image-mode-map [(right)]
-       (lambda ()
-	 (interactive)
-	 (kill-current-buffer-and-dired-jump)
-	 (dired-next-line 1)
-	 (dired-view-file)))))
+(with-eval-after-load 'image-mode
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
+  (define-key image-mode-map "q" 'quit-window-kill-buffer)
+  (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
+  ;; Browse prev/next images according to their order in Dired
+  (define-key image-mode-map [(left)]
+    (lambda ()
+      (interactive)
+      (kill-current-buffer-and-dired-jump)
+      (dired-previous-line 1)
+      (dired-view-file)))
+  (define-key image-mode-map [(right)]
+    (lambda ()
+      (interactive)
+      (kill-current-buffer-and-dired-jump)
+      (dired-next-line 1)
+      (dired-view-file))))
 
 
 ;;; image
@@ -2912,13 +2892,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; UPDATE: http://thread.gmane.org/gmane.emacs.devel/118678/focus=118684
 
 ;; Beware: C-x C-q is bound in locate-mode and find-dired
-(eval-after-load "wdired"
-  '(progn
-     (define-key wdired-mode-map [return] 'wdired-finish-edit)
-     (define-key wdired-mode-map [kp-enter] 'wdired-finish-edit)
-     ;; BAD, better to add a new rule at the end of `keyboard-escape-quit':
-     ;; (define-key wdired-mode-map [escape] 'wdired-abort-changes)
-     ))
+(with-eval-after-load 'wdired
+  (define-key wdired-mode-map [return] 'wdired-finish-edit)
+  (define-key wdired-mode-map [kp-enter] 'wdired-finish-edit)
+  ;; BAD, better to add a new rule at the end of `keyboard-escape-quit':
+  ;; (define-key wdired-mode-map [escape] 'wdired-abort-changes)
+  )
 
 
 ;;; locate
@@ -2968,32 +2947,31 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                            (setenv "HISTFILE" (expand-file-name ".bash_history_2" (getenv "HOME")))
                            (shell-in-project-root))))
 
-(eval-after-load "shell"
-  '(progn
-     (add-hook 'shell-mode-hook 'rename-uniquely)
-     ;; Turn off dirtrack because it fails in Bash on Heroku.
-     (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
-     (define-key shell-mode-map "\C-d"
-       (lambda (&optional arg)
-	 (interactive "p")
-	 ;; (let* ((proc (get-buffer-process (current-buffer)))))
-	 (cond ((and (eobp)
-		     (save-excursion
-		       (let ((inhibit-field-text-motion t))
-			 (goto-char (line-beginning-position))
-			 (looking-at-p "^iex.*>\s*$"))))
-		(let ((process (get-buffer-process (current-buffer))))
-		  (process-send-string process ":init.stop()\n")))
-	       ((and (eobp)
-		     (save-excursion
-		       (let ((inhibit-field-text-motion t))
-			 (goto-char (line-beginning-position))
-			 ;; e.g. “dev:cljs.user=> ”
-			 (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
-		(let ((process (get-buffer-process (current-buffer))))
-		  (process-send-string process ":cljs/quit\n")))
-	       (t
-		(comint-delchar-or-maybe-eof arg)))))))
+(with-eval-after-load 'shell
+  (add-hook 'shell-mode-hook 'rename-uniquely)
+  ;; Turn off dirtrack because it fails in Bash on Heroku.
+  (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
+  (define-key shell-mode-map "\C-d"
+    (lambda (&optional arg)
+      (interactive "p")
+      ;; (let* ((proc (get-buffer-process (current-buffer)))))
+      (cond ((and (eobp)
+		  (save-excursion
+		    (let ((inhibit-field-text-motion t))
+		      (goto-char (line-beginning-position))
+		      (looking-at-p "^iex.*>\s*$"))))
+	     (let ((process (get-buffer-process (current-buffer))))
+	       (process-send-string process ":init.stop()\n")))
+	    ((and (eobp)
+		  (save-excursion
+		    (let ((inhibit-field-text-motion t))
+		      (goto-char (line-beginning-position))
+		      ;; e.g. “dev:cljs.user=> ”
+		      (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
+	     (let ((process (get-buffer-process (current-buffer))))
+	       (process-send-string process ":cljs/quit\n")))
+	    (t
+	     (comint-delchar-or-maybe-eof arg))))))
 
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
@@ -3075,12 +3053,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;                                         (line-beginning-position 4))))
 ;;                   (get-buffer-window-list buffer))))
 
-(eval-after-load "compile"
-  '(progn
-     (add-hook 'compilation-mode-hook
-               (lambda ()
-                 ;; (rename-uniquely)
-                 (setq buffer-read-only nil)))))
+(with-eval-after-load 'compile
+  (add-hook 'compilation-mode-hook
+            (lambda ()
+              ;; (rename-uniquely)
+              (setq buffer-read-only nil))))
 
 ;; Create unique buffer name for `compile' and `grep'.
 (setq compilation-buffer-name-function
@@ -3109,13 +3086,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (setq compilation-buffer-name-function
           'my-compilation-buffer-name-function))
 
-(eval-after-load "grep"
-  '(progn
-     (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-     (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml") grep-files-aliases)
-     (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
-     (push '("clj" . "*.clj*") grep-files-aliases)
-     ))
+(with-eval-after-load 'grep
+  (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
+  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml") grep-files-aliases)
+  (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
+  (push '("clj" . "*.clj*") grep-files-aliases))
 
 (defun wrgrep ()
   "Word-based version of `rgrep'.
@@ -3237,24 +3212,23 @@ Example:
 
 ;; Please note that 'help-next-ref' is better than 'Info-next-reference'
 ;; because it uses 'message' instead of 'error' if "No cross references".
-(eval-after-load "help-mode"
-  '(progn
-     ;; Mozilla-like navigation:
-     (define-key help-mode-map [(meta left)]  'help-go-back)
-     (define-key help-mode-map [(meta right)] 'my-help-follow)
-     ;; Lynx-like navigation:
-     (define-key help-mode-map [(meta up)]
-       (lambda () (interactive)
-         (my-prev-link-or-scroll-page-backward
-          (save-excursion
-            (ignore-errors (backward-button 1))
-            (point)))))
-     (define-key help-mode-map [(meta down)]
-       (lambda () (interactive)
-         (my-next-link-or-scroll-page-forward
-          (save-excursion
-            (ignore-errors (forward-button 1))
-            (point)))))))
+(with-eval-after-load 'help-mode
+  ;; Mozilla-like navigation:
+  (define-key help-mode-map [(meta left)]  'help-go-back)
+  (define-key help-mode-map [(meta right)] 'my-help-follow)
+  ;; Lynx-like navigation:
+  (define-key help-mode-map [(meta up)]
+    (lambda () (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors (backward-button 1))
+         (point)))))
+  (define-key help-mode-map [(meta down)]
+    (lambda () (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors (forward-button 1))
+         (point))))))
 
 (defun my-help-follow ()
   "Either follow the link, or go forward in history."
@@ -3276,44 +3250,43 @@ Example:
 (define-key global-map "\C-h\C-i" 'info)
 
 ;; Info with look-and-feel of Midnight Commander, Lynx (Links) and Mozilla.
-(eval-after-load "info"
-  '(progn
-     (define-key Info-mode-map [(control shift insert)]
-       (lambda () (interactive) (Info-copy-current-node-name 0)))
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key Info-mode-map [?\S-\ ] 'Info-scroll-down)
-     ;; Mozilla-like navigation:
-     (define-key Info-mode-map [(meta right)] 'my-Info-forward)
-     (define-key Info-mode-map [(meta left)]  'Info-last)
-     ;; Lynx-like navigation:
-     (define-key Info-mode-map [(meta up)]
-       (lambda ()
-         (interactive)
-         (my-prev-link-or-scroll-page-backward
-          (save-excursion
-            (ignore-errors
-              (Info-prev-reference))
-            (point)))))
-     (define-key Info-mode-map [(meta down)]
-       (lambda ()
-         (interactive)
-         (my-next-link-or-scroll-page-forward
-          (save-excursion
-            (ignore-errors
-              (Info-next-reference))
-            (point)))))
-     ;; more/less scrolling style
-     (define-key Info-mode-map [return]
-       (lambda ()
-         (interactive)
-         (if nil;;TODO: add predicate function to info.el to check (point) for Info refs
-             (my-Info-forward)
-           ;; (View-scroll-line-forward)
-           (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line)))))
-     ;; ThinkPad additional keys, try to use them
-     (when (equal (upcase (system-name)) "THINKPAD")
-       (define-key Info-mode-map [osfPrior] 'Info-last)
-       (define-key Info-mode-map [osfNext] 'Info-follow-nearest-node))))
+(with-eval-after-load 'info
+  (define-key Info-mode-map [(control shift insert)]
+    (lambda () (interactive) (Info-copy-current-node-name 0)))
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key Info-mode-map [?\S-\ ] 'Info-scroll-down)
+  ;; Mozilla-like navigation:
+  (define-key Info-mode-map [(meta right)] 'my-Info-forward)
+  (define-key Info-mode-map [(meta left)]  'Info-last)
+  ;; Lynx-like navigation:
+  (define-key Info-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors
+           (Info-prev-reference))
+         (point)))))
+  (define-key Info-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors
+           (Info-next-reference))
+         (point)))))
+  ;; more/less scrolling style
+  (define-key Info-mode-map [return]
+    (lambda ()
+      (interactive)
+      (if nil ;;TODO: add predicate function to info.el to check (point) for Info refs
+          (my-Info-forward)
+        ;; (View-scroll-line-forward)
+        (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line)))))
+  ;; ThinkPad additional keys, try to use them
+  (when (equal (upcase (system-name)) "THINKPAD")
+    (define-key Info-mode-map [osfPrior] 'Info-last)
+    (define-key Info-mode-map [osfNext] 'Info-follow-nearest-node)))
 
 (defun my-Info-forward (&optional fork)
   "Follow the nearest node, or to go history forward, if point is not on ref."
@@ -3329,35 +3302,34 @@ Example:
 
 ;;; man
 
-(eval-after-load "man"
-  '(progn
-     ;; Don't use `man-mode-syntax-table' that sets word syntax to `.', `_', `:'.
-     (add-hook 'Man-mode-hook
-               (lambda ()
-                 (set-syntax-table text-mode-syntax-table)))
-     ;; Mozilla-like navigation:
-     (define-key Man-mode-map [(meta right)] 'push-button) ;; 'man-follow
-     ;; No need to kill Man buffer because it is not saved to desktop.
-     (define-key Man-mode-map [(meta left)]  'quit-window)
-     ;; Lynx-like navigation:
-     (define-key Man-mode-map [(meta up)]
-       (lambda ()
-         (interactive)
-         (my-prev-link-or-scroll-page-backward
-          (save-excursion
-            (ignore-errors (Man-previous-section 1))
-            (point)))))
-     (define-key Man-mode-map [(meta down)]
-       (lambda ()
-         (interactive)
-         (my-next-link-or-scroll-page-forward
-          (save-excursion
-            (ignore-errors (Man-next-section 1))
-            (point)))))
-     (define-key Man-mode-map [f2] 'toggle-truncate-lines)
-     ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
-     ;; more/less scrolling style
-     (define-key Man-mode-map [return] 'View-scroll-line-forward)))
+(with-eval-after-load 'man
+  ;; Don't use `man-mode-syntax-table' that sets word syntax to `.', `_', `:'.
+  (add-hook 'Man-mode-hook
+            (lambda ()
+              (set-syntax-table text-mode-syntax-table)))
+  ;; Mozilla-like navigation:
+  (define-key Man-mode-map [(meta right)] 'push-button) ;; 'man-follow
+  ;; No need to kill Man buffer because it is not saved to desktop.
+  (define-key Man-mode-map [(meta left)]  'quit-window)
+  ;; Lynx-like navigation:
+  (define-key Man-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors (Man-previous-section 1))
+         (point)))))
+  (define-key Man-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors (Man-next-section 1))
+         (point)))))
+  (define-key Man-mode-map [f2] 'toggle-truncate-lines)
+  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; more/less scrolling style
+  (define-key Man-mode-map [return] 'View-scroll-line-forward))
 
 
 ;;; dictionary
@@ -3535,74 +3507,72 @@ then output is inserted in the current buffer."
 ;;; w3
 
 (setq w3-default-stylesheet "~/.default.css")
-(eval-after-load "w3"
-  '(progn
-     ;; Mozilla-like navigation:
-     (define-key w3-mode-map [(meta right)] 'widget-button-press)
-     (define-key w3-mode-map [(meta left)] 'w3-history-backward)
-     (define-key w3-mode-map [(meta down)] 'w3-widget-forward)
-     (define-key w3-mode-map [(meta up)] 'w3-widget-backward)
-     ;; more/less scrolling style
-     (define-key w3-mode-map [return] 'View-scroll-line-forward)
-     ;; (setq w3-use-terminal-glyphs nil)
-     ;; (fset 'w3-fetch-orig (symbol-function 'w3-fetch))
-     ;; (defun w3-fetch (&optional url target)
-     ;;   (interactive (list (w3-read-url-with-default)))
-     ;;   (if (eq major-mode 'gnus-article-mode)
-     ;;       (browse-url url)
-     ;;     (w3-fetch-orig url target)))
-     ))
+(with-eval-after-load 'w3
+  ;; Mozilla-like navigation:
+  (define-key w3-mode-map [(meta right)] 'widget-button-press)
+  (define-key w3-mode-map [(meta left)] 'w3-history-backward)
+  (define-key w3-mode-map [(meta down)] 'w3-widget-forward)
+  (define-key w3-mode-map [(meta up)] 'w3-widget-backward)
+  ;; more/less scrolling style
+  (define-key w3-mode-map [return] 'View-scroll-line-forward)
+  ;; (setq w3-use-terminal-glyphs nil)
+  ;; (fset 'w3-fetch-orig (symbol-function 'w3-fetch))
+  ;; (defun w3-fetch (&optional url target)
+  ;;   (interactive (list (w3-read-url-with-default)))
+  ;;   (if (eq major-mode 'gnus-article-mode)
+  ;;       (browse-url url)
+  ;;     (w3-fetch-orig url target)))
+  )
 
 
 ;;; w3m
 
-(eval-after-load "w3m"
-  '(progn
-     ;; (setq browse-url-browser-function 'w3m-browse-url)
-     ;; Mozilla-like navigation:
-     (define-key w3m-mode-map [(meta right)] 'w3m-view-this-url)
-     (define-key w3m-mode-map [(meta left)]  'w3m-view-previous-page)
-     (define-key w3m-mode-map [(meta shift right)] 'w3m-view-this-url-new-session)
-     (define-key w3m-mode-map [(control return)] 'w3m-view-this-url-new-session)
-     ;; Lynx-like navigation:
-     (define-key w3m-mode-map [(meta up)]
-       (lambda ()
-         (interactive)
-         (my-prev-link-or-scroll-page-backward
-          (save-excursion
-            (ignore-errors (w3m-previous-anchor))
-            (point)))))
-     (define-key w3m-mode-map [(meta down)]
-       (lambda ()
-         (interactive)
-         (my-next-link-or-scroll-page-forward
-          (save-excursion
-            (ignore-errors (w3m-next-anchor))
-            (point)))))
-     ;; more/less scrolling style if point is not on URL
-     (define-key w3m-mode-map [return]
-       (lambda ()
-         (interactive)
-         (if (or (not (w3m-anchor))
-                 (eq (point) (save-excursion (move-to-window-line -1) (point))))
-             (View-scroll-line-forward)
-           (w3m-view-this-url))))
-     ;; Tabs navigation (useful when tabs are visible):
-     ;; to avoid conflict with (control tab) calling ee-buffers,
-     ;; w3m could be used in a separate frame
-     (define-key w3m-mode-map [(control tab)] 'w3m-next-buffer)
-     (define-key w3m-mode-map [(control shift tab)] 'w3m-previous-buffer)
-     (define-key w3m-mode-map [(control shift iso-lefttab)] 'w3m-previous-buffer)
-     ;; Add emacs version and gnu/linux version.
-     (setq w3m-user-agent (concat
-                           "Emacs-w3m/" emacs-w3m-version
-                           " " w3m-version
-                           " Emacs/" emacs-version
-                           (if (string-match "[Ll]inux" system-configuration)
-                               (concat " (" system-configuration ")")
-                             "")))
-     ;; (my-faces-fix)
-     ))
+(with-eval-after-load 'w3m
+  ;; (setq browse-url-browser-function 'w3m-browse-url)
+  ;; Mozilla-like navigation:
+  (define-key w3m-mode-map [(meta right)] 'w3m-view-this-url)
+  (define-key w3m-mode-map [(meta left)]  'w3m-view-previous-page)
+  (define-key w3m-mode-map [(meta shift right)] 'w3m-view-this-url-new-session)
+  (define-key w3m-mode-map [(control return)] 'w3m-view-this-url-new-session)
+  ;; Lynx-like navigation:
+  (define-key w3m-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors (w3m-previous-anchor))
+         (point)))))
+  (define-key w3m-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors (w3m-next-anchor))
+         (point)))))
+  ;; more/less scrolling style if point is not on URL
+  (define-key w3m-mode-map [return]
+    (lambda ()
+      (interactive)
+      (if (or (not (w3m-anchor))
+              (eq (point) (save-excursion (move-to-window-line -1) (point))))
+          (View-scroll-line-forward)
+        (w3m-view-this-url))))
+  ;; Tabs navigation (useful when tabs are visible):
+  ;; to avoid conflict with (control tab) calling ee-buffers,
+  ;; w3m could be used in a separate frame
+  (define-key w3m-mode-map [(control tab)] 'w3m-next-buffer)
+  (define-key w3m-mode-map [(control shift tab)] 'w3m-previous-buffer)
+  (define-key w3m-mode-map [(control shift iso-lefttab)] 'w3m-previous-buffer)
+  ;; Add emacs version and gnu/linux version.
+  (setq w3m-user-agent (concat
+                        "Emacs-w3m/" emacs-w3m-version
+                        " " w3m-version
+                        " Emacs/" emacs-version
+                        (if (string-match "[Ll]inux" system-configuration)
+                            (concat " (" system-configuration ")")
+                          "")))
+  ;; (my-faces-fix)
+  )
 
 (add-hook
  'w3m-display-hook
@@ -3650,56 +3620,53 @@ then output is inserted in the current buffer."
                           (gnus-group-jump-to-group "nnml:mail.inbox")))
 (define-key my-map "Q" 'smtpmail-send-queued-mail)
 
-(eval-after-load "gnus"
-  '(progn
-     (setq gnus-group-line-format
-           "%M%m%S%p%P%4y:%B%(%-43,43g%) %3T %5t %2I %o\n")
-     ;; (setq gnus-group-line-format
-     ;;       "%M%m%S%p%P%4y:%B%(%-30,30g%) %3T %5t %2I %o %s\n")
-     ;; (setq gnus-group-line-format
-     ;;       "%M%S%5y: %(%-30,30g%) %9,9~(cut 4)d %5t %2I %2T %o %n %s\n")
-     (define-key gnus-group-mode-map [tab] 'gnus-group-next-unread-group)
-     (define-key gnus-group-mode-map [(shift iso-lefttab)] 'gnus-group-prev-unread-group)
-     (setq gnus-message-archive-group
-           '((lambda (group)
-               (if (or (message-news-p)
-                       (not group)
-                       (and (stringp group)
-                            (or (eq (length group) 0)
-                                (string-match "^nnml:list\\." gnus-newsgroup-name)
-                                (not (string-match "^nnml:" gnus-newsgroup-name)))))
-                   "nnml:archive"
-                 group))))
-     ))
+(with-eval-after-load 'gnus
+  (setq gnus-group-line-format
+        "%M%m%S%p%P%4y:%B%(%-43,43g%) %3T %5t %2I %o\n")
+  ;; (setq gnus-group-line-format
+  ;;       "%M%m%S%p%P%4y:%B%(%-30,30g%) %3T %5t %2I %o %s\n")
+  ;; (setq gnus-group-line-format
+  ;;       "%M%S%5y: %(%-30,30g%) %9,9~(cut 4)d %5t %2I %2T %o %n %s\n")
+  (define-key gnus-group-mode-map [tab] 'gnus-group-next-unread-group)
+  (define-key gnus-group-mode-map [(shift iso-lefttab)] 'gnus-group-prev-unread-group)
+  (setq gnus-message-archive-group
+        '((lambda (group)
+            (if (or (message-news-p)
+                    (not group)
+                    (and (stringp group)
+                         (or (eq (length group) 0)
+                             (string-match "^nnml:list\\." gnus-newsgroup-name)
+                             (not (string-match "^nnml:" gnus-newsgroup-name)))))
+                "nnml:archive"
+              group)))))
 
-(eval-after-load "gnus-sum"
-  '(progn
-     ;; (setq gnus-summary-line-format ; TEST
-     ;;       "%U%R%z%I%(%[%1L: %1,1~(cut 1)L %4,4~(cut 4)o: %-20,20f%]%) %s\n")
-     ;; (setq gnus-summary-line-format
-     ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20n%]%) %s\n")
-     ;; (setq gnus-summary-line-format
-     ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
-     ;; Add 2-digit year:
-     (setq gnus-summary-line-format
-           "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
-     (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
-     (define-key gnus-summary-mode-map [(shift iso-lefttab)]
-                                       'gnus-summary-prev-unread-article)
-     (define-key gnus-summary-mode-map [(meta right)] 'gnus-summary-show-thread)
-     (define-key gnus-summary-mode-map [(meta left)] 'gnus-summary-hide-thread)
-     (define-key gnus-summary-mode-map [delete] 'gnus-summary-delete-article)
-     ;; (define-key gnus-summary-mode-map [f6] 'gnus-summary-move-article)
-     ;; (define-key gnus-summary-mode-map "!" 'my-gnus-summary-tick-article-forward)
-     ;; Commented out because sometimes I mistype "r" without the Shift key:
-     ;; (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
-     (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
-     (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
+(with-eval-after-load 'gnus-sum
+  ;; (setq gnus-summary-line-format ; TEST
+  ;;       "%U%R%z%I%(%[%1L: %1,1~(cut 1)L %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+  ;; (setq gnus-summary-line-format
+  ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20n%]%) %s\n")
+  ;; (setq gnus-summary-line-format
+  ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+  ;; Add 2-digit year:
+  (setq gnus-summary-line-format
+        "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
+  (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
+  (define-key gnus-summary-mode-map [(shift iso-lefttab)]
+    'gnus-summary-prev-unread-article)
+  (define-key gnus-summary-mode-map [(meta right)] 'gnus-summary-show-thread)
+  (define-key gnus-summary-mode-map [(meta left)] 'gnus-summary-hide-thread)
+  (define-key gnus-summary-mode-map [delete] 'gnus-summary-delete-article)
+  ;; (define-key gnus-summary-mode-map [f6] 'gnus-summary-move-article)
+  ;; (define-key gnus-summary-mode-map "!" 'my-gnus-summary-tick-article-forward)
+  ;; Commented out because sometimes I mistype "r" without the Shift key:
+  ;; (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
+  (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
+  (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
 
-     ;; Use standard keybinding instead of stupid `gnus-summary-show-thread'
-     (define-key gnus-summary-mode-map "\M-\C-s" 'isearch-forward-regexp)
+  ;; Use standard keybinding instead of stupid `gnus-summary-show-thread'
+  (define-key gnus-summary-mode-map "\M-\C-s" 'isearch-forward-regexp)
 
 ;; Commented out to test multi-article Isearch
 ;; ;; "\M-s"
@@ -3707,82 +3674,81 @@ then output is inserted in the current buffer."
 ;; ;; "\M-S"
 ;; (define-key gnus-summary-mode-map "M-s" 'gnus-summary-repeat-search-article-forward)
 
-     ;; (define-key gnus-summary-mode-map "\C-l" 'my-recenter)
+  ;; (define-key gnus-summary-mode-map "\C-l" 'my-recenter)
 
-     ;; Disable dangerous key bindings
-     (define-key gnus-summary-mode-map [(meta ?g)] nil)
-     (define-key gnus-summary-mode-map "x" nil)
-     (define-key gnus-summary-mode-map "\C-x\C-s" nil)
-     (setq gnus-thread-sort-functions
-           '(gnus-thread-sort-by-number)
-           ;;'(gnus-thread-sort-by-total-score (not gnus-thread-sort-by-number))
-           )
-     (add-hook 'gnus-group-mode-hook
-      (lambda ()
-        ;; I don't need line and column numbers in the group buffer
-        (set (make-variable-buffer-local 'line-number-mode) nil)
-        (set (make-variable-buffer-local 'column-number-mode) nil)))
-     (add-hook 'gnus-summary-mode-hook
-      (lambda ()
-        ;; I don't need line and column numbers in the summary buffer
-        (set (make-variable-buffer-local 'line-number-mode) nil)
-        (set (make-variable-buffer-local 'column-number-mode) nil)))
-     ;; Zebra stripes for the summary buffer
-     ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
-     ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
-     ))
+  ;; Disable dangerous key bindings
+  (define-key gnus-summary-mode-map [(meta ?g)] nil)
+  (define-key gnus-summary-mode-map "x" nil)
+  (define-key gnus-summary-mode-map "\C-x\C-s" nil)
+  (setq gnus-thread-sort-functions
+        '(gnus-thread-sort-by-number)
+        ;;'(gnus-thread-sort-by-total-score (not gnus-thread-sort-by-number))
+        )
+  (add-hook 'gnus-group-mode-hook
+            (lambda ()
+              ;; I don't need line and column numbers in the group buffer
+              (set (make-variable-buffer-local 'line-number-mode) nil)
+              (set (make-variable-buffer-local 'column-number-mode) nil)))
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              ;; I don't need line and column numbers in the summary buffer
+              (set (make-variable-buffer-local 'line-number-mode) nil)
+              (set (make-variable-buffer-local 'column-number-mode) nil)))
+  ;; Zebra stripes for the summary buffer
+  ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
+  ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
+  )
 
-(eval-after-load "gnus-art"
-  '(progn
-     ;; Set more human-readable time units:
-     (setq article-time-units
-	   `((year   . ,(* 60 60 24 365.25))
-	     (month  . ,(* 60 60 24 30))
-	     (week   . ,(* 60 60 24 7))
-	     (day    . ,(* 60 60 24))
-	     (hour   . ,(* 60 60))
-	     (minute .     60)
-	     (second .     1)))
-     ;; I'm curious about what news readers do people use (Gnus or not ;)
-     (setq gnus-visible-headers
-           (append
-            (if (listp gnus-visible-headers)
-                gnus-visible-headers
-              (list gnus-visible-headers))
-            (list (concat "^User-Agent:\\|^X-User-Agent:\\|"
-                          "^X-Mailer:\\|^X-Newsreader:\\|^X-FTN-Tearline:\\|"
-                          "^X-Http-User-Agent:"))))
-     ;; Highlight the beginning of the bug report.
-     (setq gnus-emphasis-alist
-           (cons
-            '("\\(the precise symptoms of the bug\\)"
-              0 1 gnus-emphasis-underline)
-            gnus-emphasis-alist))
-     (add-hook 'gnus-article-mode-hook
-               (lambda ()
-                 (visual-line-mode)
-                 (setq bug-reference-url-format "http://debbugs.gnu.org/%s")
-                 (bug-reference-mode 1))
-               t)
-     ;; Put point after headers, so TAB will browse article buttons
-     (add-hook 'gnus-article-prepare-hook
-               (lambda ()
-		 (let ((window (get-buffer-window gnus-article-buffer)))
-		   (when window
-		     (with-current-buffer (window-buffer window)
-		       ;; (forward-paragraph)
-		       (set-window-point window (point))))))
-               t)
-     ;; Shift-Space to scroll back (already added in bug#2145).
-     ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
-     (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
-     ;; RET scrolls the article one line at a time.
-     (define-key gnus-article-mode-map [return] 'my-gnus-article-press-or-scroll)
-     (define-key gnus-article-mode-map [(meta right)] 'my-gnus-article-press-or-scroll)
-     (define-key gnus-article-mode-map [(meta down)] 'widget-forward)
-     (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
-     ;; Disable dangerous key bindings
-     (define-key gnus-article-mode-map [(meta ?g)] nil)))
+(with-eval-after-load 'gnus-art
+  ;; Set more human-readable time units:
+  (setq article-time-units
+	`((year   . ,(* 60 60 24 365.25))
+	  (month  . ,(* 60 60 24 30))
+	  (week   . ,(* 60 60 24 7))
+	  (day    . ,(* 60 60 24))
+	  (hour   . ,(* 60 60))
+	  (minute .     60)
+	  (second .     1)))
+  ;; I'm curious about what news readers do people use (Gnus or not ;)
+  (setq gnus-visible-headers
+        (append
+         (if (listp gnus-visible-headers)
+             gnus-visible-headers
+           (list gnus-visible-headers))
+         (list (concat "^User-Agent:\\|^X-User-Agent:\\|"
+                       "^X-Mailer:\\|^X-Newsreader:\\|^X-FTN-Tearline:\\|"
+                       "^X-Http-User-Agent:"))))
+  ;; Highlight the beginning of the bug report.
+  (setq gnus-emphasis-alist
+        (cons
+         '("\\(the precise symptoms of the bug\\)"
+           0 1 gnus-emphasis-underline)
+         gnus-emphasis-alist))
+  (add-hook 'gnus-article-mode-hook
+            (lambda ()
+              (visual-line-mode)
+              (setq bug-reference-url-format "http://debbugs.gnu.org/%s")
+              (bug-reference-mode 1))
+            t)
+  ;; Put point after headers, so TAB will browse article buttons
+  (add-hook 'gnus-article-prepare-hook
+            (lambda ()
+	      (let ((window (get-buffer-window gnus-article-buffer)))
+		(when window
+		  (with-current-buffer (window-buffer window)
+		    ;; (forward-paragraph)
+		    (set-window-point window (point))))))
+            t)
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
+  (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
+  ;; RET scrolls the article one line at a time.
+  (define-key gnus-article-mode-map [return] 'my-gnus-article-press-or-scroll)
+  (define-key gnus-article-mode-map [(meta right)] 'my-gnus-article-press-or-scroll)
+  (define-key gnus-article-mode-map [(meta down)] 'widget-forward)
+  (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
+  ;; Disable dangerous key bindings
+  (define-key gnus-article-mode-map [(meta ?g)] nil))
 
 (defun my-gnus-article-press-or-scroll ()
   (interactive)
@@ -3897,10 +3863,9 @@ The difference between N and the number of articles ticked is returned."
 
 ;;; ange-ftp
 
-(eval-after-load "ange-ftp"
-  '(progn
-     ;; Ignore more messages in the FTP client with Finnish messages
-     (setq ange-ftp-skip-msgs (concat ange-ftp-skip-msgs "\\|^Yhdistetty"))))
+(with-eval-after-load 'ange-ftp
+  ;; Ignore more messages in the FTP client with Finnish messages
+  (setq ange-ftp-skip-msgs (concat ange-ftp-skip-msgs "\\|^Yhdistetty")))
 
 
 ;;; gnuserv
@@ -4039,10 +4004,9 @@ The difference between N and the number of articles ticked is returned."
 ;; toggle the hemisphere jumper.'
 ;; or (fset 'undefined 'yow)
 
-(eval-after-load "tetris"
-  '(progn
-     (define-key tetris-mode-map [up]   'tetris-rotate-next)
-     (define-key tetris-mode-map [down] 'tetris-move-bottom)))
+(with-eval-after-load 'tetris
+  (define-key tetris-mode-map [up]   'tetris-rotate-next)
+  (define-key tetris-mode-map [down] 'tetris-move-bottom))
 
 (defvar my-digital-clock-timer nil)
 (defvar my-digital-clock-frame nil)

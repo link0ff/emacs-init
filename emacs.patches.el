@@ -171,7 +171,7 @@ The test for presence of ELEMENT is done with `equal'.
 If you want to use `delete-to-list' on a variable that is not defined
 until a certain package is loaded, you should put the call to `delete-to-list'
 into a hook function that will be run only after loading the package.
-`eval-after-load' provides one way to do this.  In some cases
+`with-eval-after-load' provides one way to do this.  In some cases
 other hooks, such as major mode hooks, can do the job."
   (if (member element (symbol-value list-var))
       (set list-var
@@ -216,20 +216,19 @@ using function `add-to-list'."
     (add-to-history 'minibuffer-history (symbol-name symbol))))
 
 ;; ALSO TRY FROM gmane.emacs.help 2013-02-11 Subject: Using Emacs' help system:
-(eval-after-load 'icomplete
-  '(progn
-     ;; FROM bug#13602
-     ;; (setq icomplete-minibuffer-map (make-sparse-keymap))
-     ;; (define-key icomplete-minibuffer-map [?\M-\t]           'minibuffer-force-complete)
-     ;; (define-key icomplete-minibuffer-map [?\C-j]            'minibuffer-force-complete-and-exit)
-     (define-key icomplete-minibuffer-map [(control return)] 'minibuffer-force-complete-and-exit)
-     (define-key icomplete-minibuffer-map [(control right)]  'icomplete-forward-completions)
-     (define-key icomplete-minibuffer-map [(control left)]   'icomplete-backward-completions)
-     ;; (define-key icomplete-minibuffer-map [(meta right)]  'icomplete-forward-completions)
-     ;; (define-key icomplete-minibuffer-map [(meta left)]   'icomplete-backward-completions)
-     ;; (setq icomplete-with-completion-tables t)
-     ;; (setq icomplete-with-completion-tables nil)
-     ))
+(with-eval-after-load 'icomplete
+  ;; FROM bug#13602
+  ;; (setq icomplete-minibuffer-map (make-sparse-keymap))
+  ;; (define-key icomplete-minibuffer-map [?\M-\t]           'minibuffer-force-complete)
+  ;; (define-key icomplete-minibuffer-map [?\C-j]            'minibuffer-force-complete-and-exit)
+  (define-key icomplete-minibuffer-map [(control return)] 'minibuffer-force-complete-and-exit)
+  (define-key icomplete-minibuffer-map [(control right)]  'icomplete-forward-completions)
+  (define-key icomplete-minibuffer-map [(control left)]   'icomplete-backward-completions)
+  ;; (define-key icomplete-minibuffer-map [(meta right)]  'icomplete-forward-completions)
+  ;; (define-key icomplete-minibuffer-map [(meta left)]   'icomplete-backward-completions)
+  ;; (setq icomplete-with-completion-tables t)
+  ;; (setq icomplete-with-completion-tables nil)
+  )
 
 
 ;;; window.el
@@ -357,11 +356,10 @@ using function `add-to-list'."
 
 ;;; view
 
-(eval-after-load "view"
-  '(progn
-     (defun view-end-message ()
-       ;; Don't tell that we are at end of buffer.
-       (goto-char (point-max)))))
+(with-eval-after-load 'view
+  (defun view-end-message ()
+    ;; Don't tell that we are at end of buffer.
+    (goto-char (point-max))))
 
 
 ;;; dired
@@ -774,12 +772,11 @@ If LIMIT is non-nil, show no more than this many entries."
 
 ;;; eshell
 
-(eval-after-load "em-hist"
-  '(progn
-     ;; next patch should be corrected in eshell-hist-initialize
-     (or eshell-history-size
-         (setq eshell-history-size
-	       (string-to-number (or (getenv "HISTSIZE") "32768"))))))
+(with-eval-after-load 'em-hist
+  ;; next patch should be corrected in eshell-hist-initialize
+  (or eshell-history-size
+      (setq eshell-history-size
+	    (string-to-number (or (getenv "HISTSIZE") "32768")))))
 
 
 ;;; generic-x
