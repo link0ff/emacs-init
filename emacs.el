@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-03-17 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-03-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2468,7 +2468,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (with-eval-after-load 'vc-dir
   ;; Because ‘=’ is easily mistyped as ‘+’
-  (define-key vc-dir-mode-map "+" 'vc-diff))
+  (define-key vc-dir-mode-map "+" 'vc-diff)
+  ;; Often ‘v’ is mistyped to view files like in Dired
+  (define-key vc-dir-mode-map "v" 'vc-dir-view-file)
+  (define-key vc-dir-mode-map "." 'vc-next-action))
+
+(defun vc-dir-in-project-root ()
+  "Run `vc-dir' in project root directory."
+  (interactive)
+  (let* ((project (project-current))
+         (root (and project (car (project-roots project)))))
+    (vc-dir (and root (file-directory-p root) root))))
+
+(define-key my-map "d" 'vc-dir-in-project-root)
 
 
 ;;; text
@@ -3172,6 +3184,24 @@ Example:
               " "))))
 
 
+;;; xref
+
+;; This supposes display-buffer-alist to be customized to contain:
+;; '((display-buffer-condition-xref display-buffer-maybe-below-selected) ...)
+(defun display-buffer-condition-xref (buffer-name _action)
+  (and (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
+                       buffer-name)
+       (memq this-command '(xref-find-definitions))))
+
+(defun display-buffer-condition-from-xref (_buffer-name _action)
+  ;; TODO: check xref--original-window xref--original-window-intent?
+  (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
+                  (buffer-name (current-buffer))))
+
+(with-eval-after-load 'xref
+  (define-key xref--button-map [(control ?m)] #'xref-quit-and-goto-xref))
+
+
 ;;; help
 
 ;; TODO: same-window-buffer-names and same-window-regexps are obsolete.
@@ -3829,7 +3859,7 @@ The difference between N and the number of articles ticked is returned."
 ;; Bilingual spell-checking of the mail message.
 (add-hook 'message-send-hook
           (lambda ()
-            (ispell-change-dictionary "american")
+            ;; (ispell-change-dictionary "american")
             (ispell-message)
             ;; (ispell-change-dictionary "russian")
             ;; (ispell-message)

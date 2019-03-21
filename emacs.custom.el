@@ -33,7 +33,7 @@
               time-zone
               (if time-zone ")")))
  '(calendar-view-diary-initially-flag t)
- '(calendar-week-start-day 0)
+ '(calendar-week-start-day 1)
  '(column-number-mode t)
  '(comint-history-isearch 'dwim)
  '(comint-input-ignoredups t)
@@ -73,7 +73,8 @@
  '(dired-recursive-copies 'always)
  '(dired-recursive-deletes 'top)
  '(display-buffer-alist
-   '((display-buffer-condition-from-help display-buffer-same-window)
+   '((display-buffer-condition-xref display-buffer-maybe-below-selected)
+     (display-buffer-condition-from-help display-buffer-same-window)
      ("\\`\\*\\(Apropos\\|Buffer List\\|Colors\\|Command History\\|Locate\\|Messages\\|Proced\\|eww\\|snd\\|vc-log\\)\\*\\'" display-buffer-same-window)
      ("\\`\\*\\(compilation\\|grep\\|erlang\\|haskell\\|Diff\\|Help\\|shell\\|Shell Command Output\\)\\*\\(\\|<[0-9]+>\\)\\'" display-buffer-same-window)
      ("\\`\\*\\(vc-dir\\)\\*\\(\\|<[0-9a-z-]+>\\)\\'" display-buffer-same-window)
