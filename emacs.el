@@ -1,11 +1,11 @@
-;;; .emacs --- Emacs init file
+;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1989-2019  Juri Linkov <juri@linkov.net>
 
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-03-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-05-05 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -522,6 +522,7 @@ i.e. in daylight or under bright electric lamps."
 			      text))))))
 	    '((name . indicate-copied-region)))
 
+(defvar yank-from-kill-ring-history nil)
 (defun yank-from-kill-ring (string)
   "Insert the kill-ring item selected from the minibuffer history.
 Use minibuffer navigation and search commands to browse the kill-ring
@@ -531,13 +532,14 @@ in the minibuffer history before typing RET to insert the item."
 	       ;; Remove keymaps from text properties of copied string,
 	       ;; because typing RET in the minibuffer might call
 	       ;; an irrelevant command from the map of copied string.
-	       (history (mapcar (lambda (h)
-				  (remove-list-of-text-properties
-				   0 (length h)
-				   '(keymap local-map) h)
-				  h)
-				kill-ring)))
-	   (read-string "Yank from kill-ring: " nil 'history))))
+	       (yank-from-kill-ring-history
+                (mapcar (lambda (h)
+			  (remove-list-of-text-properties
+			   0 (length h)
+			   '(keymap local-map action mouse-action) h)
+			  h)
+			kill-ring)))
+	   (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
   (setq yank-window-start (window-start))
   (push-mark)
   (insert-for-yank string))
@@ -695,11 +697,11 @@ in the minibuffer history before typing RET to insert the item."
 (advice-add 'set-variable :around
 	    (lambda (orig-fun &rest args)
 	      (interactive (lambda (spec)
-			     (cl-flet ((custom-variable-p (v)
-					(and (symbolp v) (boundp v))))
-			       (advice-eval-interactive-spec spec))))
-	      (require 'cl) ; for `flet'
-	      (flet ((custom-variable-p (variable) t))
+			     (cl-letf (((symbol-function 'custom-variable-p)
+                                        (lambda (v)
+                                          (and (symbolp v) (boundp v)))))
+                               (advice-eval-interactive-spec spec))))
+	      (cl-flet ((custom-variable-p (v) t))
 		(apply orig-fun args)))
 	    '((name . override-custom-variable)))
 
@@ -2208,7 +2210,16 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'ruby-mode-hook
             (lambda ()
               (set (make-local-variable 'require-final-newline) nil)
-              (flymake-mode))))
+	      ;; Don't enable flymake-mode in read-only buffers
+	      (flymake-mode 1)
+	      (add-hook 'view-mode-hook
+			(lambda ()
+			  (flymake-mode (if view-mode -1 1)))
+			nil t))))
+
+(with-eval-after-load 'flymake
+  (define-key flymake-mode-map [left-fringe mouse-1]
+    'flymake-show-diagnostics-buffer))
 
 
 ;;; css
@@ -3100,7 +3111,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (with-eval-after-load 'grep
   (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml") grep-files-aliases)
+  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee") grep-files-aliases)
   (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
   (push '("clj" . "*.clj*") grep-files-aliases))
 
@@ -3461,7 +3472,7 @@ then output is inserted in the current buffer."
   (dictem-initialize)
   ;; (global-set-key "\C-cs" 'dictem-run-search)
   ;; (global-set-key "\C-cm" 'dictem-run-match)
-  (define-key my-map "dm" 'my-dictem-run-search)
+  ;; (define-key my-map "dm" 'my-dictem-run-search)
   ;; (global-set-key "\C-cd" 'dictem-run-define)
   ;; (global-set-key "\C-c\M-r" 'dictem-run-show-server)
   ;; (global-set-key "\C-c\M-i" 'dictem-run-show-info)

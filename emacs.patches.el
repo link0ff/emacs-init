@@ -1,4 +1,4 @@
-;;;; patches
+;;;; patches  -*- lexical-binding: t -*-
 
 ;; This file contains commands that could be added to standard Emacs distribution.
 
@@ -68,7 +68,7 @@
              ;; If there are at least 10 lines with a leading TAB, use TABs.
              (re-search-forward "^	" (+ (point) 100000) t 10)))
       (set (make-local-variable 'indent-tabs-mode) t)))
-(add-hook 'find-file-hook 'indent-tabs-mode-maybe)
+;; (add-hook 'find-file-hook 'indent-tabs-mode-maybe)
 
 
 ;;; trailing-whitespace
@@ -195,6 +195,81 @@ using function `add-to-list'."
     (add-to-list list-var (car element-list) append)
     (setq element-list (cdr element-list))))
 
+(defcustom read-passwd-hide-delay 0.3
+  "Time delay before hiding entered password chars."
+  :type 'number
+  :group 'display
+  :version "27.1")
+
+(defun read-passwd-hide-delay (prompt &optional confirm default)
+  "Read a password, prompting with PROMPT, and return it.
+If optional CONFIRM is non-nil, read the password twice to make sure.
+Optional DEFAULT is a default password to use instead of empty input.
+
+This function echoes `*' for each character that the user types.
+You could let-bind `read-hide-char' to another hiding character, though.
+
+Once the caller uses the password, it can erase the password
+by doing (clear-string STRING)."
+  (if confirm
+      (let (success)
+        (while (not success)
+          (let ((first (read-passwd-hide-delay prompt nil default))
+                (second (read-passwd-hide-delay "Confirm password: " nil default)))
+            (if (equal first second)
+                (progn
+                  (and (arrayp second) (not (eq first second)) (clear-string second))
+                  (setq success first))
+              (and (arrayp first) (clear-string first))
+              (and (arrayp second) (clear-string second))
+              (message "Password not repeated accurately; please start over")
+              (sit-for 1))))
+        success)
+    (let ((hide-chars-fun
+           (lambda (beg end _len)
+             (let ((minibuf (current-buffer)))
+               (run-with-timer
+                read-passwd-hide-delay
+                nil
+                (lambda ()
+                  (clear-this-command-keys)
+                  (when (buffer-live-p minibuf)
+                    (with-current-buffer minibuf
+                      (setq beg (min end (max (minibuffer-prompt-end) beg)))
+                      (setq end (min end (point-max)))
+                      (dotimes (i (- end beg))
+                        (put-text-property (+ i beg) (+ 1 i beg)
+                                           'display (string (or read-hide-char ?*))
+                                           minibuf)))))))))
+          minibuf)
+      (minibuffer-with-setup-hook
+          (lambda ()
+            (setq minibuf (current-buffer))
+            ;; Turn off electricity.
+            (setq-local post-self-insert-hook nil)
+            (setq-local buffer-undo-list t)
+            (setq-local select-active-regions nil)
+            (use-local-map read-passwd-map)
+            (setq-local inhibit-modification-hooks nil) ;bug#15501.
+	    (setq-local show-paren-mode nil)		;bug#16091.
+            (add-hook 'after-change-functions hide-chars-fun nil 'local)
+            ;; (add-hook 'after-change-functions (debounce 1 hide-chars-fun) nil 'local)
+            )
+        (unwind-protect
+            (let ((enable-recursive-minibuffers t)
+		  (read-hide-char (or read-hide-char ?*)))
+              (read-string prompt nil t default)) ; t = "no history"
+          (when (buffer-live-p minibuf)
+            (with-current-buffer minibuf
+              ;; Not sure why but it seems that there might be cases where the
+              ;; minibuffer is not always properly reset later on, so undo
+              ;; whatever we've done here (bug#11392).
+              (remove-hook 'after-change-functions hide-chars-fun 'local)
+              ;; (remove-hook 'after-change-functions (debounce 1 hide-chars-fun) 'local)
+              (kill-local-variable 'post-self-insert-hook)
+              ;; And of course, don't keep the sensitive data around.
+              (erase-buffer))))))))
+
 
 ;;; history
 
@@ -221,9 +296,9 @@ using function `add-to-list'."
   ;; (setq icomplete-minibuffer-map (make-sparse-keymap))
   ;; (define-key icomplete-minibuffer-map [?\M-\t]           'minibuffer-force-complete)
   ;; (define-key icomplete-minibuffer-map [?\C-j]            'minibuffer-force-complete-and-exit)
-  (define-key icomplete-minibuffer-map [(control return)] 'minibuffer-force-complete-and-exit)
-  (define-key icomplete-minibuffer-map [(control right)]  'icomplete-forward-completions)
   (define-key icomplete-minibuffer-map [(control left)]   'icomplete-backward-completions)
+  (define-key icomplete-minibuffer-map [(control right)]  'icomplete-forward-completions)
+  (define-key icomplete-minibuffer-map [(control return)] 'icomplete-force-complete-and-exit)
   ;; (define-key icomplete-minibuffer-map [(meta right)]  'icomplete-forward-completions)
   ;; (define-key icomplete-minibuffer-map [(meta left)]   'icomplete-backward-completions)
   ;; (setq icomplete-with-completion-tables t)
@@ -625,107 +700,7 @@ delete flagged files.\n\n"))))))
 ;; (setenv "LS_BLOCK_SIZE" "'1")
 
 
-;;; vc-mergebase
-
-(require 'vc)
-(require 'vc-git)
-
-(defun vc-diff-mergebase (_files rev1 rev2)
-  "Report diffs between the merge base of REV1 and REV2 revisions.
-The merge base is a common ancestor between REV1 and REV2 revisions."
-  (interactive (vc-diff-build-argument-list-internal))
-  (when (and (not rev1) rev2)
-    (error "Not a valid revision range"))
-  (let ((backend (vc-deduce-backend))
-        (default-directory default-directory)
-        rootdir)
-    (if backend
-        (setq rootdir (vc-call-backend backend 'root default-directory))
-      (setq rootdir (read-directory-name "Directory for VC root-diff: "))
-      (setq backend (vc-responsible-backend rootdir))
-      (if backend
-          (setq default-directory rootdir)
-        (error "Directory is not version controlled")))
-    (let ((default-directory rootdir)
-          (rev1 (vc-call-backend backend 'mergebase rev1 rev2)))
-      (vc-diff-internal
-       t (list backend (list rootdir)) rev1 rev2
-       (called-interactively-p 'interactive)))))
-
-(defun vc-log-mergebase (_files rev1 rev2)
-  "Show a log of changes between the merge base of REV1 and REV2 revisions.
-The merge base is a common ancestor between REV1 and REV2 revisions."
-  (interactive (vc-diff-build-argument-list-internal))
-  (let ((backend (vc-deduce-backend))
-	(default-directory default-directory)
-	rootdir)
-    (if backend
-	(setq rootdir (vc-call-backend backend 'root default-directory))
-      (setq rootdir (read-directory-name "Directory for VC root-log: "))
-      (setq backend (vc-responsible-backend rootdir))
-      (unless backend
-        (error "Directory is not version controlled")))
-    (setq default-directory rootdir)
-    (setq rev1 (vc-call-backend backend 'mergebase rev1 rev2))
-    (vc-print-log-internal backend (list rootdir) rev1 t (or rev2 ""))))
-
-(define-key vc-prefix-map "ML" 'vc-log-mergebase)
-(define-key vc-prefix-map "MD" 'vc-diff-mergebase)
-
-(require 'subr-x) ; for string-trim-right
-
-(defun vc-git-mergebase (rev1 &optional rev2)
-  (unless rev2 (setq rev2 "HEAD"))
-  (string-trim-right (vc-git--run-command-string nil "merge-base" rev1 rev2)))
-
-;; OVERRIDDEN
-(defun vc-git-print-log (files buffer &optional shortlog start-revision limit)
-  "Print commit log associated with FILES into specified BUFFER.
-If SHORTLOG is non-nil, use a short format based on `vc-git-root-log-format'.
-\(This requires at least Git version 1.5.6, for the --graph option.)
-If START-REVISION is non-nil, it is the newest revision to show.
-If LIMIT is non-nil, show no more than this many entries."
-  (let ((coding-system-for-read
-         (or coding-system-for-read vc-git-log-output-coding-system)))
-    ;; `vc-do-command' creates the buffer, but we need it before running
-    ;; the command.
-    (vc-setup-buffer buffer)
-    ;; If the buffer exists from a previous invocation it might be
-    ;; read-only.
-    (let ((inhibit-read-only t))
-      (with-current-buffer
-          buffer
-	(apply 'vc-git-command buffer
-	       'async files
-	       (append
-		'("log" "--no-color")
-                (when (and vc-git-print-log-follow
-                           (null (cdr files))
-                           (car files)
-                           (not (file-directory-p (car files))))
-                  ;; "--follow" on directories or multiple files is broken
-                  ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=8756
-                  ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16422
-                  (list "--follow"))
-		(when shortlog
-		  `("--graph" "--decorate" "--date=short"
-                    ,(format "--pretty=tformat:%s"
-			     (car vc-git-root-log-format))
-		    "--abbrev-commit"))
-		(when (numberp limit)
-                  (list "-n" (format "%s" limit)))
-		(when start-revision
-                  (if (and limit (not (numberp limit)))
-                      (list (concat start-revision ".." (if (equal limit "")
-                                                            "HEAD"
-                                                          limit)))
-                    (list start-revision)))
-		'("--")))))))
-
-
 ;;; php-mode
-
-(add-to-list 'magic-fallback-mode-alist '("<\\?php" . php-mode))
 
 ;; FIX stupid php-mode but this doesn't work
 ;; because php-font-lock-keywords-3 uses syntactic font-lock
@@ -735,6 +710,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (add-hook 'php-mode-hook
 	  (lambda ()
+            (add-to-list 'magic-fallback-mode-alist '("<\\?php" . php-mode))
 	    ;; (modify-syntax-entry ?#  "<\n" php-mode-syntax-table)
 	    ;; (modify-syntax-entry ?\n ">#"  php-mode-syntax-table)
 	    (modify-syntax-entry ?#  "<"     php-mode-syntax-table)
