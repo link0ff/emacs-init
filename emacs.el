@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-05-05 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-05-19 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1155,6 +1155,26 @@ Uses the value of the variable `search-whitespace-regexp'."
 ;; (defun re-search-backward-lax-whitespace (regexp &optional bound noerror count)
 ;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
 (setq search-default-mode #'char-fold-to-regexp)
+
+;;;; isearch-region
+
+(defun isearch-forward-region ()
+  "Do incremental search forward for text from the active region.
+Like ordinary incremental search except that text from the region
+is added to the search string initially if the region is active."
+  (interactive)
+  (isearch-forward nil 1)
+  (cond
+   ((use-region-p)
+    (isearch-yank-string
+     (buffer-substring-no-properties (region-beginning) (region-end)))
+    (deactivate-mark))
+   (t
+    (setq isearch-error "No active region")
+    (isearch-push-state)
+    (isearch-update))))
+
+(define-key search-map "r" 'isearch-forward-region)
 
 ;;;; isearch-lazy-hints
 
@@ -3198,19 +3218,23 @@ Example:
 ;;; xref
 
 ;; This supposes display-buffer-alist to be customized to contain:
-;; '((display-buffer-condition-xref display-buffer-maybe-below-selected) ...)
-(defun display-buffer-condition-xref (buffer-name _action)
+;; '((display-buffer-to-xref-p display-buffer-maybe-below-selected) ...)
+(defun display-buffer-to-xref-p (buffer-name _action)
   (and (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
                        buffer-name)
        (memq this-command '(xref-find-definitions))))
 
-(defun display-buffer-condition-from-xref (_buffer-name _action)
+(defun display-buffer-from-xref-p (_buffer-name _action)
   ;; TODO: check xref--original-window xref--original-window-intent?
   (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
-                  (buffer-name (current-buffer))))
+                  (buffer-name (window-buffer))))
 
 (with-eval-after-load 'xref
-  (define-key xref--button-map [(control ?m)] #'xref-quit-and-goto-xref))
+  ;; (define-key xref--button-map [(control ?m)] #'xref-quit-and-goto-xref)
+  (define-key xref--button-map (kbd "RET") #'xref-quit-and-goto-xref)
+  )
+
+(add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely)
 
 
 ;;; help
@@ -3280,9 +3304,11 @@ Example:
 
 ;; Clicking a link from the *Help* buffer opens source code in the same window.
 ;; This supposes display-buffer-alist to be customized to contain:
-;; '((display-buffer-condition-from-help display-buffer-same-window) ...)
-(defun display-buffer-condition-from-help (_buffer-name _action)
-  (string-match-p "\\`\\*\\(Help\\)\\*\\(\\|<[0-9]+>\\)\\'" (buffer-name (current-buffer))))
+;; '((display-buffer-from-help-p display-buffer-same-window) ...)
+(defun display-buffer-from-help-p (_buffer-name _action)
+  (when current-prefix-arg
+    (with-current-buffer (window-buffer)
+      (eq major-mode 'help-mode))))
 
 
 ;;; info

@@ -75,8 +75,8 @@
  '(dired-recursive-copies 'always)
  '(dired-recursive-deletes 'top)
  '(display-buffer-alist
-   '((display-buffer-condition-xref display-buffer-maybe-below-selected)
-     (display-buffer-condition-from-help display-buffer-same-window)
+   '((display-buffer-to-xref-p display-buffer-maybe-below-selected)
+     (display-buffer-from-help-p display-buffer-same-window)
      ("\\`\\*\\(Apropos\\|Buffer List\\|Colors\\|Command History\\|Locate\\|Messages\\|Proced\\|eww\\|snd\\|vc-log\\)\\*\\'" display-buffer-same-window)
      ("\\`\\*\\(compilation\\|grep\\|erlang\\|haskell\\|Diff\\|Help\\|shell\\|Shell Command Output\\)\\*\\(\\|<[0-9]+>\\)\\'" display-buffer-same-window)
      ("\\`\\*\\(vc-dir\\)\\*\\(\\|<[0-9a-z-]+>\\)\\'" display-buffer-same-window)
@@ -106,7 +106,6 @@
  '(find-grep-options "-iq")
  '(find-ls-option '("-exec ls -ld {} \\;" . "-ld"))
  '(flymake-no-changes-timeout nil)
- '(flymake-start-on-newline nil)
  '(garbage-collection-messages t)
  '(gc-cons-threshold 128000000)
  '(global-eldoc-mode nil)
