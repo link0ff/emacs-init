@@ -33,6 +33,7 @@
 		;; Clojure
 	        "target"
 		;; Ruby
+		"tmp"
 		;; "i18n"
 		"log" "logs" "public/assets"
 		;; Firefox addons
@@ -55,3 +56,20 @@
   (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t))
 
 (require 'erlang-start nil t)
+
+;; (add-to-list 'auto-mode-alist '("\\.sass\\'" . scss-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+
+;; (add-to-list 'auto-mode-alist '("\\.rb\\'" . enh-ruby-mode))
+;; (with-eval-after-load 'enh-ruby-mode
+;;   (define-key enh-ruby-mode-map [(control left)]  'enh-ruby-backward-sexp)
+;;   (define-key enh-ruby-mode-map [(control right)] 'enh-ruby-forward-sexp))
+
+(defvar ruby-use-smie nil)
+
+(with-eval-after-load 'ruby-mode
+  (define-key ruby-mode-map [(control left)] 'ruby-backward-sexp)
+  (define-key ruby-mode-map [(control right)] 'ruby-forward-sexp))
+
+(when (fboundp 'global-diff-hl-mode)
+  (global-diff-hl-mode))

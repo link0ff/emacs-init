@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-05-19 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-06-23 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -447,6 +447,7 @@ i.e. in daylight or under bright electric lamps."
     (kill-buffer my-next-error-prev-buffer))
   (setq my-next-error-prev-buffer (current-buffer)))
 (add-hook 'next-error-hook 'my-next-error)
+(add-hook 'next-error-hook 'reposition-window)
 
 ;; See bug#20489: 25.0.50; next-error-find-buffer chooses non-current buffer without good reason
 ;; See bug#28864: 25.3.50; next-error-no-select does select
@@ -2509,7 +2510,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (interactive)
   (let* ((project (project-current))
          (root (and project (car (project-roots project)))))
-    (vc-dir (and root (file-directory-p root) root))))
+    (vc-dir (or (and root (file-directory-p root) root) default-directory))))
 
 (define-key my-map "d" 'vc-dir-in-project-root)
 
@@ -2544,6 +2545,33 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
             ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
             ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
             (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
+
+;; TODO: TRY
+;; (let ((sentence-end (sentence-end)))
+;;   (rx (group (>= 5 (not (any " ."))))
+;;       (group (regexp sentence-end))))
+
+(defun canonically-double-space-region (beg end)
+  (interactive "*r")
+  (canonically-space-region beg end)
+  (unless (markerp end) (setq end (copy-marker end t)))
+  (let* ((sentence-end-double-space nil) ; to get right regexp below
+         (end-spc-re (concat "\\(?:[^.?!]\\{5,\\}\\)\\(?:" (sentence-end) "\\)")))
+    (save-excursion
+      (goto-char beg)
+      (while (and (< (point) end)
+		  (re-search-forward end-spc-re end t))
+        (unless (or (>= (point) end)
+                    (looking-back "[[:space:]]\\{2\\}\\|\n"))
+          (insert " "))))))
+
+(advice-add 'fill-paragraph :before
+	    (lambda (&rest _args)
+	      (when (use-region-p)
+                (canonically-double-space-region
+                 (region-beginning)
+                 (region-end))))
+	    '((name . fill-paragraph-double-space)))
 
 
 ;;; view
@@ -2710,7 +2738,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
       ;;           (string-match "\\.gif$" file)
       ;;           (string-match "\\.pdf$" file))
       (let* ((file-list (list (dired-get-filename)))
-             (command (dired-guess-default file-list)))
+             (command (dired-guess-default file-list))
+             (async-shell-command-display-buffer nil))
         (if (listp command)
             (setq command (car command)))
         (if command
@@ -3100,7 +3129,13 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'compilation-mode-hook
             (lambda ()
               ;; (rename-uniquely)
-              (setq buffer-read-only nil))))
+              (setq buffer-read-only nil)))
+  ;; TODO: add to compile.el
+  (add-hook 'compilation-finish-functions
+            (lambda (cur-buffer _msg)
+              (with-current-buffer cur-buffer
+                ;; Ensure the right number of errors shown in the modeline
+                (font-lock-ensure)))))
 
 ;; Create unique buffer name for `compile' and `grep'.
 (setq compilation-buffer-name-function
@@ -3224,15 +3259,26 @@ Example:
                        buffer-name)
        (memq this-command '(xref-find-definitions))))
 
+;; UNUSED
 (defun display-buffer-from-xref-p (_buffer-name _action)
   ;; TODO: check xref--original-window xref--original-window-intent?
   (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
                   (buffer-name (window-buffer))))
 
 (with-eval-after-load 'xref
-  ;; (define-key xref--button-map [(control ?m)] #'xref-quit-and-goto-xref)
-  (define-key xref--button-map (kbd "RET") #'xref-quit-and-goto-xref)
-  )
+  (defvar xref--original-command nil)
+  (advice-add 'xref-find-definitions :after
+	      (lambda (&rest _args)
+                (with-current-buffer (window-buffer)
+                  (setq-local xref--original-command 'xref-find-definitions)))
+	      '((name . from-xref-find-definitions)))
+  (define-key xref--button-map [(control ?m)]
+    (lambda ()
+      (interactive)
+      (if (memq xref--original-command '(xref-find-definitions))
+          (call-interactively 'xref-quit-and-goto-xref)
+        (setq xref--original-window nil)
+        (call-interactively 'xref-goto-xref)))))
 
 (add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely)
 
@@ -3306,7 +3352,7 @@ Example:
 ;; This supposes display-buffer-alist to be customized to contain:
 ;; '((display-buffer-from-help-p display-buffer-same-window) ...)
 (defun display-buffer-from-help-p (_buffer-name _action)
-  (when current-prefix-arg
+  (unless current-prefix-arg
     (with-current-buffer (window-buffer)
       (eq major-mode 'help-mode))))
 
