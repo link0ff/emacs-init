@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-06-23 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-06-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1126,9 +1126,9 @@ before searching for the next hit."
 ;; doesn't yank punctuation characters, so use word search instead of this:
 ;; (setq search-whitespace-regexp "\\W+")
 ;; TRY to match newlines like in `compare-windows-whitespace':
-(setq search-whitespace-regexp "\\(\\s-\\|\n\\)+")
+(setq search-whitespace-regexp "\\(?:\\s-\\|\n\\)+") ; bug#35802
 ;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
-(setq Info-search-whitespace-regexp "\\(\\s-\\|\n\\)+")
+(setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+")
 
 ;; TRY:
 ;; Like `word-search-regexp'
@@ -1142,7 +1142,7 @@ Uses the value of the variable `search-whitespace-regexp'."
       string
     ;; FIXME: this is not strictly correct implementation because it ignores
     ;; `subregexp-context-p' and replaces spaces inside char set group like
-    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(\\s-\\|\n\\)+"] !
+    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(?:\\s-\\|\n\\)+"] !
     (replace-regexp-in-string
      search-whitespace-regexp
      search-whitespace-regexp ;; or replace by " " that is handled by search-spaces-regexp
@@ -2546,17 +2546,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
             ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
             (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
 
-;; TODO: TRY
-;; (let ((sentence-end (sentence-end)))
-;;   (rx (group (>= 5 (not (any " ."))))
-;;       (group (regexp sentence-end))))
-
 (defun canonically-double-space-region (beg end)
   (interactive "*r")
   (canonically-space-region beg end)
   (unless (markerp end) (setq end (copy-marker end t)))
   (let* ((sentence-end-double-space nil) ; to get right regexp below
-         (end-spc-re (concat "\\(?:[^.?!]\\{5,\\}\\)\\(?:" (sentence-end) "\\)")))
+         (end-spc-re (rx (>= 5 (not (in ".?!"))) (regexp (sentence-end)))))
     (save-excursion
       (goto-char beg)
       (while (and (< (point) end)
@@ -3176,7 +3171,7 @@ Modifies the grep-find template to add the option `-w' that matches whole words.
   (interactive)
   (let ((grep-host-defaults-alist nil)
         (grep-find-template
-         "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color -winH -e <R>"))
+         (replace-regexp-in-string "<C>" "-w \\&" grep-find-template)))
     (call-interactively 'rgrep)))
 
 
