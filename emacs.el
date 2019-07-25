@@ -567,6 +567,32 @@ in the minibuffer history before typing RET to insert the item."
 ;; then convert region to other coding, this is very useful when the region
 ;; was typed with a wrong input method, when the user forgot to toggle it
 
+;; Alternative Keyboard Feature implemented in bug#9751
+;; and posted to http://ru-emacs.livejournal.com/82428.html
+(defun reverse-input-method (input-method)
+  "Build the reverse mapping of single letters from INPUT-METHOD."
+  (interactive
+   (list (read-input-method-name "Use input method (default current): ")))
+  (if (and input-method (symbolp input-method))
+      (setq input-method (symbol-name input-method)))
+  (let ((current current-input-method)
+        (modifiers '(nil (control) (meta) (control meta))))
+    (when input-method
+      (activate-input-method input-method))
+    (when (and current-input-method quail-keyboard-layout)
+      (dolist (map (cdr (quail-map)))
+        (let* ((to (car map))
+               (from (quail-get-translation
+                      (cadr map) (char-to-string to) 1)))
+          (when (and (characterp from) (characterp to))
+            (dolist (mod modifiers)
+              (define-key local-function-key-map
+                (vector (append mod (list from)))
+                (vector (append mod (list to)))))))))
+    (when input-method
+      (activate-input-method current))))
+;; (reverse-input-method "cyrillic-jcuken")
+
 
 ;;; mule
 
@@ -1264,28 +1290,6 @@ is added to the search string initially if the region is active."
 
 (define-key isearch-mode-map (kbd "C-0") 'isearch-toggle-lazy-hints)
 
-;;;; isearch-decomposition
-
-;; OBSOLETE:
-;; Decomposition search for accented letters.
-(define-key isearch-mode-map "\M-sd" 'isearch-toggle-decomposition)
-(defun isearch-toggle-decomposition ()
-  "Toggle Unicode decomposition searching on or off."
-  (interactive)
-  (setq isearch-word (unless (eq isearch-word 'isearch-decomposition-regexp)
-		       'isearch-decomposition-regexp))
-  (if isearch-word (setq isearch-regexp nil))
-  (setq isearch-success t isearch-adjusted t)
-  (isearch-update))
-(defun isearch-decomposition-regexp (string &optional _lax)
-  "Return a regexp that matches decomposed Unicode characters in STRING."
-  (let ((accents "['`\"́̋]"))
-    (mapconcat
-     (lambda (c0)
-       (concat (string c0) accents "?"))
-     (replace-regexp-in-string accents "" string) "")))
-(put 'isearch-decomposition-regexp 'isearch-message-prefix "deco ")
-
 ;;;; isearch-diff-hunk
 
 (isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
@@ -1301,6 +1305,78 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 (add-hook 'diff-mode-hook
 	  (lambda ()
 	    (set (make-local-variable 'search-default-mode) 'diff-hunk-to-regexp)))
+
+
+;;; char-fold
+
+;; Moved here from emacs.custom.el and configured explicitly
+;; because custom-set-variables shows characters as integers:
+
+(require 'char-fold)
+
+(setq char-fold-symmetric t)
+
+;; Matching "и" with "й" is wrong in Russian.
+;; TODO: add to char-fold.el defaults
+(setq char-fold-exclude
+      (append char-fold-exclude
+              '((?и "й") (?й "и")
+                (?И "Й") (?Й "И"))))
+
+;; Allow search to match accented Cyrillic chars, so e.g. in etc/HELLO
+;; “Здравствуйте” will match “Здра́вствуйте” and vice versa:
+(setq char-fold-include
+      (append char-fold-include
+              '((?а "а́") (?А "А́")
+                (?е "е́") (?Е "Е́")
+                (?и "и́") (?И "И́")
+                (?о "о́") (?О "О́")
+                (?у "у́") (?У "У́")
+                (?ы "ы́") (?Ы "Ы́")
+                (?э "э́") (?Э "Э́")
+                (?ю "ю́") (?Ю "Ю́")
+                (?я "я́") (?Я "Я́"))))
+
+;; Allow searching with Cyrillic translit
+;; https://en.wikipedia.org/wiki/Transliteration
+;; https://en.wikipedia.org/wiki/Romanization_of_Russian#Transliteration_table
+(setq char-fold-include
+      (append char-fold-include
+              '((?а "a")
+                (?б "b")
+                (?в "v" "w")
+                (?г "g")
+                (?д "d")
+                (?е "e")
+                (?ё "jo" "yo")
+                (?ж "v" "zh")
+                (?з "z")
+                (?и "i")
+                (?й "j" "y")
+                (?к "k")
+                (?л "l")
+                (?м "m")
+                (?н "n")
+                (?о "o")
+                (?п "p")
+                (?р "r")
+                (?с "s")
+                (?т "t")
+                (?у "u")
+                (?ф "f")
+                (?х "h")
+                (?ц "c")
+                (?ч "ch")
+                (?ш "sh")
+                (?щ "sch")
+                ;; (?ъ "")
+                (?ы "y")
+                ;; (?ь "")
+                (?э "e")
+                (?ю "ju" "yu")
+                (?я "ja" "ya"))))
+
+(char-fold-update-table)
 
 
 ;;; occur
