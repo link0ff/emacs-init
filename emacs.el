@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-06-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-07-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2514,6 +2514,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key my-map "d" 'vc-dir-in-project-root)
 
+(add-hook 'vc-git-log-edit-mode-hook
+          (lambda ()
+            (setq fill-column 78)
+            (display-fill-column-indicator-mode t)))
+
 
 ;;; text
 
@@ -2800,6 +2805,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map [(shift f7)] 'find-dired)
 
 (define-key dired-mode-map [(control meta ?=)] 'dired-compare-directories)
+
+(defun dired-in-project-root ()
+  "Run `dired' in project root directory."
+  (interactive)
+  (let* ((project (project-current))
+         (root (and project (car (project-roots project)))))
+    (dired (or (and root (file-directory-p root) root) default-directory))))
+
+(define-key ctl-x-map "D" 'dired-in-project-root)
 
 (define-key dired-mode-map [(meta left)]
   ;; Mozilla-like navigation
@@ -3124,13 +3138,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'compilation-mode-hook
             (lambda ()
               ;; (rename-uniquely)
-              (setq buffer-read-only nil)))
-  ;; TODO: add to compile.el
-  (add-hook 'compilation-finish-functions
-            (lambda (cur-buffer _msg)
-              (with-current-buffer cur-buffer
-                ;; Ensure the right number of errors shown in the modeline
-                (font-lock-ensure)))))
+              (setq buffer-read-only nil))))
 
 ;; Create unique buffer name for `compile' and `grep'.
 (setq compilation-buffer-name-function
@@ -4207,6 +4215,7 @@ Cancel the clock if called with C-u."
               shell-command-history
               search-ring
               regexp-search-ring
+              vc-git-history
               wincows-states
               )
             (delq 'register-alist desktop-globals-to-save)))))

@@ -755,6 +755,34 @@ delete flagged files.\n\n"))))))
 	    (string-to-number (or (getenv "HISTSIZE") "32768")))))
 
 
+;;; debbugs
+
+(defun add-debbugs-headers ()
+  "Add debbugs boilerplate in `message-mode'."
+  (interactive)
+  (message-carefully-insert-headers (list (cons 'Bcc "control@debbugs.gnu.org")))
+  ;; (message-sort-headers)
+  (message-goto-body)
+  (let* ((subject (mail-fetch-field "Subject"))
+         (bug (or (and (string-match "[Bb]ug ?#?\\([0-9]+\\)" subject)
+                       (match-string 1 subject))
+                  "###")))
+    (insert (string-join `(,(format "Version: %s" emacs-version)
+                           "Severity: serious important normal minor wishlist"
+                           "Tags: patch wontfix moreinfo unreproducible fixed notabug security confirmed"
+                           "X-Debbugs-Cc:"
+                           ,(format "unarchive %s" bug)
+                           ,(format "reopen %s" bug)
+                           ,(format "severity %s serious important normal minor wishlist" bug)
+                           ,(format "tags %s + patch wontfix moreinfo unreproducible fixed notabug security confirmed" bug)
+                           ,(format "retitle %s ..." bug)
+                           ,(format "found %s %s" bug emacs-version)
+                           ,(format "fixed %s %s" bug emacs-version)
+                           ,(format "close %s %s" bug emacs-version)
+                           "quit|stop|thanks")
+                         "\n") "\n\n")))
+
+
 ;;; generic-x
 
 ;; renamed from `apache-log-generic-mode' (because not suitable for error_log)
