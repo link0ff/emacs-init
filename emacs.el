@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-07-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-07-30 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1316,13 +1316,6 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 
 (setq char-fold-symmetric t)
 
-;; Matching "и" with "й" is wrong in Russian.
-;; TODO: add to char-fold.el defaults
-(setq char-fold-exclude
-      (append char-fold-exclude
-              '((?и "й") (?й "и")
-                (?И "Й") (?Й "И"))))
-
 ;; Allow search to match accented Cyrillic chars, so e.g. in etc/HELLO
 ;; “Здравствуйте” will match “Здра́вствуйте” and vice versa:
 (setq char-fold-include
@@ -2572,7 +2565,23 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (with-eval-after-load 'vc-hooks
   ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
-  (define-key vc-prefix-map "+" 'vc-diff))
+  (define-key vc-prefix-map "+" 'vc-diff)
+  (define-key vc-prefix-map "S" 'vc-log-search))
+
+;; Highlight found occurrences in vc-search-log output buffer.
+;; Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
+(add-hook 'vc-post-command-functions
+          (lambda (_command _files flags)
+            (save-match-data
+              (let* ((matches
+                      (delq nil (mapcar (lambda (flag)
+                                          (and (stringp flag)
+                                               (string-match "^--grep=\\(.*\\)$" flag)
+                                               (match-string 1 flag)))
+                                        flags)))
+                     (match (car matches)))
+                (when match
+                  (highlight-regexp match 'hi-yellow))))))
 
 (with-eval-after-load 'vc-dir
   ;; Because ‘=’ is easily mistyped as ‘+’
@@ -2680,11 +2689,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
       (if (<= (window-start) (point-min))
           (goto-char (point-min))
         (View-scroll-page-backward-set-page-size))))
+
   ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
   (defadvice View-scroll-line-forward (after my-View-scroll-line-forward activate)
     "Fix point position to be at the bottom line."
     (move-to-window-line -1)
-    (beginning-of-line)))
+    (beginning-of-line))
+
+  ;; Remove verbosity from view.el functions (bug#21893):
+  (advice-add 'view-end-message :around
+	      (lambda (orig-fun &rest args)
+	        (let ((inhibit-message t))
+                  (apply orig-fun args)))
+	      '((name . non-verbose-view-end-message))))
 
 
 ;;; doc-view

@@ -66,7 +66,7 @@
            (save-excursion
              (goto-char (point-min))
              ;; If there are at least 10 lines with a leading TAB, use TABs.
-             (re-search-forward "^	" (+ (point) 100000) t 10)))
+             (re-search-forward "^\t" (+ (point) 100000) t 10)))
       (set (make-local-variable 'indent-tabs-mode) t)))
 ;; (add-hook 'find-file-hook 'indent-tabs-mode-maybe)
 
@@ -427,14 +427,6 @@ by doing (clear-string STRING)."
 ;; why sh-mode's mode-class=special?
 ;; if file is read-only, it doesn't come into view mode (qv (after-find-file))
 (put 'sh-mode 'mode-class nil)
-
-
-;;; view
-
-(with-eval-after-load 'view
-  (defun view-end-message ()
-    ;; Don't tell that we are at end of buffer.
-    (goto-char (point-max))))
 
 
 ;;; dired
