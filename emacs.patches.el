@@ -10,12 +10,13 @@
 ;; Customize
 
 ;; customize-save is too slow!!!
+
 
 ;;; info
 
 ;; TODO: change syntax (C-h s in *Info*)
-;; < '               w p	which means: word,
-;; > '               w p	which means: punctuation
+;; < '               w p        which means: word,
+;; > '               w p        which means: punctuation
 
 
 ;;; isearch
@@ -81,7 +82,7 @@
 so that I can correct them."
   (if (and my-show-trailing-whitespace-dirs
            buffer-file-name
-	   (not buffer-read-only)
+           (not buffer-read-only)
            (string-match (concat "^\\(" (mapconcat
                                          'identity
                                          my-show-trailing-whitespace-dirs
@@ -100,6 +101,7 @@ so that I can correct them."
 ;; qv (info "(emacs)Rectangles") !!!
 ;; The right edge of the rectangle does not make
 ;; any difference to this command.
+
 
 ;;; simple.el
 
@@ -251,13 +253,13 @@ by doing (clear-string STRING)."
             (setq-local select-active-regions nil)
             (use-local-map read-passwd-map)
             (setq-local inhibit-modification-hooks nil) ;bug#15501.
-	    (setq-local show-paren-mode nil)		;bug#16091.
+            (setq-local show-paren-mode nil)            ;bug#16091.
             (add-hook 'after-change-functions hide-chars-fun nil 'local)
             ;; (add-hook 'after-change-functions (debounce 1 hide-chars-fun) nil 'local)
             )
         (unwind-protect
             (let ((enable-recursive-minibuffers t)
-		  (read-hide-char (or read-hide-char ?*)))
+                  (read-hide-char (or read-hide-char ?*)))
               (read-string prompt nil t default)) ; t = "no history"
           (when (buffer-live-p minibuf)
             (with-current-buffer minibuf
@@ -280,12 +282,12 @@ by doing (clear-string STRING)."
   (when (and function (symbolp function))
     (add-to-history 'minibuffer-history (symbol-name function))))
 
-(define-advice describe-variable (:before (variable &optional buffer frame))
+(define-advice describe-variable (:before (variable &optional _buffer _frame))
   "Add variable name to the history."
   (when (and variable (symbolp variable))
     (add-to-history 'minibuffer-history (symbol-name variable))))
 
-(define-advice describe-symbol (:before (symbol &optional buffer frame))
+(define-advice describe-symbol (:before (symbol &optional _buffer _frame))
   "Add symbol name to the history."
   (when (and symbol (symbolp symbol))
     (add-to-history 'minibuffer-history (symbol-name symbol))))
@@ -332,17 +334,17 @@ by doing (clear-string STRING)."
   "Keymap to resize windows.")
 (when (fboundp 'advice-add)
   (advice-add 'enlarge-window-horizontally
-	      :after (lambda (&rest _args)
-		       (set-transient-map window-resize-keymap)))
+              :after (lambda (&rest _args)
+                       (set-transient-map window-resize-keymap)))
   (advice-add 'shrink-window-horizontally
-	      :after (lambda (&rest _args)
-		       (set-transient-map window-resize-keymap)))
+              :after (lambda (&rest _args)
+                       (set-transient-map window-resize-keymap)))
   (advice-add 'enlarge-window
-	      :after (lambda (&rest _args)
-		       (set-transient-map window-resize-keymap)))
+              :after (lambda (&rest _args)
+                       (set-transient-map window-resize-keymap)))
   (advice-add 'shrink-window
-	      :after (lambda (&rest _args)
-		       (set-transient-map window-resize-keymap)))
+              :after (lambda (&rest _args)
+                       (set-transient-map window-resize-keymap)))
   (defun window-resize-command ()
     (interactive)
     (message "Use window-resizing keys...")
@@ -358,14 +360,14 @@ by doing (clear-string STRING)."
   (let* ((clearfunsym (make-symbol "clear-temporary-post-command-hook"))
          (clearfun
           `(lambda ()
-	     (unless (eq this-command 'ctl-x-7-prefix-command)
-	       (remove-hook 'post-command-hook ',clearfunsym)
-	       (setq-default display-buffer-overriding-action
-			    ,display-buffer-overriding-action)))))
+             (unless (eq this-command 'ctl-x-7-prefix-command)
+               (remove-hook 'post-command-hook ',clearfunsym)
+               (setq-default display-buffer-overriding-action
+                            ,display-buffer-overriding-action)))))
     (fset clearfunsym clearfun)
     (add-hook 'post-command-hook clearfunsym)
     (setq-default display-buffer-overriding-action
-		'(display-buffer-pop-up-frame))
+                '(display-buffer-pop-up-frame))
     (set-transient-map ctl-x-map)))
 
 (define-key ctl-x-map "7" 'ctl-x-7-prefix-command)
@@ -378,7 +380,7 @@ by doing (clear-string STRING)."
 (defun copy-line (&optional arg)
   "Copy current line `arg' times."
   (interactive "p")
-  (dotimes (var arg)
+  (dotimes (_ arg)
     (beginning-of-line)
     (forward-line 1)
     (insert "\n") ;; (open-line 1) because doesn't work on ChangeLog headers
@@ -397,10 +399,10 @@ by doing (clear-string STRING)."
    (set (make-local-variable 'outline-regexp) "=[^c]")
    (set (make-local-variable 'outline-level)
         (lambda ()
-	  (save-excursion
-	    (cond ((looking-at "=head1") 1)
-		  ((looking-at "=head2") 2)
-		  (t 3)))))))
+          (save-excursion
+            (cond ((looking-at "=head1") 1)
+                  ((looking-at "=head2") 2)
+                  (t 3)))))))
 
 ;; add to generic-x, if not supported by cperl-mode.el
 (define-generic-mode 'pod-generic-mode
@@ -414,11 +416,11 @@ by doing (clear-string STRING)."
           (set (make-local-variable 'outline-regexp) "=[^c]")
           (set (make-local-variable 'outline-level)
                (lambda ()
-		 (save-excursion
-		   (cond ((looking-at "=head1") 1)
-			 ((looking-at "=head2") 2)
-			 ((looking-at "=[^i]") 3)
-			 (t 4)))))))
+                 (save-excursion
+                   (cond ((looking-at "=head1") 1)
+                         ((looking-at "=head2") 2)
+                         ((looking-at "=[^i]") 3)
+                         (t 4)))))))
   "Perl POD documentation files.")
 
 
@@ -450,25 +452,25 @@ by doing (clear-string STRING)."
   "Move down lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
   (interactive "p")
-  (next-line arg)
+  (forward-line arg)
   (if (dired-between-files)
       (progn
-	(goto-char (point-min))
-	;; code borrowed from dired-mark-files-in-region, TODO: make general function
-	(while (and (not (eobp)) (dired-between-files))
-	  (forward-line 1))))
+        (goto-char (point-min))
+        ;; code borrowed from dired-mark-files-in-region, TODO: make general function
+        (while (and (not (eobp)) (dired-between-files))
+          (forward-line 1))))
   (dired-move-to-filename))
 (defun dired-previous-line-cycle (arg)
   "Move up lines then position at filename.
 Optional prefix ARG says how many lines to move; default is one line."
   (interactive "p")
-  (previous-line arg)
+  (forward-line (- arg))
   (beginning-of-line)
   (if (dired-between-files)
       (progn
-	(goto-char (point-max))
-	(while (and (not (bobp)) (dired-between-files))
-	  (forward-line -1))))
+        (goto-char (point-max))
+        (while (and (not (bobp)) (dired-between-files))
+          (forward-line -1))))
   (dired-move-to-filename))
 
 (defun dired-next-dirline-cycle (arg &optional opoint)
@@ -477,16 +479,16 @@ Optional prefix ARG says how many lines to move; default is one line."
   (or opoint (setq opoint (point)))
   ;; go over boundaries back to the beginning
   (if (if (> arg 0)
-	  (or (re-search-forward dired-re-dir nil t arg)
-	      (progn
-		(goto-char (point-min))
-		(re-search-forward dired-re-dir nil t arg)))
-	(beginning-of-line)
-	(or (re-search-backward dired-re-dir nil t (- arg))
-	    (progn
-	      (goto-char (point-max))
-	      (re-search-backward dired-re-dir nil t (- arg)))))
-      (dired-move-to-filename)		; user may type `i' or `f'
+          (or (re-search-forward dired-re-dir nil t arg)
+              (progn
+                (goto-char (point-min))
+                (re-search-forward dired-re-dir nil t arg)))
+        (beginning-of-line)
+        (or (re-search-backward dired-re-dir nil t (- arg))
+            (progn
+              (goto-char (point-max))
+              (re-search-backward dired-re-dir nil t (- arg)))))
+      (dired-move-to-filename)          ; user may type `i' or `f'
     (goto-char opoint)
     ;; (progn (beep) (message "No more subdirectories")) ; message instead of error ?
     (error "No more subdirectories")))
@@ -527,18 +529,19 @@ Optional prefix ARG says how many lines to move; default is one line."
             ;; works only with ls patch
             ;; patched in dired.el:dired-move-to-filename-regexp
             ;; (re-search-forward "\\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\)")
-	    ;; try standard expression
+            ;; try standard expression
             ;; (re-search-forward directory-listing-before-filename-regexp)
             ;; (goto-char (match-beginning 2))
             ;; (forward-char -1)
-            (setq size (string-to-number (replace-regexp-in-string
-				       ;; handle thousand separators in sizes
-				       "," ""
-				       (buffer-substring (save-excursion
-							   ;; (backward-word 1)
-							   (skip-chars-backward "[0-9,.]")
-							   (setq pos (point)))
-							 (point)))))
+            (setq size (string-to-number
+                        (replace-regexp-in-string
+                         ;; handle thousand separators in sizes
+                         "," ""
+                         (buffer-substring (save-excursion
+                                             ;; (backward-word 1)
+                                             (skip-chars-backward "[0-9,.]")
+                                             (setq pos (point)))
+                                           (point)))))
             (goto-char pos)
             (backward-word 1)
             (setq gid (buffer-substring (save-excursion (forward-word 1) (point))
@@ -634,24 +637,24 @@ Then you'll be asked about a number of files to recover."
                              (if (string= "" nd)
                                  directory-files-no-dot-files-regexp
                                (concat "\\`" (regexp-quote nd)))
-			     t)
+                             t)
       (error "No previous sessions to recover")))
   (let ((ls-lisp-support-shell-wildcards t))
     (dired (concat auto-save-list-file-prefix "*")
-	   (concat dired-listing-switches " -t"))
-    (if dired-omit-mode
+           (concat dired-listing-switches " -t"))
+    (if (bound-and-true-p dired-omit-mode)
         (dired-omit-toggle)))
   (use-local-map (nconc (make-sparse-keymap) (current-local-map)))
   (define-key (current-local-map) "\C-c\C-c" 'recover-session-finish)
   (save-excursion
     (goto-char (point-min))
     (or (looking-at " Move to the session you want to recover,")
-	(let ((inhibit-read-only t))
-	  ;; Each line starts with a space
-	  ;; so that Font Lock mode won't highlight the first character.
-	  (insert " To recover a session, move to it and type C-c C-c.\n"
-		  (substitute-command-keys
-		   " To delete a session file, type \
+        (let ((inhibit-read-only t))
+          ;; Each line starts with a space
+          ;; so that Font Lock mode won't highlight the first character.
+          (insert " To recover a session, move to it and type C-c C-c.\n"
+                  (substitute-command-keys
+                   " To delete a session file, type \
 \\[dired-flag-file-deletion] on its line to flag
  the file for deletion, then \\[dired-do-flagged-delete] to \
 delete flagged files.\n\n"))))))
@@ -683,8 +686,8 @@ delete flagged files.\n\n"))))))
 (defun my-set-insert-directory-program ()
   (when (file-remote-p default-directory)
     (setq dired-actual-switches
-	  (replace-regexp-in-string "--block-size='1\\|--group-directories-first" ""
-				    dired-actual-switches))))
+          (replace-regexp-in-string "--block-size='1\\|--group-directories-first" ""
+                                    dired-actual-switches))))
 (add-hook 'dired-before-readin-hook 'my-set-insert-directory-program)
 
 ;; qv http://thread.gmane.org/gmane.emacs.devel/118789
@@ -697,22 +700,22 @@ delete flagged files.\n\n"))))))
 ;; FIX stupid php-mode but this doesn't work
 ;; because php-font-lock-keywords-3 uses syntactic font-lock
 ;; (add-hook 'php-mode-user-hook
-;; 	  (lambda ()
-;; 	    (modify-syntax-entry ?_ "_" php-mode-syntax-table)))
+;;           (lambda ()
+;;             (modify-syntax-entry ?_ "_" php-mode-syntax-table)))
 
 (add-hook 'php-mode-hook
-	  (lambda ()
+          (lambda ()
             (add-to-list 'magic-fallback-mode-alist '("<\\?php" . php-mode))
-	    ;; (modify-syntax-entry ?#  "<\n" php-mode-syntax-table)
-	    ;; (modify-syntax-entry ?\n ">#"  php-mode-syntax-table)
-	    (modify-syntax-entry ?#  "<"     php-mode-syntax-table)
-	    (modify-syntax-entry ?\n ">"     php-mode-syntax-table)
-	    (modify-syntax-entry ?/  ". 124" php-mode-syntax-table)
-	    (modify-syntax-entry ?*  ". 23b" php-mode-syntax-table)
-	    ;; (set (make-local-variable 'comment-start) "# ")
-	    ;; (set (make-local-variable 'comment-end) "")
-	    ;; (set (make-local-variable 'comment-start-skip) "#+ *")
-	    ))
+            ;; (modify-syntax-entry ?#  "<\n" php-mode-syntax-table)
+            ;; (modify-syntax-entry ?\n ">#"  php-mode-syntax-table)
+            (modify-syntax-entry ?#  "<"     php-mode-syntax-table)
+            (modify-syntax-entry ?\n ">"     php-mode-syntax-table)
+            (modify-syntax-entry ?/  ". 124" php-mode-syntax-table)
+            (modify-syntax-entry ?*  ". 23b" php-mode-syntax-table)
+            ;; (set (make-local-variable 'comment-start) "# ")
+            ;; (set (make-local-variable 'comment-end) "")
+            ;; (set (make-local-variable 'comment-start-skip) "#+ *")
+            ))
 
 ;; FROM http://drupal.org/node/59868
 (c-set-offset 'arglist-intro 2)
@@ -723,14 +726,14 @@ delete flagged files.\n\n"))))))
 
 ;; FROM http://thread.gmane.org/gmane.emacs.devel/153647/focus=153682
 (add-hook 'comint-mode-hook
-	  (lambda ()
-	    (require 'compile)
-	    (setq mode-line-process
-		  '(:propertize ":%s" face compilation-mode-line-fail))))
+          (lambda ()
+            (require 'compile)
+            (setq mode-line-process
+                  '(:propertize ":%s" face compilation-mode-line-fail))))
 
 ;; ALSO with exit status:
 (advice-add 'shell-command-sentinel :after
-	    (lambda (process signal)
+	    (lambda (process _signal)
 	      (with-current-buffer (process-buffer process)
 		(setq mode-line-process
 		      `(:propertize ,(format ":%s [%s]" "%s" (process-exit-status process))
@@ -744,7 +747,7 @@ delete flagged files.\n\n"))))))
   ;; next patch should be corrected in eshell-hist-initialize
   (or eshell-history-size
       (setq eshell-history-size
-	    (string-to-number (or (getenv "HISTSIZE") "32768")))))
+            (string-to-number (or (getenv "HISTSIZE") "32768")))))
 
 
 ;;; debbugs
@@ -870,18 +873,18 @@ delete flagged files.\n\n"))))))
   (define-fringe-bitmap 'light-right-arrow [16 8 252 8 16] nil 11 'center)
   (define-fringe-bitmap 'light-left-arrow [32 64 254 64 32] nil nil 'center)
   (setq-default fringe-indicator-alist
-		'((truncation . (light-left-arrow light-right-arrow))
-		  (continuation . (light-left-curly-arrow light-right-curly-arrow))
-		  (overlay-arrow . right-triangle)
-		  (up . light-up-arrow)
-		  (down . light-down-arrow)
-		  (top . (light-top-left-angle top-right-angle))
-		  (bottom . (light-bottom-left-angle bottom-right-angle
-			     top-right-angle light-top-left-angle))
-		  (top-bottom . (light-left-bracket right-bracket
-				 top-right-angle light-top-left-angle))
-		  (empty-line . empty-line)
-		  (unknown . question-mark))))
+                '((truncation . (light-left-arrow light-right-arrow))
+                  (continuation . (light-left-curly-arrow light-right-curly-arrow))
+                  (overlay-arrow . right-triangle)
+                  (up . light-up-arrow)
+                  (down . light-down-arrow)
+                  (top . (light-top-left-angle top-right-angle))
+                  (bottom . (light-bottom-left-angle bottom-right-angle
+                             top-right-angle light-top-left-angle))
+                  (top-bottom . (light-left-bracket right-bracket
+                                 top-right-angle light-top-left-angle))
+                  (empty-line . empty-line)
+                  (unknown . question-mark))))
  ((fboundp 'define-fringe-bitmap)
   ;; OLD fringe customization code:
   ;; bitmaps are from emacs-devel Subject: fringe buffer-boundary bitmaps
@@ -971,40 +974,40 @@ delete flagged files.\n\n"))))))
 ;; This fix uses mnemonics only for familiar codings that are frequently used.
 ;; Otherwise, it displays the full name of the encodings.
 (setq-default mode-line-mule-info
-	      `(""
-		(current-input-method
-		 (:propertize ("" current-input-method-title)
-			      help-echo (concat
-					 ,(purecopy "Current input method: ")
-					 current-input-method
-					 ,(purecopy "\n\
+              `(""
+                (current-input-method
+                 (:propertize ("" current-input-method-title)
+                              help-echo (concat
+                                         ,(purecopy "Current input method: ")
+                                         current-input-method
+                                         ,(purecopy "\n\
 mouse-2: Disable input method\n\
 mouse-3: Describe current input method"))
-			      local-map ,mode-line-input-method-map
-			      mouse-face mode-line-highlight))
-		(:eval
-		 (propertize
-		  (cond
-		   ((not (memq buffer-file-coding-system
-			       '(cyrillic-koi8
-				 cyrillic-koi8-dos
-				 cyrillic-koi8-unix
-				 no-conversion
-				 prefer-utf-8-unix
-				 undecided-unix
-				 utf-8
-				 utf-8-dos
-				 utf-8-emacs
-				 utf-8-emacs-dos
-				 utf-8-emacs-unix
-				 utf-8-unix)))
-		    (replace-regexp-in-string
-		     "-\\(?:dos\\|unix\\)$" ""
-		     (format "%S" buffer-file-coding-system)))
-		   (t "%z"))
-		  'help-echo 'mode-line-mule-info-help-echo
-		  'mouse-face 'mode-line-highlight
-		  'local-map mode-line-coding-system-map))
-		(:eval (mode-line-eol-desc))))
+                              local-map ,mode-line-input-method-map
+                              mouse-face mode-line-highlight))
+                (:eval
+                 (propertize
+                  (cond
+                   ((not (memq buffer-file-coding-system
+                               '(cyrillic-koi8
+                                 cyrillic-koi8-dos
+                                 cyrillic-koi8-unix
+                                 no-conversion
+                                 prefer-utf-8-unix
+                                 undecided-unix
+                                 utf-8
+                                 utf-8-dos
+                                 utf-8-emacs
+                                 utf-8-emacs-dos
+                                 utf-8-emacs-unix
+                                 utf-8-unix)))
+                    (replace-regexp-in-string
+                     "-\\(?:dos\\|unix\\)$" ""
+                     (format "%S" buffer-file-coding-system)))
+                   (t "%z"))
+                  'help-echo 'mode-line-mule-info-help-echo
+                  'mouse-face 'mode-line-highlight
+                  'local-map mode-line-coding-system-map))
+                (:eval (mode-line-eol-desc))))
 
 
