@@ -48,17 +48,19 @@
 
 ;; If not on AC power line, then display battery status on the mode line
 (defvar my-battery-timer nil)
-(when (and (require 'battery nil t) (functionp battery-status-function))
+(when (and (require 'battery nil t)
+           (bound-and-true-p battery-status-function)
+           (functionp battery-status-function))
   (when (and (boundp 'my-battery-timer) (timerp  my-battery-timer))
     (cancel-timer my-battery-timer))
   (setq my-battery-timer
         ;; Check periodically if went off-line and
         ;; discharging battery needs to be displayed
         (run-at-time t 600 (lambda ()
-			     (display-battery-mode
-			      (if (member (cdr (assoc ?L (funcall battery-status-function)))
-					  '("AC" "on-line"))
-				  0 1))))))
+                             (display-battery-mode
+                              (if (member (cdr (assoc ?L (funcall battery-status-function)))
+                                          '("AC" "on-line"))
+                                  0 1))))))
 
 ;; Create display table to modify some display elements
 (or standard-display-table (setq standard-display-table (make-display-table)))
@@ -71,7 +73,7 @@
 ;; (from old code in faces.el in Emacs repo modified for Emacs 23)
 (if (facep 'escape-glyph)
     (let* ((face (lsh (face-id 'escape-glyph) 22)) ;; 22 was 19 in Emacs 22
-           (backslash (+ face ?\\))
+           ;; (backslash (+ face ?\\))
            ;; TRIANGULAR BULLET keeps the default font height
            (dot (+ face #x2023)))
       ;; (aset standard-display-table 2208 (vector backslash ?\s)) ; no-break space
@@ -87,7 +89,8 @@
 (setq print-circle t)
 
 ;; Tabify only initial whitespace
-(setq tabify-regexp "^\t* [ \t]+")
+(with-eval-after-load 'tabify
+  (setq tabify-regexp "^\t* [ \t]+"))
 
 ;; For a new non-file buffer set its major mode based on the buffer name.
 ;; http://thread.gmane.org/gmane.emacs.devel/115520/focus=115794
@@ -232,7 +235,9 @@ i.e. in daylight or under bright electric lamps."
 (defun my-colors-set (&optional frame)
   (interactive)
   (require 'solar)
-  (if (and calendar-latitude calendar-longitude calendar-time-zone)
+  (if (and (bound-and-true-p calendar-latitude)
+           (bound-and-true-p calendar-longitude)
+           (bound-and-true-p calendar-time-zone))
       (let* ((l (solar-sunrise-sunset (calendar-current-date)))
              (sunrise-string (apply 'solar-time-string (car l)))
              (sunset-string (apply 'solar-time-string (car (cdr l))))
@@ -262,9 +267,10 @@ i.e. in daylight or under bright electric lamps."
             (select-frame-set-input-focus frame)))
 
 (advice-add 'make-frame-on-monitor :around
-	    (lambda (orig-fun monitor &optional display parameters)
-	      (funcall orig-fun monitor display '((undecorated . t))))
-	    '((name . make-frame-on-monitor-undecorated)))
+            (lambda (orig-fun monitor &optional display parameters)
+              (funcall orig-fun monitor display
+                       (append '((undecorated . t)) parameters)))
+            '((name . make-frame-on-monitor-undecorated)))
 
 ;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
 (set-frame-parameter nil 'undecorated t)
@@ -453,11 +459,11 @@ i.e. in daylight or under bright electric lamps."
 ;; See bug#28864: 25.3.50; next-error-no-select does select
 ;; (setq next-error-find-buffer-function
 ;;       (lambda (&optional avoid-current extra-test-inclusive extra-test-exclusive)
-;; 	(window-parameter nil 'next-error-buffer)))
+;;      (window-parameter nil 'next-error-buffer)))
 ;; (add-hook 'next-error-hook
-;; 	  (lambda ()
-;; 	    (set-window-parameter
-;; 	     nil 'next-error-buffer next-error-last-buffer)))
+;;        (lambda ()
+;;          (set-window-parameter
+;;           nil 'next-error-buffer next-error-last-buffer)))
 
 ;; TODO: currently key (control escape) is free, bind it to something useful,
 ;; unless it is used by the window manager
@@ -492,36 +498,36 @@ i.e. in daylight or under bright electric lamps."
 
 ;; When M-w (kill-ring-save) is called without region, copy text at point.
 (advice-add 'kill-ring-save :before
-	    (lambda (&rest _args)
-	      (interactive (lambda (spec)
-			     (setq kill-ring-save-set-region-p nil)
-			     (unless (use-region-p)
-			       (let ((bounds (or (bounds-of-thing-at-point 'url)
-						 (bounds-of-thing-at-point 'filename)
-						 (bounds-of-thing-at-point 'symbol)
-						 (bounds-of-thing-at-point 'sexp))))
-				 (unless bounds
-				   (signal 'mark-inactive nil))
-				 (goto-char (car bounds))
-				 (push-mark (cdr bounds) t t)
-				 (setq kill-ring-save-set-region-p t)))
-			     (advice-eval-interactive-spec spec))))
-	    '((name . set-region-if-inactive)))
+            (lambda (&rest _args)
+              (interactive (lambda (spec)
+                             (setq kill-ring-save-set-region-p nil)
+                             (unless (use-region-p)
+                               (let ((bounds (or (bounds-of-thing-at-point 'url)
+                                                 (bounds-of-thing-at-point 'filename)
+                                                 (bounds-of-thing-at-point 'symbol)
+                                                 (bounds-of-thing-at-point 'sexp))))
+                                 (unless bounds
+                                   (signal 'mark-inactive nil))
+                                 (goto-char (car bounds))
+                                 (push-mark (cdr bounds) t t)
+                                 (setq kill-ring-save-set-region-p t)))
+                             (advice-eval-interactive-spec spec))))
+            '((name . set-region-if-inactive)))
 
 ;; Indicate copied region, especially needed when
 ;; the region was activated by the advice above
 (advice-add 'kill-ring-save :after
-	    (lambda (&rest _args)
-	      ;; When the region was set by the advice above,
-	      ;; only then display its text.
-	      (when kill-ring-save-set-region-p
-		(let ((text (substring-no-properties (current-kill 0))))
-		  (message "Copied text \"%s\""
-			   (query-replace-descr ; don't show newlines literally
-			    (if (> (length text) 64)
-				(concat (substring text 0 64) "..." (substring text -16))
-			      text))))))
-	    '((name . indicate-copied-region)))
+            (lambda (&rest _args)
+              ;; When the region was set by the advice above,
+              ;; only then display its text.
+              (when kill-ring-save-set-region-p
+                (let ((text (substring-no-properties (current-kill 0))))
+                  (message "Copied text \"%s\""
+                           (query-replace-descr ; don't show newlines literally
+                            (if (> (length text) 64)
+                                (concat (substring text 0 64) "..." (substring text -16))
+                              text))))))
+            '((name . indicate-copied-region)))
 
 (defvar yank-from-kill-ring-history nil)
 (defun yank-from-kill-ring (string)
@@ -530,17 +536,17 @@ Use minibuffer navigation and search commands to browse the kill-ring
 in the minibuffer history before typing RET to insert the item."
   (interactive
    (list (let ((history-add-new-input nil)
-	       ;; Remove keymaps from text properties of copied string,
-	       ;; because typing RET in the minibuffer might call
-	       ;; an irrelevant command from the map of copied string.
-	       (yank-from-kill-ring-history
+               ;; Remove keymaps from text properties of copied string,
+               ;; because typing RET in the minibuffer might call
+               ;; an irrelevant command from the map of copied string.
+               (yank-from-kill-ring-history
                 (mapcar (lambda (h)
-			  (remove-list-of-text-properties
-			   0 (length h)
-			   '(keymap local-map action mouse-action) h)
-			  h)
-			kill-ring)))
-	   (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
+                          (remove-list-of-text-properties
+                           0 (length h)
+                           '(keymap local-map action mouse-action) h)
+                          h)
+                        kill-ring)))
+           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
   (setq yank-window-start (window-start))
   (push-mark)
   (insert-for-yank string))
@@ -579,7 +585,7 @@ in the minibuffer history before typing RET to insert the item."
         (modifiers '(nil (control) (meta) (control meta))))
     (when input-method
       (activate-input-method input-method))
-    (when (and current-input-method quail-keyboard-layout)
+    (when (and current-input-method (bound-and-true-p quail-keyboard-layout))
       (dolist (map (cdr (quail-map)))
         (let* ((to (car map))
                (from (quail-get-translation
@@ -650,7 +656,6 @@ in the minibuffer history before typing RET to insert the item."
   ;; `C-z -' and `C-z C--' inserts a vertical line.
   (define-key my-map [(control ?-)] (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
   (define-key my-map "-" (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
-  (define-key my-map "p" (lambda () (interactive) (my-shell-command "perl test.pl")))
   ;; TEST: try `C-z C-x C-x C-x C-x ...', try `C-x z C-z C-z C-z' (repeat.el)
   )
 
@@ -722,15 +727,15 @@ in the minibuffer history before typing RET to insert the item."
 
 ;; Allow set-variable to set internal variables, not only customizable ones:
 (advice-add 'set-variable :around
-	    (lambda (orig-fun &rest args)
-	      (interactive (lambda (spec)
-			     (cl-letf (((symbol-function 'custom-variable-p)
+            (lambda (orig-fun &rest args)
+              (interactive (lambda (spec)
+                             (cl-letf (((symbol-function 'custom-variable-p)
                                         (lambda (v)
                                           (and (symbolp v) (boundp v)))))
                                (advice-eval-interactive-spec spec))))
-	      (cl-flet ((custom-variable-p (v) t))
-		(apply orig-fun args)))
-	    '((name . override-custom-variable)))
+              (cl-flet ((custom-variable-p (_v) t))
+                (apply orig-fun args)))
+            '((name . override-custom-variable)))
 
 
 ;;; functions
@@ -853,7 +858,7 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;         (set-window-next-buffers w (nth 2 l))
 ;;         (set-window-prev-buffers w (nth 3 l))))))
 
-(defun my-move-to-window-top (&optional arg)
+(defun my-move-to-window-top ()
   "Position point to the top line of the window."
   (interactive)
   (move-to-window-line 0))
@@ -861,7 +866,7 @@ With C-u, C-0 or M-0, cancel the timer."
 (define-key global-map [(control prior)] 'my-move-to-window-top)
 (define-key global-map [(control kp-prior)] 'my-move-to-window-top)
 
-(defun my-move-to-window-bottom (&optional arg)
+(defun my-move-to-window-bottom ()
   "Position point to the bottom line of the window."
   (interactive)
   (move-to-window-line -1))
@@ -888,9 +893,9 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;                               (window-start)
 ;;                               (save-excursion (beginning-of-line) (point)))
 ;;             arg nil
-;;             recenter-position (/ (float my-recenter-line)
-;;                                  (count-screen-lines
-;;                                   (window-start) (window-end)))))
+;;             my-recenter-position (/ (float my-recenter-line)
+;;                                     (count-screen-lines
+;;                                      (window-start) (window-end)))))
 ;;   (if arg (recenter arg) (recenter my-recenter-line)))
 ;; (put 'my-recenter 'isearch-scroll t)
 ;;
@@ -911,14 +916,17 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; (define-key my-map "\M-r" 'my-move-to-window-line)
 ;; (define-key global-map "\M-r" 'my-move-to-window-line)
 
+(defvar my-recenter-position nil
+  "Default recenter position.")
+
 (when (boundp 'recenter-positions)
-  (setq recenter-position (car recenter-positions)))
+  (setq my-recenter-position (car recenter-positions)))
 
 ;; Instead of the default hook that recenters to the middle of the screen,
 ;; add hooks that recenter to the middle of the top half of the screen
 (defun recenter-top ()
   (interactive)
-  (recenter (round (* recenter-position (window-height)))))
+  (recenter (round (* my-recenter-position (window-height)))))
 
 (add-hook 'xref-after-jump-hook 'reposition-window)
 (add-hook 'xref-after-return-hook 'reposition-window)
@@ -927,18 +935,18 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; Let `C-M-a' (beginning-of-defun) not scroll the window
 ;; when after jump point stays within current window bounds
 (advice-add 'beginning-of-defun :around
-	    (lambda (orig-fun &rest args)
-	      (let ((w-s (window-start))
-		    (w-e (window-end)))
-		(apply orig-fun args)
-		(when (and
-		       ;; Only when used interactively
-		       (eq this-command 'beginning-of-defun)
-		       ;; And only when jumping outside of window
-		       ;; to the center of the window
-		       (or (< (point) w-s) (> (point) w-e)))
-		  (recenter-top))))
-	    '((name . recenter-top)))
+            (lambda (orig-fun &rest args)
+              (let ((w-s (window-start))
+                    (w-e (window-end)))
+                (apply orig-fun args)
+                (when (and
+                       ;; Only when used interactively
+                       (eq this-command 'beginning-of-defun)
+                       ;; And only when jumping outside of window
+                       ;; to the center of the window
+                       (or (< (point) w-s) (> (point) w-e)))
+                  (recenter-top))))
+            '((name . recenter-top)))
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -993,9 +1001,9 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;; (add-hook 'activate-mark-hook (lambda () (setq mark-active-window (selected-window))))
 (advice-add 'activate-mark :after
-	    (lambda (&rest _args)
-	      (setq mark-active-window (selected-window)))
-	    '((name . mark-active-window)))
+            (lambda (&rest _args)
+              (setq mark-active-window (selected-window)))
+            '((name . mark-active-window)))
 
 ;; Can't use deactivate-mark-hook because when clicking mouse in another window
 ;; with the same buffer it calls both activate-mark and deactivate-mark,
@@ -1004,9 +1012,9 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; hook below.  OTOH, the advice is used unconditionally.
 ;; (add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
 (advice-add 'deactivate-mark :after
-	    (lambda (&rest _args)
-	      (setq mark-active-window nil))
-	    '((name . mark-active-window)))
+            (lambda (&rest _args)
+              (setq mark-active-window nil))
+            '((name . mark-active-window)))
 
 (defun redisplay--update-mark-active-window (window)
   (when mark-active-window
@@ -1028,16 +1036,16 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; TODO: try to use ‘add-function’
 (setq isearch-push-state-function
       (lambda ()
-	;; Recenter new search hits outside of window boundaries
+        ;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
-	  ;; reposition-window takes too much time in large buffers
+          ;; reposition-window takes too much time in large buffers
           (if (or (eq major-mode 'fundamental-mode)
                   (> (buffer-size) 1000000))
-	      (recenter-top)
-	    (condition-case nil
-		;; Prevent errors from reposition-window
-		(reposition-window)
-	      (error nil))))
+              (recenter-top)
+            (condition-case nil
+                ;; Prevent errors from reposition-window
+                (reposition-window)
+              (error nil))))
         `(lambda (cmd)
            (when isearch-success
              (set-window-start nil ,(window-start))))))
@@ -1053,14 +1061,14 @@ before searching for the next hit."
   (isearch-push-state))
 
 (advice-add 'isearch-repeat-forward :before
-	    (lambda (&rest _args)
-	      (isearch-refresh-state))
-	    '((name . refresh-state)))
+            (lambda (&rest _args)
+              (isearch-refresh-state))
+            '((name . refresh-state)))
 
 (advice-add 'isearch-repeat-backward :before
-	    (lambda (&rest _args)
-	      (isearch-refresh-state))
-	    '((name . refresh-state)))
+            (lambda (&rest _args)
+              (isearch-refresh-state))
+            '((name . refresh-state)))
 
 ;; Wrap without failing, posted to
 ;; http://stackoverflow.com/questions/285660/automatically-wrapping-i-search#287067
@@ -1086,7 +1094,7 @@ before searching for the next hit."
 ;;        (let ((line (count-screen-lines (point) (window-start))))
 ;;          (or (> line (* (/ (window-height) 4) 3))
 ;;              (< line (* (/ (window-height) 9) 1)))))
-;;       (let ((recenter-position 0.3))
+;;       (let ((my-recenter-position 0.3))
 ;;         (recenter '(4)))))
 
 ;; Automatically reposition every found isearch match
@@ -1154,7 +1162,8 @@ before searching for the next hit."
 ;; TRY to match newlines like in `compare-windows-whitespace':
 (setq search-whitespace-regexp "\\(?:\\s-\\|\n\\)+") ; bug#35802
 ;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
-(setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+")
+(with-eval-after-load 'info
+  (setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+"))
 
 ;; TRY:
 ;; Like `word-search-regexp'
@@ -1206,7 +1215,9 @@ is added to the search string initially if the region is active."
 ;;;; isearch-lazy-hints
 
 (defcustom isearch-lazy-hints nil
-  "Show numeric hints on isearch lazy-highlighted matches.")
+  "Show numeric hints on isearch lazy-highlighted matches."
+  :type 'boolean
+  :group 'lazy-highlight)
 
 (defface isearch-lazy-hint
   '((t :inherit lazy-highlight))
@@ -1255,16 +1266,16 @@ is added to the search string initially if the region is active."
                           isearch-lazy-highlight-overlays)))
       (seq-map-indexed
        (lambda (ov index)
-	 (isearch-lazy-hint (if isearch-forward (overlay-end ov) (overlay-start ov))
+         (isearch-lazy-hint (if isearch-forward (overlay-end ov) (overlay-start ov))
                             (1+ index)))
        (cdr
-	;; Skip the current match
-	(seq-sort-by #'overlay-start (if isearch-forward #'< #'>)
+        ;; Skip the current match
+        (seq-sort-by #'overlay-start (if isearch-forward #'< #'>)
                      (cdr (assq (if isearch-forward 'after 'before)
-				grouped-overlays)))))
+                                grouped-overlays)))))
       (seq-map-indexed
        (lambda (ov index)
-	 (isearch-lazy-hint (if isearch-forward (overlay-start ov) (overlay-end ov))
+         (isearch-lazy-hint (if isearch-forward (overlay-start ov) (overlay-end ov))
                             (- (1+ index))))
        (seq-sort-by #'overlay-start (if isearch-forward #'> #'<)
                     (cdr (assq (if isearch-forward 'before 'after)
@@ -1280,7 +1291,8 @@ is added to the search string initially if the region is active."
 
 ;; (add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
 ;; To clean also after ispell lazy-highlight
-(advice-add 'lazy-highlight-cleanup :after (lambda (&optional _ _) (isearch-lazy-hints-cleanup)))
+(advice-add 'lazy-highlight-cleanup :after (lambda (&optional _force _procrastinate)
+                                             (isearch-lazy-hints-cleanup)))
 
 ;; TODO: add to the end of isearch-lazy-highlight-new-loop
 (add-hook 'isearch-update-post-hook 'isearch-lazy-hints)
@@ -1295,7 +1307,7 @@ is added to the search string initially if the region is active."
 (isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
 Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 
-(defun diff-hunk-to-regexp (string &optional _lax from)
+(defun diff-hunk-to-regexp (string &optional _lax _from)
   (replace-regexp-in-string
    "[[:space:]]+" "[[:space:]]+"
    (replace-regexp-in-string
@@ -1303,8 +1315,8 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
     (regexp-quote string) nil t)))
 
 (add-hook 'diff-mode-hook
-	  (lambda ()
-	    (set (make-local-variable 'search-default-mode) 'diff-hunk-to-regexp)))
+          (lambda ()
+            (set (make-local-variable 'search-default-mode) 'diff-hunk-to-regexp)))
 
 
 ;;; char-fold
@@ -1421,18 +1433,18 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
   "Swap occurrences of FROM-STRING and TO-STRING."
   (interactive
    (let ((common
-	  (query-replace-read-args
-	   (concat "Query swap"
-		   (if current-prefix-arg
-		       (if (eq current-prefix-arg '-) " backward" " word")
-		     "")
-		   (if (use-region-p) " in region" ""))
-	   nil)))
+          (query-replace-read-args
+           (concat "Query swap"
+                   (if current-prefix-arg
+                       (if (eq current-prefix-arg '-) " backward" " word")
+                     "")
+                   (if (use-region-p) " in region" ""))
+           nil)))
      (list (nth 0 common) (nth 1 common) (nth 2 common)
-	   (if (use-region-p) (region-beginning))
-	   (if (use-region-p) (region-end))
-	   (nth 3 common)
-	   (if (use-region-p) (region-noncontiguous-p)))))
+           (if (use-region-p) (region-beginning))
+           (if (use-region-p) (region-end))
+           (nth 3 common)
+           (if (use-region-p) (region-noncontiguous-p)))))
   (perform-replace
    (concat "\\(" (regexp-quote from-string) "\\)\\|" (regexp-quote to-string))
    `(replace-eval-replacement replace-quote (if (match-string 1) ,to-string ,from-string))
@@ -1491,22 +1503,29 @@ if the deleted element was the last in the history list."
 ;; see also PC-temp-minibuffer-message, file-cache-temp-minibuffer-message,
 ;; calc-temp-minibuffer-message and bug report in emacs-pretest-bug
 ;; Subject: bad doc string for PC-temp-minibuffer-message
+;; Actually this is like isearch-count
 (defun minibuffer-history-position-message ()
-  (if (memq this-command '(next-history-element previous-history-element))
+  (if (memq this-command '(next-history-element previous-history-element
+                           next-line-or-history-element previous-line-or-history-element))
       (minibuffer-message
        (propertize
         (format "%s[%s]"
                 (make-string
                  1
-                 ;;              (- (frame-width)
-                 ;;                 (minibuffer-prompt-width)
-                 ;;                 (length (minibuffer-contents-no-properties))
-                 ;;                 5)
+                 ;; (- (frame-width)
+                 ;;    (minibuffer-prompt-width)
+                 ;;    (length (minibuffer-contents-no-properties))
+                 ;;    5)
                  ?\ )
-                minibuffer-history-position) 'face 'shadow))))
+                minibuffer-history-position)
+        'face 'shadow))))
 ;; (defadvice next-history-element (after history-position-message activate)
 ;;   (minibuffer-history-position-message))
 ;; (defadvice previous-history-element (after history-position-message activate)
+;;   (minibuffer-history-position-message))
+;; (defadvice next-line-or-history-element (after history-position-message activate)
+;;   (minibuffer-history-position-message))
+;; (defadvice previous-line-or-history-element (after history-position-message activate)
 ;;   (minibuffer-history-position-message))
 ;; (defadvice goto-history-element (after history-position-message activate)
 ;;   (minibuffer-history-position-message))
@@ -1532,6 +1551,10 @@ The prompt should already have been inserted."
 ;; (defadvice next-history-element (after my-next-history-element activate)
 ;;   (minibuffer-history-position-update))
 ;; (defadvice previous-history-element (after my-previous-history-element activate)
+;;   (minibuffer-history-position-update))
+;; (defadvice next-line-or-history-element (after my-next-history-element activate)
+;;   (minibuffer-history-position-update))
+;; (defadvice previous-line-or-history-element (after my-previous-history-element activate)
 ;;   (minibuffer-history-position-update))
 
 
@@ -1560,7 +1583,8 @@ With prefix arg, insert the current timestamp to the current buffer."
 (define-key my-map     [f5]  'my-info-refresh)
 (define-key global-map [f5]  'my-info-refresh)
 
-(defun my-work-log-add (&optional arg)
+(defvar my-work-log-file)
+(defun my-work-log-add (&optional _arg)
   (interactive "P")
   (find-file my-work-log-file)
   (goto-char (point-max))
@@ -1584,10 +1608,10 @@ With prefix arg, insert the current timestamp to the current buffer."
                          (lambda (a b) (< (overlay-start a)
                                           (overlay-start b)))))
          (oi 0)
-         ;; ois is indexes of overlays sorted by start positions
+         ;; ‘ois’ is indexes of overlays sorted by start positions
          (ois (mapcar (lambda (o) (setq oi (1+ oi)) (cons o oi))
                       overlays))
-         ;; poss is list of positions of boundaries of text properties
+         ;; ‘poss’ is list of positions of boundaries of text properties
          ;; and start and end positions of overlays
          (poss (sort
                 (append
@@ -1602,7 +1626,7 @@ With prefix arg, insert the current timestamp to the current buffer."
                  (mapcar (lambda (o)
                            (list (overlay-end o) 'oe (cdr (assq o ois))))
                          overlays))
-                ;; sort positions in the descending order
+                ;; Sort positions in the descending order
                 (lambda (a b) (if (= (car a) (car b))
                                   ;; for equal positions first no prop
                                   (or (null (cadr b))
@@ -1616,30 +1640,30 @@ With prefix arg, insert the current timestamp to the current buffer."
     (insert s)
     (goto-char p)
     (save-excursion
-      (mapcar (lambda (pos)
-                (goto-char (car pos))
-                ;; insert markup from buffer end to the beginning
-                (cond
-                 ((eq (cadr pos) 'os)
-                  (insert (format "<o%s>" (caddr pos))))
-                 ((eq (cadr pos) 'oe)
-                  (insert (format "</o%s>" (caddr pos))))
-                 ((null (cdr pos))
-                  (insert "</p>"))
-                 (t (let ((props (cdr pos)))
-                      (insert "<p")
-                      (while props
-                        (insert (format " %s=\"" (car props)))
-                        (insert
-                         (cond
-                          ((overlayp (cadr props))
-                           (format "o%s" (cdr (assq (cadr props) ois))))
-                          (t
-                           (format "%s" (cadr props)))))
-                        (insert "\"")
-                        (setq props (cddr props)))
-                      (insert ">")))))
-              poss))
+      (mapc (lambda (pos)
+              (goto-char (car pos))
+              ;; Insert markup from buffer end to the beginning
+              (cond
+               ((eq (cadr pos) 'os)
+                (insert (format "<o%s>" (caddr pos))))
+               ((eq (cadr pos) 'oe)
+                (insert (format "</o%s>" (caddr pos))))
+               ((null (cdr pos))
+                (insert "</p>"))
+               (t (let ((props (cdr pos)))
+                    (insert "<p")
+                    (while props
+                      (insert (format " %s=\"" (car props)))
+                      (insert
+                       (cond
+                        ((overlayp (cadr props))
+                         (format "o%s" (cdr (assq (cadr props) ois))))
+                        (t
+                         (format "%s" (cadr props)))))
+                      (insert "\"")
+                      (setq props (cddr props)))
+                    (insert ">")))))
+            poss))
     (run-hooks 'my-buffer-xray)))
 
 (add-hook 'my-buffer-xray 'html-mode)
@@ -1682,7 +1706,8 @@ goes to the saved location."
       (find-file url)
       (cond
        ((integerp anchor)
-        (goto-line anchor))
+        (goto-char (point-min))
+        (forward-line (1- anchor)))
        ((stringp anchor)
         (goto-char (point-min))
         (if (re-search-forward anchor)
@@ -1899,30 +1924,31 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (with-eval-after-load 'clojure-mode
   (add-hook 'clojure-mode-hook
             (lambda ()
-              (set (make-local-variable 'inferior-lisp-program)
-                   ;; For latest version:
-                   "lein repl"
-                   ;; "java -cp /home/work/java/clojure/jar/clojure-1.7.0-alpha1.jar clojure.main"
-                   ;; "java -cp /home/work/java/clojure/jar/clojure-1.5.0-RC4.jar clojure.main"
-                   ;; For 1.2 with init file:
-                   ;; "java clojure.main -i ~/init.clj"
-                   ;; "java clojure.main"
-                   ;; For OLD version 1.0 (deprecated):
-                   ;; "java -cp clojure.jar clojure.lang.Repl"
-                   ;; For installed version in Ubuntu:
-                   ;; "clojure"
-                   )))
+              (setq-local inferior-lisp-program
+                ;; For latest version:
+                "lein repl"
+                ;; "java -cp /home/work/java/clojure/jar/clojure-1.7.0-alpha1.jar clojure.main"
+                ;; "java -cp /home/work/java/clojure/jar/clojure-1.5.0-RC4.jar clojure.main"
+                ;; For 1.2 with init file:
+                ;; "java clojure.main -i ~/init.clj"
+                ;; "java clojure.main"
+                ;; For OLD version 1.0 (deprecated):
+                ;; "java -cp clojure.jar clojure.lang.Repl"
+                ;; For installed version in Ubuntu:
+                ;; "clojure"
+                )))
 
   ;; FROM https://github.com/weavejester/compojure/wiki/Emacs-indentation
-  (define-clojure-indent
-    (defroutes 'defun)
-    (GET 2)
-    (POST 2)
-    (PUT 2)
-    (DELETE 2)
-    (HEAD 2)
-    (ANY 2)
-    (context 2)))
+  ;; (define-clojure-indent
+  ;;   (defroutes 'defun)
+  ;;   (GET 2)
+  ;;   (POST 2)
+  ;;   (PUT 2)
+  ;;   (DELETE 2)
+  ;;   (HEAD 2)
+  ;;   (ANY 2)
+  ;;   (context 2))
+  )
 
 ;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
 ;; (setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
@@ -1940,6 +1966,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (interactive)
   (run-scheme "snd -notebook" "snd"))
 
+(defvar inferior-lisp-prompt)
 ;; Added "<" for Scheme "#<unspecified>"
 (setq inferior-lisp-prompt "^[^<> \n]*>+:? *")
 
@@ -1990,21 +2017,22 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; (defalias 'perl-mode 'cperl-mode)
 ;; (fset 'perl-mode 'cperl-mode)
 
-(add-to-list
- 'auto-insert-alist
- '(perl-mode
-   nil
-   "#!/usr/bin/perl -w" \n
-   "# -*- Perl -*-" \n
-   ;; "# \$Id\$" \n
-   ;; "# \$RCSfile\$\$Revision\$\$Date\$" \n
-   "# \$Revision\$" \n
-   \n
-   "while (<>) {" \n
-   > "chomp;" \n
-   > _ \n
-   > "print \"$_\\n\";\n"
-   "}\n"))
+(with-eval-after-load 'autoinsert
+  (add-to-list
+   'auto-insert-alist
+   '(perl-mode
+     nil
+     "#!/usr/bin/perl -w" \n
+     "# -*- Perl -*-" \n
+     ;; "# \$Id\$" \n
+     ;; "# \$RCSfile\$\$Revision\$\$Date\$" \n
+     "# \$Revision\$" \n
+     \n
+     "while (<>) {" \n
+     > "chomp;" \n
+     > _ \n
+     > "print \"$_\\n\";\n"
+     "}\n")))
 
 (tempo-define-template "perl-skeleton"
  '("#!/usr/bin/perl -w\n# -*- Perl -*-\n# \$Revision\$\n\nwhile (<>) {\n  chomp;\n  "
@@ -2060,14 +2088,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; prolog
 
-(setq prolog-system 'swi)
-(setq prolog-indent-width 8)
-(setq prolog-electric-dot-flag t)
-(setq prolog-program-switches
-  '((sicstus ("-i"))
-    (swi ("-G8M"))
-    (t nil)))
-(setq prolog-info-predicate-index "(prolog)Predicates188")
+(with-eval-after-load 'prolog
+  (setq prolog-system 'swi)
+  (setq prolog-indent-width 8)
+  (setq prolog-electric-dot-flag t)
+  (setq prolog-program-switches
+        '((sicstus ("-i"))
+          (swi ("-G8M"))
+          (t nil)))
+  (setq prolog-info-predicate-index "(prolog)Predicates188"))
 
 ;; Use better prolog-mode from http://www.emacswiki.org/emacs/PrologMode
 ;; renamed here to prolog2.el
@@ -2079,12 +2108,13 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; (setq outline-regexp "[0-9]+ \\?-") ; for *prolog*
 (setq auto-mode-alist
       (append '(
-               ;; ("\\.pl?\\'" . 'prolog-mode) ; SWI Prolog
-               ;; pl files in *prolog* dir are Prolog files
-               ("prolog.*\\.pl?\\'" . prolog-mode) ; SWI Prolog
-               ("\\.[Pp][Rr][Oo]\\'" . prolog-mode)
-               ("\\.ari\\'" . prolog-mode) ; Arity Prolog
-               ) auto-mode-alist))
+                ;; ("\\.pl?\\'" . 'prolog-mode) ; SWI Prolog
+                ;; pl files in *prolog* dir are Prolog files
+                ("prolog.*\\.pl?\\'" . prolog-mode) ; SWI Prolog
+                ("\\.[Pp][Rr][Oo]\\'" . prolog-mode)
+                ("\\.ari\\'" . prolog-mode) ; Arity Prolog
+                )
+              auto-mode-alist))
 
 ;; Resolve file extension conflict between Octave and Mercury Prolog
 ;; in favor of Mercury Prolog
@@ -2131,7 +2161,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
    (set (make-local-variable 'outline-level) (lambda () 1))))
 
 (defun my-search-prolog-doc-at-point ()
-  (let* ((wordchars "a-zA-Z_0-9")
+  (let* (;;(wordchars "a-zA-Z_0-9")
          (str
           (concat "\^L\n\n"
                   (current-word)
@@ -2173,9 +2203,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; TODO: for Yaws templates use mumamo with erlang-mode and html-mode
 (add-to-list 'auto-mode-alist '("\\.yaws\\'" . erlang-mode))
 
-(setq erlang-inferior-shell-split-window nil)
-
 (with-eval-after-load 'erlang
+  (setq erlang-inferior-shell-split-window nil)
   (add-hook 'erlang-mode-hook
             (lambda ()
               (setq tab-width 2)
@@ -2203,10 +2232,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;; These are needed to set before loading sgml-mode.el:
 ;; (setq sgml-quick-keys t)
-(setq html-quick-keys t)
 (with-eval-after-load 'sgml-mode
+  (setq html-quick-keys t)
+  (defvar sgml-mode-syntax-table)
   (modify-syntax-entry ?. "." sgml-mode-syntax-table)
   (modify-syntax-entry ?: "." sgml-mode-syntax-table)
+  (defvar html-tag-face-alist)
   (setq html-tag-face-alist (append '(("a" . underline))
                                     html-tag-face-alist)))
 
@@ -2300,12 +2331,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'ruby-mode-hook
             (lambda ()
               (set (make-local-variable 'require-final-newline) nil)
-	      ;; Don't enable flymake-mode in read-only buffers
-	      (flymake-mode 1)
-	      (add-hook 'view-mode-hook
-			(lambda ()
-			  (flymake-mode (if view-mode -1 1)))
-			nil t))))
+              ;; Don't enable flymake-mode in read-only buffers
+              (flymake-mode 1)
+              (add-hook 'view-mode-hook
+                        (lambda ()
+                          (flymake-mode (if view-mode -1 1)))
+                        nil t))))
 
 (with-eval-after-load 'flymake
   (define-key flymake-mode-map [left-fringe mouse-1]
@@ -2460,16 +2491,16 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; this is old and bad
 ;; (defun my-outline-hide-entry-or-subtree ()
 ;;   (interactive)
-;;   (if (save-excursion (next-line 1) (looking-at outline-regexp))
+;;   (if (save-excursion (forward-line 1) (looking-at outline-regexp))
 ;;       ;; (save-excursion (outline-end-of-heading) (outline-visible))
 ;;       (outline-hide-subtree)
 ;;     (progn (outline-hide-entry) (beginning-of-line))))
 
 (defun my-outline-hide-entry-or-subtree ()
   (interactive)
-  (if (save-excursion (next-line 1) (or (looking-at outline-regexp) (eobp)))
+  (if (save-excursion (forward-line 1) (or (looking-at outline-regexp) (eobp)))
       (if (>= (funcall outline-level)
-              (save-excursion (next-line 1)
+              (save-excursion (forward-line 1)
                               (or (and (eobp) 0) (funcall outline-level))))
           (if (= (funcall outline-level) 1)
               (goto-char (point-min))
@@ -2482,7 +2513,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (if (save-excursion
         (re-search-forward (concat "\n\\(" outline-regexp "\\)")
                            (save-excursion
-                             (outline-next-visible-heading 1) ; (next-line 1)
+                             (outline-next-visible-heading 1) ; (forward-line 1)
                              (point))
                            t))
       (outline-show-children)
@@ -2520,11 +2551,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'log-view-mode-hook 'rename-uniquely)
 
   (add-hook 'diff-mode-hook
-	    (lambda ()
-	      (set (make-local-variable 'beginning-of-defun-function)
-		   #'diff-beginning-of-hunk)
-	      (set (make-local-variable 'end-of-defun-function)
-		   #'diff-end-of-hunk)))
+            (lambda ()
+              (set (make-local-variable 'beginning-of-defun-function)
+                   #'diff-beginning-of-hunk)
+              (set (make-local-variable 'end-of-defun-function)
+                   #'diff-end-of-hunk)))
 
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
@@ -2645,18 +2676,18 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (save-excursion
       (goto-char beg)
       (while (and (< (point) end)
-		  (re-search-forward end-spc-re end t))
+                  (re-search-forward end-spc-re end t))
         (unless (or (>= (point) end)
-                    (looking-back "[[:space:]]\\{2\\}\\|\n"))
+                    (looking-back "[[:space:]]\\{2\\}\\|\n" 3))
           (insert " "))))))
 
 (advice-add 'fill-paragraph :before
-	    (lambda (&rest _args)
-	      (when (use-region-p)
+            (lambda (&rest _args)
+              (when (use-region-p)
                 (canonically-double-space-region
                  (region-beginning)
                  (region-end))))
-	    '((name . fill-paragraph-double-space)))
+            '((name . fill-paragraph-double-space)))
 
 
 ;;; view
@@ -2698,10 +2729,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
   ;; Remove verbosity from view.el functions (bug#21893):
   (advice-add 'view-end-message :around
-	      (lambda (orig-fun &rest args)
-	        (let ((inhibit-message t))
+              (lambda (orig-fun &rest args)
+                (let ((inhibit-message t))
                   (apply orig-fun args)))
-	      '((name . non-verbose-view-end-message))))
+              '((name . non-verbose-view-end-message))))
 
 
 ;;; doc-view
@@ -2776,9 +2807,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'imagemagick-enabled-types 'WEBP)
 
 (advice-add 'imagemagick-types :around
-	    (lambda (orig-fun &rest args)
-	      (append (apply orig-fun args) '(WEBP)))
-	    '((name . add-webp)))
+            (lambda (orig-fun &rest args)
+              (append (apply orig-fun args) '(WEBP)))
+            '((name . add-webp)))
 
 (imagemagick-register-types)
 
@@ -2861,8 +2892,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;; The following two bindings allow to quickly look to the file and return back
 ;; to dired by pressing [f3] twice (same keys are used in Midnight Commander)
-(define-key dired-mode-map [f3]
-  (lambda () (interactive) (let (dired-view-command-alist) (dired-view-file))))
+(define-key dired-mode-map [f3] 'dired-view-file)
 (define-key global-map [f3] 'kill-current-buffer)
 (define-key global-map [(control f3)] 'kill-current-buffer-and-dired-jump)
 (define-key dired-mode-map [(shift f3)] 'dired-find-file-literally)
@@ -2910,7 +2940,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key dired-mode-map [(meta left)]
   ;; Mozilla-like navigation
-  (lambda (arg)
+  (lambda (_arg)
      (interactive "P")
      (if (not (and (memq ?R (append dired-actual-switches nil))
                    (dired-between-files)))
@@ -2921,19 +2951,18 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key dired-mode-map [(meta right)]
   ;; Mozilla-like navigation
-  (lambda (arg)
+  (lambda (_arg)
      (interactive "P")
-     (let (dired-view-command-alist)
-       (if (not (and (memq ?R (append dired-actual-switches nil))
-                     (dired-between-files)))
-           (dired-view-file)
-         (if (dired-subdir-hidden-p (dired-current-directory))
-             (progn (dired-hide-subdir 1)
-                    (dired-prev-subdir 1)
-                    (dired-next-line 4))
-           (dired-view-file))))))
+     (if (not (and (memq ?R (append dired-actual-switches nil))
+                   (dired-between-files)))
+         (dired-view-file)
+       (if (dired-subdir-hidden-p (dired-current-directory))
+           (progn (dired-hide-subdir 1)
+                  (dired-prev-subdir 1)
+                  (dired-next-line 4))
+         (dired-view-file)))))
 
-(defun my-dired-move-to-next-dir (arg)
+(defun my-dired-move-to-next-dir (_arg)
   (interactive "P")
   (if (not (memq ?R (append dired-actual-switches nil)))
       (dired-next-dirline-cycle 1)
@@ -2942,7 +2971,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map [(control meta down)] 'my-dired-move-to-next-dir)
 (define-key dired-mode-map [tab] 'my-dired-move-to-next-dir) ;'other-window
 
-(defun my-dired-move-to-prev-dir (arg)
+(defun my-dired-move-to-prev-dir (_arg)
   (interactive "P")
   (if (not (memq ?R (append dired-actual-switches nil)))
       (dired-prev-dirline-cycle 1)
@@ -2951,7 +2980,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map [(control meta up)] 'my-dired-move-to-prev-dir)
 (define-key dired-mode-map [(shift iso-lefttab)] 'my-dired-move-to-prev-dir)
 
-(defun my-dired-do-shell-command-on-current-file (&optional arg)
+(defun my-dired-do-shell-command-on-current-file ()
   "Run a shell command on the current file instead of marked files."
   (interactive)
   (let ((dired-marker-char ?M))         ; ?M is unused marker char
@@ -3014,15 +3043,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key dired-mode-map "q" 'quit-window-kill-buffer)
 
 (add-hook 'dired-after-readin-hook
-	  (lambda ()
-	    ;; Set name of dired buffers to absolute directory name.
-	    ;; Use `generate-new-buffer-name' for vc-directory
-	    ;; which creates duplicate buffers.
+          (lambda ()
+            ;; Set name of dired buffers to absolute directory name.
+            ;; Use `generate-new-buffer-name' for vc-directory
+            ;; which creates duplicate buffers.
             ;; SEE ALSO http://emacs.stackexchange.com/questions/2123/how-can-i-make-dired-buffer-names-include-the-full-path
-	    ;; TODO: Add this feature to `dired-internal-noselect' instead
-	    ;; of `(create-file-buffer (directory-file-name dirname))'.
-	    (when (stringp dired-directory)
-	      ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
+            ;; TODO: Add this feature to `dired-internal-noselect' instead
+            ;; of `(create-file-buffer (directory-file-name dirname))'.
+            (when (stringp dired-directory)
+              ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
               (rename-buffer (generate-new-buffer-name dired-directory)))))
 
 (add-hook 'dired-mode-hook
@@ -3076,10 +3105,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; locate
 
-;; Redefine `locate-default-make-command-line'.
-(defun locate-make-command-line-ignore-case (search-string)
-  (list locate-command "-i" search-string))
-(setq locate-make-command-line 'locate-make-command-line-ignore-case)
+(with-eval-after-load 'locate
+  ;; Redefine `locate-default-make-command-line'.
+  (defun locate-make-command-line-ignore-case (search-string)
+    (list locate-command "-i" search-string))
+  (setq locate-make-command-line 'locate-make-command-line-ignore-case))
 
 ;; Highlight all matches in the *Locate* buffer like in the *Occur* buffer
 (add-hook
@@ -3130,22 +3160,22 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
       (interactive "p")
       ;; (let* ((proc (get-buffer-process (current-buffer)))))
       (cond ((and (eobp)
-		  (save-excursion
-		    (let ((inhibit-field-text-motion t))
-		      (goto-char (line-beginning-position))
-		      (looking-at-p "^iex.*>\s*$"))))
-	     (let ((process (get-buffer-process (current-buffer))))
-	       (process-send-string process ":init.stop()\n")))
-	    ((and (eobp)
-		  (save-excursion
-		    (let ((inhibit-field-text-motion t))
-		      (goto-char (line-beginning-position))
-		      ;; e.g. “dev:cljs.user=> ”
-		      (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
-	     (let ((process (get-buffer-process (current-buffer))))
-	       (process-send-string process ":cljs/quit\n")))
-	    (t
-	     (comint-delchar-or-maybe-eof arg))))))
+                  (save-excursion
+                    (let ((inhibit-field-text-motion t))
+                      (goto-char (line-beginning-position))
+                      (looking-at-p "^iex.*>\s*$"))))
+             (let ((process (get-buffer-process (current-buffer))))
+               (process-send-string process ":init.stop()\n")))
+            ((and (eobp)
+                  (save-excursion
+                    (let ((inhibit-field-text-motion t))
+                      (goto-char (line-beginning-position))
+                      ;; e.g. “dev:cljs.user=> ”
+                      (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
+             (let ((process (get-buffer-process (current-buffer))))
+               (process-send-string process ":cljs/quit\n")))
+            (t
+             (comint-delchar-or-maybe-eof arg))))))
 
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
@@ -3235,27 +3265,29 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;; Create unique buffer name for `compile' and `grep'.
 (setq compilation-buffer-name-function
-      (lambda (mode-name)
+      (lambda (name-of-mode)
         (generate-new-buffer-name
-         (concat "*" (downcase mode-name) "*"))))
+         (concat "*" (downcase name-of-mode) "*"))))
 
 ;; Currently NOT USED
-(defun my-compilation-buffer-name-function (mode-name)
+(defun my-compilation-buffer-name-function (name-of-mode)
   (cond
-   ((and (eq mode-command major-mode)
+   ((and (bound-and-true-p mode-command)
+         (eq mode-command major-mode)
          (eq major-mode (nth 1 compilation-arguments)))
     (buffer-name))
    ((let ((window-buffers
            (delete-dups
             (delq nil (mapcar (lambda (w)
                                 (with-current-buffer (window-buffer w)
-                                  (if (eq mode-command major-mode)
+                                  (if (and (bound-and-true-p mode-command)
+                                           (eq mode-command major-mode))
                                       (window-buffer w))))
                               (window-list))))))
       (if (eq (length window-buffers) 1)
           (car window-buffers))))
    ((generate-new-buffer-name
-     (concat "*" (downcase mode-name) "*")))))
+     (concat "*" (downcase name-of-mode) "*")))))
 (if (boundp 'mode-command)
     (setq compilation-buffer-name-function
           'my-compilation-buffer-name-function))
@@ -3364,10 +3396,10 @@ Example:
 (with-eval-after-load 'xref
   (defvar xref--original-command nil)
   (advice-add 'xref-find-definitions :after
-	      (lambda (&rest _args)
+              (lambda (&rest _args)
                 (with-current-buffer (window-buffer)
                   (setq-local xref--original-command 'xref-find-definitions)))
-	      '((name . from-xref-find-definitions)))
+              '((name . from-xref-find-definitions)))
   (define-key xref--button-map [(control ?m)]
     (lambda ()
       (interactive)
@@ -3580,7 +3612,7 @@ then output is inserted in the current buffer."
               (widget-create 'link
                              :format (concat "%[" link-text "%]")
                              :button-face 'info-xref
-                             :notify (lambda (widget &rest ignore)
+                             :notify (lambda (widget &rest _ignore)
                                        (push (widget-value widget) my-dict-history)
                                        (my-dict-search-word (widget-value widget)))
                              :button-prefix ""
@@ -3591,9 +3623,6 @@ then output is inserted in the current buffer."
           ;; (toggle-read-only 1) ;; don't use view mode, but instead use its keymap
           ;; Is it right? (another solution is in help-mode-hook)
           (select-window (get-buffer-window new-buffer-name))
-          (setq view-return-to-alist
-                (list (cons (selected-window)
-                            (cons (next-window (selected-window)) t))))
           ;; Make major or minor mode for *Dictionary <word>* buffers
           ;; TODO: use (local-set-key) instead
           ;; (use-local-map widget-keymap)
@@ -3785,7 +3814,7 @@ then output is inserted in the current buffer."
 
 (add-hook
  'w3m-display-hook
- (lambda (url)
+ (lambda (_url)
    ;; But better idea is to display these names only in the buffer list
    (rename-buffer
     (generate-new-buffer-name
@@ -3896,13 +3925,13 @@ then output is inserted in the current buffer."
   (add-hook 'gnus-group-mode-hook
             (lambda ()
               ;; I don't need line and column numbers in the group buffer
-              (set (make-variable-buffer-local 'line-number-mode) nil)
-              (set (make-variable-buffer-local 'column-number-mode) nil)))
+              (setq-local line-number-mode nil)
+              (setq-local column-number-mode nil)))
   (add-hook 'gnus-summary-mode-hook
             (lambda ()
               ;; I don't need line and column numbers in the summary buffer
-              (set (make-variable-buffer-local 'line-number-mode) nil)
-              (set (make-variable-buffer-local 'column-number-mode) nil)))
+              (setq-local line-number-mode nil)
+              (setq-local column-number-mode nil)))
   ;; Zebra stripes for the summary buffer
   ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
   ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
@@ -3911,13 +3940,13 @@ then output is inserted in the current buffer."
 (with-eval-after-load 'gnus-art
   ;; Set more human-readable time units:
   (setq article-time-units
-	`((year   . ,(* 60 60 24 365.25))
-	  (month  . ,(* 60 60 24 30))
-	  (week   . ,(* 60 60 24 7))
-	  (day    . ,(* 60 60 24))
-	  (hour   . ,(* 60 60))
-	  (minute .     60)
-	  (second .     1)))
+        `((year   . ,(* 60 60 24 365.25))
+          (month  . ,(* 60 60 24 30))
+          (week   . ,(* 60 60 24 7))
+          (day    . ,(* 60 60 24))
+          (hour   . ,(* 60 60))
+          (minute .     60)
+          (second .     1)))
   ;; I'm curious about what news readers do people use (Gnus or not ;)
   (setq gnus-visible-headers
         (append
@@ -3942,11 +3971,11 @@ then output is inserted in the current buffer."
   ;; Put point after headers, so TAB will browse article buttons
   (add-hook 'gnus-article-prepare-hook
             (lambda ()
-	      (let ((window (get-buffer-window gnus-article-buffer)))
-		(when window
-		  (with-current-buffer (window-buffer window)
-		    ;; (forward-paragraph)
-		    (set-window-point window (point))))))
+              (let ((window (get-buffer-window gnus-article-buffer)))
+                (when window
+                  (with-current-buffer (window-buffer window)
+                    ;; (forward-paragraph)
+                    (set-window-point window (point))))))
             t)
   ;; Shift-Space to scroll back (already added in bug#2145).
   ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
@@ -3968,7 +3997,7 @@ then output is inserted in the current buffer."
     (widget-button-press (point))))
 
 ;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
-(defun my-gnus-copy-link-gnu-lists (&optional arg)
+(defun my-gnus-copy-link-gnu-lists (&optional _arg)
   "Put the link to the article in the GNU archives into the kill ring.
 Example:
 \(browse-url (concat \"http://lists.gnu.org/archive/cgi-bin/namazu.cgi?idxname=\"
@@ -3997,7 +4026,7 @@ Example:
 
 ;; Actually, the above is not needed due to the supported url scheme like
 ;; http://thread.gmane.org/<Message-ID>
-(defun my-gnus-copy-link-gmane (&optional arg)
+(defun my-gnus-copy-link-gmane (&optional _arg)
   "Put the link to the article on gmane.org into the kill ring.
 Example:
 \(browse-url (concat \"http://thread.gmane.org/\"
@@ -4047,9 +4076,9 @@ The difference between N and the number of articles ticked is returned."
 (add-hook 'message-mode-hook
           (lambda ()
             (auto-fill-mode 1)
-	    ;; Support search of `symbol'
-	    (modify-syntax-entry ?` "'   " message-mode-syntax-table)
-	    (modify-syntax-entry ?' "'   " message-mode-syntax-table)
+            ;; Support search of `symbol'
+            (modify-syntax-entry ?` "'   " message-mode-syntax-table)
+            (modify-syntax-entry ?' "'   " message-mode-syntax-table)
             ;; Prevent premature sending when `C-c C-s'
             ;; is typed instead of `C-x C-s'
             (define-key message-mode-map "\C-c\C-s" nil)))
