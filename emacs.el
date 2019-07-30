@@ -1384,6 +1384,36 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 (char-fold-update-table)
 
 
+;;; text-property-search
+
+;; Better interactive arguments for text-property-search-forward (see bug#36486)
+(defun search-text-property (property &optional value predicate not-immediate)
+  "Same as `text-property-search-forward', but better interactive arguments.
+Added support for reading the second argument VALUE that allows reading
+symbols as well as strings.  Unlike `text-property-search-forward', this
+command can find combined text properties, e.g. can find the property
+`face' and the value `hi-yellow' in the buffer with the text property
+containing the list of values `(hi-yellow font-lock-keyword-face)'.
+Also ensure the whole buffer is fontified by `font-lock' to be able
+to find all text properties with font-lock face."
+  (interactive
+   (let* ((property (completing-read "Search for property: " obarray))
+          (property (when (> (length property) 0)
+                      (intern property obarray)))
+          (value (when property
+                   (read-from-minibuffer "Search for property value (quote strings): "
+                                         nil nil t nil "nil"))))
+     (list property value)))
+  (font-lock-ensure)
+  (text-property-search-forward property value
+                                (or predicate
+                                    (lambda (val p-val)
+                                      (if (and (listp p-val) (not (listp val)))
+                                          (member val p-val)
+                                        (equal val p-val))))
+                                not-immediate))
+
+
 ;;; occur
 
 ;; Make *Occur* buffer names unique and writable
@@ -1687,30 +1717,33 @@ goes to the saved location."
                 (concat "(qv "
                         (cond
                          (buffer-file-name
-                          (format "\"%s\"\n    \"^%s$\"" ;; "\"%s\" %s"
+                          (format "\"%s\"\n    \"%s\"" ;; "\"%s\" %s"
                                   buffer-file-name
                                   ;;(line-number-at-pos)
                                   (replace-regexp-in-string
-                                   "^[ \t]*" "[ \t]*"
-                                   (replace-regexp-in-string
-                                    "\"" "\\\\\""
-                                    (replace-regexp-in-string
-                                     "\\\\" "\\\\\\\\"
-                                     (regexp-quote
-                                      (buffer-substring-no-properties
-                                       (line-beginning-position)
-                                       (line-end-position)))))))))
+                                   "^\\s-*" ""
+                                   (buffer-substring-no-properties
+                                    (line-beginning-position)
+                                    (line-end-position))))))
                         ")")))
     (cond
      ((file-exists-p url)
       (find-file url)
       (cond
+       ;; Line number
        ((integerp anchor)
         (goto-char (point-min))
         (forward-line (1- anchor)))
-       ((stringp anchor)
+       ;; Line regexp
+       ((and (stringp anchor)
+             (string-match-p "^^" anchor))
         (goto-char (point-min))
         (if (re-search-forward anchor)
+            (goto-char (match-beginning 0))))
+       ;; Line string
+       ((stringp anchor)
+        (goto-char (point-min))
+        (if (re-search-forward (format "^\\s-*%s$" (regexp-quote anchor)))
             (goto-char (match-beginning 0)))))))))
 
 
@@ -2024,9 +2057,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      nil
      "#!/usr/bin/perl -w" \n
      "# -*- Perl -*-" \n
-     ;; "# \$Id\$" \n
-     ;; "# \$RCSfile\$\$Revision\$\$Date\$" \n
-     "# \$Revision\$" \n
+     ;; "# $Id$" \n
+     ;; "# $RCSfile$$Revision$$Date$" \n
+     "# $Revision$" \n
      \n
      "while (<>) {" \n
      > "chomp;" \n
@@ -2035,7 +2068,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      "}\n")))
 
 (tempo-define-template "perl-skeleton"
- '("#!/usr/bin/perl -w\n# -*- Perl -*-\n# \$Revision\$\n\nwhile (<>) {\n  chomp;\n  "
+ '("#!/usr/bin/perl -w\n# -*- Perl -*-\n# $Revision$\n\nwhile (<>) {\n  chomp;\n  "
    p "\n}\n"))
 (tempo-define-template "perl-s-skeleton" '("s/" p "//;"))
 (tempo-define-template "perl-print-skeleton" '("print \"$_" p "\\n\";"))
@@ -4038,7 +4071,7 @@ Example:
          (with-current-buffer gnus-original-article-buffer
            (replace-regexp-in-string
             "^<\\(.*\\)>$" "\\1" (gnus-fetch-field "message-id"))))
-        (text-template "\(browse-url (concat \"http://thread.gmane.org/\"\
+        (text-template "(browse-url (concat \"http://thread.gmane.org/\"\
  (url-hexify-string \"%s\")))")
         (text))
     (setq text (format text-template message-id))

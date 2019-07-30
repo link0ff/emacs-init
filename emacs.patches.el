@@ -611,7 +611,7 @@ Optional prefix ARG says how many lines to move; default is one line."
                                              (reverse
                                               (string-to-list
                                                (replace-regexp-in-string
-                                                "\.0$" ""
+                                                ".0$" ""
                                                 (number-to-string
                                                  total-size)))))))))))
       (message "Marked %s files with %s bytes" total-count total-size-str))))
