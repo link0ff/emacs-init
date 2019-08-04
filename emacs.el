@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-07-30 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-08-04 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1113,6 +1113,12 @@ before searching for the next hit."
 
 (put 'toggle-truncate-lines 'isearch-scroll t)
 (put 'comint-show-output 'isearch-scroll t) ;; bound to `C-M-l'
+
+;; Mostly for `C-s M-s o'
+(put 'windmove-display-up    'isearch-scroll t)
+(put 'windmove-display-down  'isearch-scroll t)
+(put 'windmove-display-left  'isearch-scroll t)
+(put 'windmove-display-right 'isearch-scroll t)
 
 (define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
 (define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
@@ -2663,9 +2669,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (define-key my-map "d" 'vc-dir-in-project-root)
 
+;; TODO: better to add to .dir-locals.el (bug#36861)
 (add-hook 'vc-git-log-edit-mode-hook
           (lambda ()
-            (setq fill-column 78)
+            (setq display-fill-column-indicator-column 78)
             (display-fill-column-indicator-mode t)))
 
 
@@ -3426,6 +3433,8 @@ Example:
   (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
                   (buffer-name (window-buffer))))
 
+;; Use this keybinding only in buffers created by xref-find-definitions,
+;; but not by e.g. project-find-regexp
 (with-eval-after-load 'xref
   (defvar xref--original-command nil)
   (advice-add 'xref-find-definitions :after
@@ -4027,7 +4036,7 @@ then output is inserted in the current buffer."
           ;; or point is on the bottom of the window while scrolling
           (eq (point) (save-excursion (move-to-window-line -1) (point))))
       (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
-    (widget-button-press (point))))
+    (gnus-article-press-button)))
 
 ;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
 (defun my-gnus-copy-link-gnu-lists (&optional _arg)
