@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-08-04 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-08-06 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -3756,6 +3756,13 @@ then output is inserted in the current buffer."
               (outline-minor-mode 1)
               ;; (define-key dictem-mode-map [(meta left)]  'my-dictem-prev-word?)
               (define-key dictem-mode-map [(meta right)] 'my-dictem-run-search)))
+
+  ;; Stupid bug pushes an empty string to kill-ring
+  (advice-add 'dictem-base-do-default-server :around
+              (lambda (orig-fun &rest args)
+                (let (kill-ring kill-ring-yank-pointer)
+                  (apply orig-fun args)))
+              '((name . dictem-base-do-default-server-no-kill-ring)))
 
   (setq dictem-use-existing-buffer t)
   (setq dictem-empty-initial-input t))

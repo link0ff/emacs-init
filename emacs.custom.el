@@ -287,7 +287,7 @@
  '(diff-refine-added ((t (:inherit diff-refine-changed :background "#ccffcc"))))
  '(diff-refine-removed ((t (:inherit diff-refine-changed :background "#ffdddd"))))
  '(dired-directory ((t (:inherit link :underline nil))))
- '(dired-socket ((t (:foreground "Sienna"))))
+ '(dired-special ((t (:foreground "Sienna"))))
  '(eshell-prompt ((t (:foreground "DarkRed" :underline t :weight normal))))
  '(font-lock-builtin-face ((((class color) (background light)) (:foreground "Sienna")) (((class color) (background dark)) (:foreground "Sienna"))))
  '(font-lock-comment-face ((t (:foreground "Firebrick"))))
