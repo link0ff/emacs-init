@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-08-06 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-08-08 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -326,10 +326,30 @@ i.e. in daylight or under bright electric lamps."
 
 ;;; keybindings
 
-(define-key global-map [(control left)]       'backward-sexp)
-(define-key global-map [(control right)]      'forward-sexp)
-(define-key global-map [(control kp-left)]    'backward-sexp)
-(define-key global-map [(control kp-right)]   'forward-sexp)
+;; Fix inconsistency in motion keys: there was no symmetry for sexp
+;; like in right-char/left-char and right-word/left-word (bug#36923)
+(defun right-sexp (&optional arg)
+  "Move across one balanced expression (sexp) to the right.
+Depending on the bidirectional context, this may move either forward
+or backward in the buffer.  See more at `forward-sexp'."
+  (interactive "^p")
+  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
+      (forward-sexp arg)
+    (backward-sexp arg)))
+
+(defun left-sexp (&optional arg)
+  "Move across one balanced expression (sexp) to the left.
+Depending on the bidirectional context, this may move either backward
+or forward in the buffer.  See more at `backward-sexp'."
+  (interactive "^p")
+  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
+      (backward-sexp arg)
+    (forward-sexp arg)))
+
+(define-key global-map [(control left)]       'left-sexp)
+(define-key global-map [(control right)]      'right-sexp)
+(define-key global-map [(control kp-left)]    'left-sexp)
+(define-key global-map [(control kp-right)]   'right-sexp)
 (define-key global-map [(control meta left)]  'left-word)
 (define-key global-map [(control meta right)] 'right-word)
 
