@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-08-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-08-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1234,6 +1234,8 @@ is added to the search string initially if the region is active."
   (isearch-forward nil 1)
   (cond
    ((use-region-p)
+    (when (< (mark) (point))
+      (exchange-point-and-mark))
     (isearch-yank-string
      (buffer-substring-no-properties (region-beginning) (region-end)))
     (deactivate-mark))
@@ -1242,7 +1244,23 @@ is added to the search string initially if the region is active."
     (isearch-push-state)
     (isearch-update))))
 
-(define-key search-map "r" 'isearch-forward-region)
+(define-key search-map "r"    'isearch-forward-region)
+(define-key search-map "\M-." 'isearch-forward-region)
+
+;;;; isearch-yank-until-char alike
+
+;; This is like `M-z' (zap-to-char)
+(defun skip-to-char (arg char)
+  "Skip up to and including ARGth occurrence of CHAR.
+Case is ignored if ‘case-fold-search’ is non-nil in the current buffer.
+Goes backward if ARG is negative; error if CHAR not found."
+  (interactive "^p\ncSkip to char: ")
+  (search-forward (char-to-string char) nil nil arg))
+
+;; Allow `C-SPC C-M-z $ M-s M-.'
+(define-key esc-map "\C-z" 'skip-to-char)
+;; Allow `C-s C-M-z $' when `isearch-yank-on-move' is `t'
+;; (put 'skip-to-char 'isearch-move t)
 
 ;;;; isearch-lazy-hints
 
