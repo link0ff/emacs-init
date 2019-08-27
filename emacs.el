@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-08-08 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-08-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 (and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
 (and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
 
-;; Blinking cursors are distracting - turn blink OFF
+;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
 (and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
 
 ;; Use "y or n" for answers instead of complete words "yes or no"
@@ -561,9 +561,13 @@ in the minibuffer history before typing RET to insert the item."
                ;; an irrelevant command from the map of copied string.
                (yank-from-kill-ring-history
                 (mapcar (lambda (h)
+                          ;; TODO: remove all props except face/font-lock-face
                           (remove-list-of-text-properties
                            0 (length h)
-                           '(keymap local-map action mouse-action) h)
+                           '(
+                             keymap local-map action mouse-action
+                             button category help-args)
+                           h)
                           h)
                         kill-ring)))
            (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
@@ -1040,6 +1044,8 @@ With C-u, C-0 or M-0, cancel the timer."
   (when mark-active-window
     (setq mark-active (eq mark-active-window window))))
 
+;; Problem: when compiled without optimization CFLAGS='-O0'
+;; quick region selection experiences lags that results in wrong selection
 (add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 
 
@@ -1326,7 +1332,7 @@ is added to the search string initially if the region is active."
 ;; TODO: call isearch-lazy-hint from isearch-lazy-highlight-update?
 (advice-add 'isearch-lazy-highlight-update :after 'isearch-lazy-hints)
 
-(define-key isearch-mode-map (kbd "C-0") 'isearch-toggle-lazy-hints)
+(define-key isearch-mode-map (kbd "C-+") 'isearch-toggle-lazy-hints)
 
 ;;;; isearch-diff-hunk
 
@@ -1423,12 +1429,13 @@ containing the list of values `(hi-yellow font-lock-keyword-face)'.
 Also ensure the whole buffer is fontified by `font-lock' to be able
 to find all text properties with font-lock face."
   (interactive
-   (let* ((property (completing-read "Search for property: " obarray))
+   (let* ((property (completing-read "Search for property: " obarray
+                                     nil nil nil nil '("markchars")))
           (property (when (> (length property) 0)
                       (intern property obarray)))
           (value (when property
                    (read-from-minibuffer "Search for property value (quote strings): "
-                                         nil nil t nil "nil"))))
+                                         nil nil t nil '("nil" "confusable")))))
      (list property value)))
   (font-lock-ensure)
   (text-property-search-forward property value
@@ -1523,7 +1530,7 @@ to find all text properties with font-lock face."
 (add-hook 'minibuffer-exit-hook
           (lambda ()
             (when (string-match
-                   "\\`\\(?:rm\\| \\)"
+                   "\\`\\(?:rm\\|git rm\\| \\)"
                    (or (car-safe (symbol-value minibuffer-history-variable)) ""))
               (set minibuffer-history-variable
                    (cdr (symbol-value minibuffer-history-variable))))))
@@ -1743,7 +1750,7 @@ goes to the saved location."
                 (concat "(qv "
                         (cond
                          (buffer-file-name
-                          (format "\"%s\"\n    \"%s\"" ;; "\"%s\" %s"
+                          (format "\"%s\"\n    %S" ;; "\"%s\" %s"
                                   buffer-file-name
                                   ;;(line-number-at-pos)
                                   (replace-regexp-in-string
@@ -2420,6 +2427,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . conf-mode))
 
 
+;;; sql
+
+;; Pleroma uses .psql file extension
+(add-to-list 'auto-mode-alist '("\\.p?sql\\'" . sql-mode))
+
+
 ;;; debug
 
 ;; Add key bindings similar to IDEBUG or Turbo Debugger
@@ -2805,24 +2818,28 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; image-mode
 
+(defun my-image-prev-dired ()
+  (interactive)
+  (kill-current-buffer-and-dired-jump)
+  (dired-previous-line 1)
+  (dired-view-file))
+
+(defun my-image-next-dired ()
+  (interactive)
+  (kill-current-buffer-and-dired-jump)
+  (dired-next-line 1)
+  (dired-view-file))
+
 (with-eval-after-load 'image-mode
   ;; Shift-Space to scroll back (already added in bug#2145).
   ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
   (define-key image-mode-map "q" 'quit-window-kill-buffer)
   (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
   ;; Browse prev/next images according to their order in Dired
-  (define-key image-mode-map [(left)]
-    (lambda ()
-      (interactive)
-      (kill-current-buffer-and-dired-jump)
-      (dired-previous-line 1)
-      (dired-view-file)))
-  (define-key image-mode-map [(right)]
-    (lambda ()
-      (interactive)
-      (kill-current-buffer-and-dired-jump)
-      (dired-next-line 1)
-      (dired-view-file))))
+  (define-key image-mode-map [(left)] 'my-image-prev-dired)
+  (define-key image-mode-map [(right)] 'my-image-next-dired)
+  (define-key image-mode-map [(control left)] 'image-backward-hscroll)
+  (define-key image-mode-map [(control right)] 'image-forward-hscroll))
 
 
 ;;; image
@@ -3280,6 +3297,23 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key esc-map "\M-|" 'shell-command-on-region-or-buffer) ; `M-ESC |'
 (define-key global-map [(control ?|)] 'shell-command-on-region-or-buffer)
 (define-key my-map "|" 'shell-command-on-region-or-buffer)
+
+
+;;; shell-log
+
+(defvar shell-log-font-lock-keywords
+  ;; `shell-prompt-pattern' can't be used: it finds too many false matches
+  '(("^\\([^#$%>\12]*@[^#$%>\12]*:[^#$%>\12]*[#$%>] *\\)\\(.*\\)$"
+     (1 'comint-highlight-prompt)
+     (2 'comint-highlight-input)))
+  "Shell prompts to highlight in Shell Log mode.")
+
+(define-derived-mode shell-log-mode shell-mode "Shell-Log"
+  "Font-lock for shell logs."
+  (put 'shell-log-mode 'mode-class nil)
+  (setq-local font-lock-defaults '(shell-log-font-lock-keywords t)))
+
+(add-to-list 'auto-mode-alist '("\\.log\\'" . shell-log-mode))
 
 
 ;;; comint
@@ -4407,6 +4441,7 @@ Cancel the clock if called with C-u."
               search-ring
               regexp-search-ring
               vc-git-history
+              gud-gdb-history
               wincows-states
               )
             (delq 'register-alist desktop-globals-to-save)))))

@@ -78,7 +78,7 @@
  '(display-buffer-alist
    '((display-buffer-to-xref-p display-buffer-maybe-below-selected)
      (display-buffer-from-help-p display-buffer-same-window)
-     ("\\`\\*\\(Apropos\\|Buffer List\\|Colors\\|Command History\\|Locate\\|Messages\\|Proced\\|eww\\|snd\\|vc-log\\)\\*\\'" display-buffer-same-window)
+     ("\\`\\*\\(Apropos\\|Buffer List\\|Colors\\|Command History\\|Locate\\|Messages\\|Proced\\|eww\\|snd\\|gud-emacs\\|vc-log\\)\\*\\'" display-buffer-same-window)
      ("\\`\\*\\(compilation\\|grep\\|erlang\\|haskell\\|Diff\\|Help\\|shell\\|Shell Command Output\\)\\*\\(\\|<[0-9]+>\\)\\'" display-buffer-same-window)
      ("\\`\\*\\(vc-dir\\|vc-search-log\\)\\*\\(\\|<[0-9a-z-]+>\\)\\'" display-buffer-same-window)
      ("\\`\\*dictem.*" display-buffer-same-window)))
@@ -234,6 +234,7 @@
  '(sql-sqlite-program "sqlite3")
  '(switch-to-buffer-obey-display-actions t)
  '(switch-to-buffer-preserve-window-point nil)
+ '(tar-mode-show-date t)
  '(temp-buffer-resize-mode t)
  '(thumbs-per-line 65536)
  '(thumbs-relief 0)
