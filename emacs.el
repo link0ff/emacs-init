@@ -313,6 +313,7 @@ i.e. in daylight or under bright electric lamps."
 
 ;;; faces
 
+(defvar face nil)
 (defun my-faces-fix (&optional frame)
   "Fix defined faces."
   (interactive)
@@ -335,13 +336,13 @@ i.e. in daylight or under bright electric lamps."
 
       ;; Fonts with different height decrease the amount of lines
       ;; visible on screen, so remove the height property
-      (when (numberp (face-attribute face :height frame))
-        (set-face-attribute face frame :height 'unspecified))
+      ;; (when (numberp (face-attribute face :height frame))
+      ;;   (set-face-attribute face frame :height 'unspecified))
 
       ;; Fonts with different width decrease the amount of characters
       ;; on the line, so remove the width property
-      (when (numberp (face-attribute face :width frame))
-        (set-face-attribute face frame :width 'unspecified))
+      ;; (when (numberp (face-attribute face :width frame))
+      ;;   (set-face-attribute face frame :width 'unspecified))
 
       ;; Fonts with different weight decrease the height and width,
       ;; of the line, so remove the weight property
@@ -350,6 +351,10 @@ i.e. in daylight or under bright electric lamps."
       ;; (unless (string-match "^mode-line" (symbol-name face))
       ;;   ;; Reset all face attributes
       ;;   (modify-face face))
+
+      ;; New feature in Emacs 27
+      ;; (set-face-attribute face frame :extend t)
+      ;; (set-face-extend face t frame)
       )))
 
 ;; 1. Fix existing faces
@@ -885,8 +890,6 @@ With C-u, C-0 or M-0, cancel the timer."
 
 
 ;;; window
-
-;; (winner-mode) ; use tab-bar-history-mode instead
 
 (windmove-default-keybindings 'super)
 (windmove-display-default-keybindings '(super meta))
@@ -1472,7 +1475,7 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 ;;; text-property-search
 
 ;; Better interactive arguments for text-property-search-forward (see bug#36486)
-(defun search-text-property (property &optional value predicate not-immediate)
+(defun search-text-property (property &optional value predicate not-current)
   "Same as `text-property-search-forward', but better interactive arguments.
 Added support for reading the second argument VALUE that allows reading
 symbols as well as strings.  Unlike `text-property-search-forward', this
@@ -1497,7 +1500,7 @@ to find all text properties with font-lock face."
                                       (if (and (listp p-val) (not (listp val)))
                                           (member val p-val)
                                         (equal val p-val))))
-                                not-immediate))
+                                not-current))
 
 
 ;;; occur
