@@ -405,16 +405,18 @@ or forward in the buffer.  See more at `backward-sexp'."
 ;; (define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
 ;; (define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
 
-(define-key global-map [(meta left)]
-  (lambda ()
-    (interactive)
-    ;; TODO: also check in the frame parameter `tabs'
-    (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
-        (dired-jump)
-      ;; Go to the top to not store emacs-places.
-      (goto-char (point-min))
-      (kill-current-buffer-and-dired-jump))))
-(define-key global-map [(meta right)]         'my-find-thing-at-point)
+(defun my-go-back ()
+  "Go back from current buffer and jump to Dired."
+  (interactive)
+  ;; TODO: also check in the frame parameter `tabs'
+  (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+      (dired-jump)
+    ;; Go to the top to not store emacs-places.
+    (goto-char (point-min))
+    (kill-current-buffer-and-dired-jump)))
+
+(define-key global-map [(meta left)]  'my-go-back)
+(define-key global-map [(meta right)] 'my-find-thing-at-point)
 ;; Keybindings (meta up) (meta down) are free when windmove uses `super'.
 
 ;; Actually I don't use next two keybindings, use them for something useful
@@ -1410,7 +1412,7 @@ Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
 
 (add-hook 'diff-mode-hook
           (lambda ()
-            (set (make-local-variable 'search-default-mode) 'diff-hunk-to-regexp)))
+            (setq-local search-default-mode 'diff-hunk-to-regexp)))
 
 
 ;;; char-fold
@@ -2272,8 +2274,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
    ;; (define-key prolog-mode-map "\C-zi."
    ;;   (lambda () (interactive) (end-of-line) (insert-string ".") (newline)))
    ;; (defun prolog-outline-level () (- 4 (outline-level)))
-   (set (make-local-variable 'outline-regexp) "%%%+")
-   (set (make-local-variable 'outline-level) (lambda () (- 5 (outline-level))))
+   (setq-local outline-regexp "%%%+")
+   (setq-local outline-level (lambda () (- 5 (outline-level))))
    ;; (setq outline-level 'prolog-outline-level)
    ;; global-font-lock-mode doesn't work with prolog.el, but works with prolog2.el
    ;; (font-lock-mode 1)
@@ -2289,8 +2291,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
    (define-key prolog-inferior-mode-map [(control f1)]
      (lambda () (interactive) (my-search-prolog-doc-at-point)))
    (define-key prolog-inferior-mode-map "\C-zo" 'comint-kill-output-since-last-prompt)
-   (set (make-local-variable 'outline-regexp) "^[1-9][0-9]* \\?- ")
-   (set (make-local-variable 'outline-level) (lambda () 1))))
+   (setq-local outline-regexp "^[1-9][0-9]* \\?- ")
+   (setq-local outline-level (lambda () 1))))
 
 (defun my-search-prolog-doc-at-point ()
   (let* (;;(wordchars "a-zA-Z_0-9")
@@ -2302,7 +2304,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                   ;; (save-excursion (skip-chars-forward  wordchars) (point)))
                   "(")))
     (view-file "~/doc/prog/prolog/PROLOG")
-    ;; (set (make-local-variable 'outline-regexp) "^\\(Chapter [0-9]\\|\\)")
+    ;; (setq-local outline-regexp "^\\(Chapter [0-9]\\|\\)")
     ;; (make-local-variable 'outline-level)
     (if (not (re-search-forward str nil t))
         (progn
@@ -2462,7 +2464,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (with-eval-after-load 'ruby-mode
   (add-hook 'ruby-mode-hook
             (lambda ()
-              (set (make-local-variable 'require-final-newline) nil)
+              (setq-local require-final-newline nil)
               ;; Don't enable flymake-mode in read-only buffers
               (flymake-mode 1)
               (add-hook 'view-mode-hook
@@ -2473,6 +2475,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (with-eval-after-load 'flymake
   (define-key flymake-mode-map [left-fringe mouse-1]
     'flymake-show-diagnostics-buffer))
+
+(add-to-list 'auto-mode-alist '("\\.cr\\'" . ruby-mode)) ; Crystal
 
 
 ;;; css
@@ -2616,7 +2620,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      (let ((table (make-syntax-table)))
        (modify-syntax-entry ?` "'   " table)
        (modify-syntax-entry ?' "'   " table)
-       (set-syntax-table table)))))
+       (set-syntax-table table)))
+
+   ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+   ;; to make the current outline heading visible.
+   (setq-local beginning-of-defun-function
+               (lambda () (outline-previous-visible-heading 1)))
+   (setq-local end-of-defun-function
+               (lambda () (outline-next-visible-heading 1)))))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
@@ -2673,6 +2684,20 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;      (outline-up-heading 1)))
 
 
+;;; org
+
+(with-eval-after-load 'org-mode
+  (add-hook
+   'org-mode-hook
+   (lambda ()
+     ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+     ;; to make the current org outline heading visible.
+     (setq-local beginning-of-defun-function
+                 (lambda () (org-previous-visible-heading 1)))
+     (setq-local end-of-defun-function
+                 (lambda () (org-next-visible-heading 1))))))
+
+
 ;;; diff
 
 (with-eval-after-load 'diff-mode
@@ -2688,12 +2713,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'diff-mode-hook 'rename-uniquely)
   (add-hook 'log-view-mode-hook 'rename-uniquely)
 
+  ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+  ;; to make the current hunk visible.
   (add-hook 'diff-mode-hook
             (lambda ()
-              (set (make-local-variable 'beginning-of-defun-function)
-                   #'diff-beginning-of-hunk)
-              (set (make-local-variable 'end-of-defun-function)
-                   #'diff-end-of-hunk)))
+              (setq-local beginning-of-defun-function #'diff-beginning-of-hunk)
+              (setq-local end-of-defun-function #'diff-end-of-hunk)))
 
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
@@ -3369,7 +3394,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 (defvar shell-log-font-lock-keywords
   ;; `shell-prompt-pattern' can't be used: it finds too many false matches
-  '(("^\\([^#$%>\12]*@[^#$%>\12]*:[^#$%>\12]*[#$%>] *\\)\\(.*\\)$"
+  `((,(rx-let ((c (* (not (any "#$%>\12"))))) ; any non-prompt char
+        (rx bol
+            (group-n 1 c (or "@" "irb") c ":" c (any "#$%>") (* " "))
+            (group-n 2 (* nonl))
+            eol))
      (1 'comint-highlight-prompt)
      (2 'comint-highlight-input)))
   "Shell prompts to highlight in Shell Log mode.")
@@ -3641,7 +3670,7 @@ Example:
           ;;              'before-string (make-string 64 ?-))
           )))
     ;; Comment out to remove startup warnings:
-    ;; (set (make-local-variable 'outline-regexp) "^.*:$")
+    ;; (setq-local outline-regexp "^.*:$")
     ;; (outline-minor-mode 1)
     ))
 
@@ -3906,7 +3935,7 @@ then output is inserted in the current buffer."
             (lambda ()
               (define-key dictem-mode-map [tab] 'dictem-next-link)
               (define-key dictem-mode-map [(backtab)] 'dictem-previous-link)
-              (set (make-local-variable 'outline-regexp) "From")
+              (setq-local outline-regexp "From")
               (outline-minor-mode 1)
               ;; (define-key dictem-mode-map [(meta left)]  'my-dictem-prev-word?)
               (define-key dictem-mode-map [(meta right)] 'my-dictem-run-search)))
@@ -4329,7 +4358,7 @@ The difference between N and the number of articles ticked is returned."
 (add-hook 'term-mode-hook
           (lambda ()
             ;; (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
-            ;; (set (make-local-variable 'mouse-yank-at-point) t)
+            ;; (setq-local mouse-yank-at-point t)
             ;; (make-local-variable 'transient-mark-mode)
             (auto-fill-mode -1)
             (setq tab-width 8)))
