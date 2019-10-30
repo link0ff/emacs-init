@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-08-28 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-10-30 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 (and (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 (and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
 (and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
+;; tab-bar is enabled below
 
 ;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
 (and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
@@ -152,10 +153,44 @@
          default-frame-alist))))
 
 
-;;; tabs
+;;; tab-bar tabs
 
-(global-set-key [(control tab)]               'tab-next)
-(global-set-key [(control shift iso-lefttab)] 'tab-previous)
+(when (fboundp 'tab-bar-mode) (tab-bar-mode 1) (tab-bar-history-mode 1))
+(when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
+(unless window-system (xterm-mouse-mode 1))
+
+(advice-add 'tab-bar-make-keymap-1 :around
+  (lambda (orig-fun)
+    (append `(keymap (display-time menu-item ,(format-time-string "%H:%M") ignore))
+            (cdr (funcall orig-fun))))
+  '((name . tab-bar-display-time)))
+
+(advice-add 'tab-bar-make-keymap-1 :around
+  (lambda (orig-fun)
+    (append (funcall orig-fun)
+            `((display-time menu-item
+               ,(concat
+                 (propertize " " 'display '(space :align-to (- right 5)))
+                 (format-time-string "%H:%M"))
+               ignore))))
+  '((name . tab-bar-display-time)))
+
+(when (featurep 'tab-bar)
+  (define-key global-map [(meta  ?\xa7)] 'tab-bar-list)
+  ;; (define-key global-map [(meta ?\x8a7)] 'tab-bar-list)
+  (define-key global-map [(meta     ?`)] 'tab-bar-list)
+  (define-key global-map [(super    ?`)] 'tab-bar-list)
+  (with-eval-after-load 'tab-bar
+    (define-key tab-bar-list-mode-map [(meta  ?\xa7)] 'tab-bar-list-select)
+    ;; (define-key tab-bar-list-mode-map [(meta ?\x8a7)] 'tab-bar-list-select)
+    (define-key tab-bar-list-mode-map [(meta     ?`)] 'tab-bar-list-select)
+    (define-key tab-bar-list-mode-map [(super    ?`)] 'tab-bar-list-select)
+    (define-key tab-bar-list-mode-map [( ?\xa7)] 'tab-bar-list-next-line)
+    ;; (define-key tab-bar-list-mode-map [(?\x8a7)] 'tab-bar-list-next-line)
+    (define-key tab-bar-list-mode-map [(    ?`)] 'tab-bar-list-next-line)
+    (define-key tab-bar-list-mode-map [( ?\xbd)] 'tab-bar-list-prev-line)
+    ;; (define-key tab-bar-list-mode-map [(?\x8bd)] 'tab-bar-list-prev-line)
+    (define-key tab-bar-list-mode-map [(    ?~)] 'tab-bar-list-prev-line)))
 
 
 ;;; mouse
@@ -368,7 +403,7 @@ or forward in the buffer.  See more at `backward-sexp'."
 (define-key global-map [(meta left)]
   (lambda ()
     (interactive)
-    ;; TODO: also check in (wincows-states)
+    ;; TODO: also check in the frame parameter `tabs'
     (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
         (dired-jump)
       ;; Go to the top to not store emacs-places.
@@ -851,7 +886,7 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;;; window
 
-(winner-mode)
+;; (winner-mode) ; use tab-bar-history-mode instead
 
 (windmove-default-keybindings 'super)
 (windmove-display-default-keybindings '(super meta))
@@ -1820,7 +1855,11 @@ goes to the saved location."
 
 (when (require 'ee-autoloads nil t)
   (define-key global-map [f1] 'ee-info)
-  (define-key global-map [(control tab)] 'ee-buffers)
+  (define-key global-map [(super tab)] 'ee-buffers)
+  ;; (define-key ctl-x-map [(control tab)] 'ee-buffers)
+  ;; (define-key my-map [(control tab)] 'ee-buffers)
+  (with-eval-after-load 'ee-buffers
+    (define-key ee-buffers-keymap [(super tab)] 'ee-view-record-select-or-expansion-show-or-hide))
   (define-key my-map "eb"  'ee-buffers)
   (define-key my-map "ehc" 'ee-history-command)
   (define-key my-map "ehe" 'ee-history-extended-command)
@@ -1849,8 +1888,8 @@ goes to the saved location."
     ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
     (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev)))
 
-;; Use standalone wincows.el instead
-(when (require 'wincows nil t)
+;; Standalone wincows.el is replaced by `tab-bar-list' above now.
+(when nil ;; (require 'wincows nil t)
   (define-key global-map [(meta  ?\xa7)] 'wincows)
   ;; (define-key global-map [(meta ?\x8a7)] 'wincows)
   (define-key global-map [(meta     ?`)] 'wincows)
@@ -4460,7 +4499,6 @@ Cancel the clock if called with C-u."
               regexp-search-ring
               vc-git-history
               gud-gdb-history
-              wincows-states
               )
             (delq 'register-alist desktop-globals-to-save)))))
 
