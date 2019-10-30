@@ -678,6 +678,10 @@ in the minibuffer history before typing RET to insert the item."
       (delete (rassoc 'utf-8-with-signature auto-coding-regexp-alist)
               auto-coding-regexp-alist))))
 
+;; Use Unicode ellipsis in `C-x C-b' (list-buffers)
+(with-eval-after-load 'mule-util
+  (setq truncate-string-ellipsis "…"))
+
 
 ;;; C-z my-map
 
@@ -1301,6 +1305,8 @@ Goes backward if ARG is negative; error if CHAR not found."
 ;; (put 'skip-to-char 'isearch-move t)
 
 ;;;; isearch-lazy-hints
+
+(require 'seq)
 
 (defcustom isearch-lazy-hints nil
   "Show numeric hints on isearch lazy-highlighted matches."
@@ -2734,7 +2740,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; Highlight found occurrences in vc-search-log output buffer.
 ;; Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
 (add-hook 'vc-post-command-functions
-          (lambda (_command _files flags)
+          (lambda (command files flags)
             (save-match-data
               (let* ((matches
                       (delq nil (mapcar (lambda (flag)
@@ -3373,7 +3379,19 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (put 'shell-log-mode 'mode-class nil)
   (setq-local font-lock-defaults '(shell-log-font-lock-keywords t)))
 
-(add-to-list 'auto-mode-alist '("\\.log\\'" . shell-log-mode))
+(defun shell-log-or-compilation-mode ()
+  "Enable either `shell-log-mode' or `compilation-mode' based on log contents."
+  (let ((mode (if (save-excursion
+                    (goto-char (point-min))
+                    (re-search-forward
+                     (rx (or "./configure" (and bol "Compilation")))
+                     nil t))
+                  'compilation-mode
+                (require 'shell)
+                'shell-log-mode)))
+    (call-interactively mode)))
+
+(add-to-list 'auto-mode-alist '("\\.log\\'" . shell-log-or-compilation-mode))
 
 
 ;;; comint
@@ -3403,13 +3421,33 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; TODO: try to put 'invisible property on it, because next doesn't work well.
 ;; But commented out because I don't like this code anymore:
 ;; (add-hook 'compilation-finish-functions
-;;        (lambda (buffer msg)
+;;        (lambda (cur-buffer _msg)
 ;;             (mapc (lambda (window)
 ;;                     (set-window-start window
 ;;                                       (save-excursion
 ;;                                         (goto-char (point-min))
 ;;                                         (line-beginning-position 4))))
-;;                   (get-buffer-window-list buffer))))
+;;                   (get-buffer-window-list cur-buffer))))
+
+;; Run the compiled program in gdb if live gdb buffer exists
+(add-hook 'compilation-finish-functions
+          (lambda (cur-buffer msg)
+            (when (and (string-match-p "finished" msg)
+                       (eq (with-current-buffer cur-buffer major-mode)
+                           'compilation-mode)) ;; i.e. not grep-mode
+              (let ((gdb-buffer (seq-find (lambda (b)
+                                            (string-match-p
+                                             "*gud-emacs*"
+                                             (buffer-name b)))
+                                          (buffer-list))))
+                (when (and (buffer-live-p gdb-buffer)
+                           ;; (get-buffer-window gdb-buffer t)
+                           (get-buffer-process gdb-buffer)
+                           (eq (process-status (get-buffer-process gdb-buffer)) 'run))
+                  (with-current-buffer gdb-buffer
+                    (goto-char (point-max))
+                    (insert "r")
+                    (comint-send-input)))))))
 
 (with-eval-after-load 'compile
   (add-hook 'compilation-mode-hook
@@ -3447,8 +3485,9 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
           'my-compilation-buffer-name-function))
 
 (with-eval-after-load 'grep
+  (push '("ch" . "*.[chm]") grep-files-aliases) ; override existing alias with added *.m
   (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee") grep-files-aliases)
+  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee Gemfile Gemfile.lock") grep-files-aliases)
   (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
   (push '("clj" . "*.clj*") grep-files-aliases))
 
@@ -3537,7 +3576,8 @@ Example:
 ;; This supposes display-buffer-alist to be customized to contain:
 ;; '((display-buffer-to-xref-p display-buffer-maybe-below-selected) ...)
 (defun display-buffer-to-xref-p (buffer-name _action)
-  (and (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
+  (and (stringp buffer-name)
+       (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
                        buffer-name)
        (memq this-command '(xref-find-definitions))))
 
