@@ -245,7 +245,6 @@
  '(tool-bar-style 'both-horiz)
  '(track-eol t)
  '(truncate-lines t)
- '(uniquify-buffer-name-style 'post-forward-angle-brackets nil (uniquify))
  '(vc-annotate-background nil)
  '(vc-bzr-diff-switches "-F ^(")
  '(vc-bzr-status-switches nil)

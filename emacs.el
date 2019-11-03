@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-10-30 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-11-04 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -159,6 +159,19 @@
 (when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
 (unless window-system (xterm-mouse-mode 1))
 
+;; Shorten long tab names in tab-bar - show only current buffer name when
+;; there are long names like in Gnus, otherwise show all buffer names.
+(require 'seq)
+(setq tab-bar-tab-name-function
+      (lambda ()
+        (if (seq-some (lambda (buffer)
+                        (with-current-buffer buffer
+		          (derived-mode-p 'gnus-summary-mode 'gnus-article-mode)))
+                      ;; TODO: implement and use `tab-bar-tab-buffers'
+                      (mapcar #'window-buffer (window-list-1 (frame-first-window) 'nomini)))
+            (tab-bar-tab-name-current-with-count)
+          (tab-bar-tab-name-all))))
+
 (advice-add 'tab-bar-make-keymap-1 :around
   (lambda (orig-fun)
     (append `(keymap (display-time menu-item ,(format-time-string "%H:%M") ignore))
@@ -191,6 +204,10 @@
     (define-key tab-bar-list-mode-map [( ?\xbd)] 'tab-bar-list-prev-line)
     ;; (define-key tab-bar-list-mode-map [(?\x8bd)] 'tab-bar-list-prev-line)
     (define-key tab-bar-list-mode-map [(    ?~)] 'tab-bar-list-prev-line)))
+
+(when tab-bar-history-mode
+  (define-key global-map [(control c) left]  'tab-bar-history-back)
+  (define-key global-map [(control c) right] 'tab-bar-history-forward))
 
 
 ;;; mouse
@@ -1883,10 +1900,10 @@ goes to the saved location."
   (define-key my-map "et"  'ee-tags)
   (define-key my-map "ewa" 'ee-windows-add)
   (define-key my-map "eww" 'ee-windows)
-  (define-key global-map [(meta  ?\xa7)] 'ee-windows-and-add-current)
+  ;; (define-key global-map [(meta  ?\xa7)] 'ee-windows-and-add-current)
   ;; (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
-  (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
-  (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
+  ;; (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
+  ;; (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
   (with-eval-after-load 'ee-windows
     (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
     ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
@@ -2718,7 +2735,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (add-hook 'diff-mode-hook
             (lambda ()
               (setq-local beginning-of-defun-function #'diff-beginning-of-hunk)
-              (setq-local end-of-defun-function #'diff-end-of-hunk)))
+              (setq-local end-of-defun-function       #'diff-end-of-hunk)))
 
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
@@ -3213,14 +3230,27 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-hook 'dired-after-readin-hook
           (lambda ()
             ;; Set name of dired buffers to absolute directory name.
-            ;; Use `generate-new-buffer-name' for vc-directory
-            ;; which creates duplicate buffers.
-            ;; SEE ALSO http://emacs.stackexchange.com/questions/2123/how-can-i-make-dired-buffer-names-include-the-full-path
-            ;; TODO: Add this feature to `dired-internal-noselect' instead
-            ;; of `(create-file-buffer (directory-file-name dirname))'.
+            ;; Use non-nil arg `unique' for `rename-buffer'
+            ;; because vc-dir that creates duplicate buffers.
+            ;; SEE ALSO https://emacs.stackexchange.com/q/2123
+            ;; (when (stringp dired-directory)
+            ;;   ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
+            ;;   (rename-buffer dired-directory t))
+
+            ;; TODO: Maybe better to change `dired-internal-noselect'
+            ;; from `(create-file-buffer (directory-file-name dirname))'
+            ;; to just `(create-file-buffer dirname) that leaves the final slash,
+            ;; but the problem is that `uniquify--create-file-buffer-advice'
+            ;; changes absolute directory name with slash to short name dir.
+
+            ;; The current solution still relies on uniquify, but adds
+            ;; the final slash to dired buffer names, e.g. "dir/"
             (when (stringp dired-directory)
-              ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
-              (rename-buffer (generate-new-buffer-name dired-directory)))))
+              (rename-buffer
+               (file-name-as-directory
+                (file-name-nondirectory
+                 (directory-file-name dired-directory)))
+               t))))
 
 (add-hook 'dired-mode-hook
           (lambda ()
