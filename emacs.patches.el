@@ -691,7 +691,7 @@ delete flagged files.\n\n"))))))
 (add-hook 'dired-before-readin-hook 'my-set-insert-directory-program)
 
 ;; qv http://thread.gmane.org/gmane.emacs.devel/118789
-;; (setq dired-listing-switches "-Al --group-directories-first --block-size='1")
+;; (setq dired-listing-switches "-Alv --group-directories-first --block-size='1")
 ;; (setenv "LS_BLOCK_SIZE" "'1")
 
 

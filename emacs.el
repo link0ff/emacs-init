@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-11-04 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-11-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -159,6 +159,8 @@
 (when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
 (unless window-system (xterm-mouse-mode 1))
 
+(define-key tab-prefix-map "m" 'tab-move)
+
 ;; Shorten long tab names in tab-bar - show only current buffer name when
 ;; there are long names like in Gnus, otherwise show all buffer names.
 (require 'seq)
@@ -249,13 +251,7 @@ i.e. in daylight or under bright electric lamps."
     (set-face-background 'region "gray90" frame))
   (when (facep 'fringe)
     (set-face-background 'fringe (face-background 'default) frame)
-    (set-face-foreground 'fringe (face-foreground 'default) frame))
-  ;; When started Emacs under root, warn by red color in the modeline
-  (when (and (facep 'mode-line)
-             ;; Alternative condition is (= (user-uid) 0)
-             (file-exists-p "/root")
-             (file-writable-p "/root"))
-    (set-face-background 'mode-line "firebrick")))
+    (set-face-foreground 'fringe (face-foreground 'default) frame)))
 
 (define-key global-map [f6 ?c ?s] 'my-colors-light)
 
@@ -572,6 +568,20 @@ or forward in the buffer.  See more at `backward-sexp'."
 
 
 ;;; copy-paste
+
+;; Decode URL copied from web browser.  It converts e.g.
+;; https://en.wikipedia.org/wiki/%CE%A9
+;; to more nice-looking
+;; https://en.wikipedia.org/wiki/Ω
+(advice-add 'gui-selection-value :around
+            (lambda (orig-fun &rest args)
+              (let ((value (apply orig-fun args)))
+                (when (and (stringp value) (string-match-p "^http.*%" value))
+                  (setq value (decode-coding-string
+                               (url-unhex-string value)
+                               'utf-8)))
+                value))
+            '((name . gui-selection-value-url-decode)))
 
 (defvar kill-ring-save-set-region-p nil)
 
@@ -1198,6 +1208,8 @@ before searching for the next hit."
   (when (and (derived-mode-p 'diff-mode) isearch-regexp (equal "^revno:" isearch-string))
     (recenter 1)))
 
+(put 'narrow-to-defun 'isearch-scroll t)
+(put 'widen 'isearch-scroll t)
 (put 'toggle-truncate-lines 'isearch-scroll t)
 (put 'comint-show-output 'isearch-scroll t) ;; bound to `C-M-l'
 
@@ -2478,7 +2490,13 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
               (setq js-indent-level 2)
               (setq tab-width 2))))
 
+;; (defvar ruby-use-smie nil)
 (with-eval-after-load 'ruby-mode
+  ;; (setq ruby-use-smie nil)
+  (define-key ruby-mode-map [(control left)] 'ruby-backward-sexp)
+  (define-key ruby-mode-map [(control right)] 'ruby-forward-sexp)
+  (when delete-selection-mode
+    (put 'ruby-end-return 'delete-selection t))
   (add-hook 'ruby-mode-hook
             (lambda ()
               (setq-local require-final-newline nil)
