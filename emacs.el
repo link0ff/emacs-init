@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-11-21 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-12-03 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2523,7 +2523,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
 ;; 'scss-mode' was added to Emacs 25.1
 ;; (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
-(add-to-list 'auto-mode-alist '("\\.haml\\'" . javascript-mode))
 ;; '.jsx' was added to auto-mode-alist in the new version of Emacs
 ;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
@@ -4456,8 +4455,9 @@ The difference between N and the number of articles ticked is returned."
 
 (setq wget-download-directory ".")
 (setq wget-download-log-file "DOWNLOAD")
-(setq wget-download-log-format "%T %U\n")
-(setq wget-download-log-time-format "%Y-%m-%d")
+(setq wget-download-log-format "%U\n")
+;; (setq wget-download-log-format "%T %U\n")
+;; (setq wget-download-log-time-format "%Y-%m-%d")
 
 ;; Set the default either to the URL in the clipboard or URL at point.
 (defun my-wget (uri &optional arg)
@@ -4656,6 +4656,13 @@ Cancel the clock if called with C-u."
             ;; (toggle-frame-maximized)
             )
           t)
+
+(add-hook 'after-init-hook
+          (lambda ()
+            ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
+            ;; This needs to run with timer since ‘normal-top-level’ does
+            ;; (setenv "TERM" "dumb") at the end without running more hooks.
+            (run-at-time "1 second" nil 'setenv "TERM" "ansi")))
 
 ;; Display the time of the Emacs initialization.
 (when (fboundp 'emacs-init-time)
