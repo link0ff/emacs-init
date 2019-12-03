@@ -421,8 +421,10 @@ or forward in the buffer.  See more at `backward-sexp'."
 (defun my-go-back ()
   "Go back from current buffer and jump to Dired."
   (interactive)
-  ;; TODO: also check in the frame parameter `tabs'
-  (if (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+  ;; Keep the buffer displayed on the frame or in a tab
+  (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+          (not (eq (car (tab-bar-get-buffer-tab (current-buffer) t))
+                   'current-tab)))
       (dired-jump)
     ;; Go to the top to not store emacs-places.
     (goto-char (point-min))
@@ -4121,11 +4123,24 @@ then output is inserted in the current buffer."
 
 ;;; gnus
 
+;; From (info "(gnus) Tabbed Interface")
+(push '("\\`\\*Group\\*\\'" .
+        (display-buffer-in-tab
+         (name . "Gnus")))
+      display-buffer-alist)
+(push '("\\`\\*Summary .*\\*\\'" .
+        (display-buffer-in-tab
+         (name . (lambda (buffer _alist)
+                   (setq buffer (buffer-name buffer))
+                   (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
+                     (format "Group %s" (match-string 1 buffer)))))))
+      display-buffer-alist)
+
 (defun my-gnus ()
   "Start a new Gnus, or locate the existing buffer *Group*."
   (interactive)
-  (if (buffer-live-p    (get-buffer "*Group*"))
-      (switch-to-buffer (get-buffer "*Group*"))
+  (if (buffer-live-p (get-buffer "*Group*"))
+      (pop-to-buffer-same-window (get-buffer "*Group*"))
     (gnus)))
 
 (define-key my-map "g" 'my-gnus)
@@ -4584,9 +4599,12 @@ Cancel the clock if called with C-u."
 
 ;;; desktop
 
-(when (boundp 'desktop-modes-not-to-save)
-  (add-to-list 'desktop-modes-not-to-save 'dired-mode)
-  (add-to-list 'desktop-modes-not-to-save 'vc-dir-mode))
+;; Save only such dired buffers that are visible in windows or tabs
+(when (boundp 'desktop-buffers-not-to-save-function)
+  (setq desktop-buffers-not-to-save-function
+        (lambda (_filename bufname mode &rest _)
+          (or (not (memq mode '(dired-mode vc-dir-mode)))
+              (tab-bar-get-buffer-tab bufname t)))))
 
 ;; Add more globals to save between sessions.
 (if (boundp 'desktop-globals-to-save)
