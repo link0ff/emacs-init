@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-12-03 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-12-19 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -158,8 +158,6 @@
 (when (fboundp 'tab-bar-mode) (tab-bar-mode 1) (tab-bar-history-mode 1))
 (when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
 (unless window-system (xterm-mouse-mode 1))
-
-(define-key tab-prefix-map "m" 'tab-move)
 
 ;; Shorten long tab names in tab-bar - show only current buffer name when
 ;; there are long names like in Gnus, otherwise show all buffer names.
@@ -488,7 +486,15 @@ or forward in the buffer.  See more at `backward-sexp'."
 (define-key global-map [(control f1)] 'info-lookup-symbol)
 (define-key global-map [f2] 'save-buffer)
 ;; (define-key global-map [f9] 'call-last-kbd-macro)
-(define-key global-map [(control f9)] 'compile)
+(define-key global-map [(control f9)]
+  (lambda ()
+    (interactive)
+    (compile
+     ;; Use previous command from history
+     ;; instead of the default from compile-command
+     (compilation-read-command (car compile-history))
+     ;; Don't use compilation-shell-minor-mode
+     nil)))
 (define-key global-map [(meta f7)] 'grep) ; Commander-like
 (define-key global-map [(meta shift f7)] 'grep-find)
 
@@ -712,6 +718,15 @@ in the minibuffer history before typing RET to insert the item."
 ;; Use Unicode ellipsis in `C-x C-b' (list-buffers)
 (with-eval-after-load 'mule-util
   (setq truncate-string-ellipsis "…"))
+
+;; Use buffer's coding for the output of base64-decode (bug#38587)
+;; (can be overridden by ‘C-x RET c’)
+(advice-add 'base64-decode-region :after
+            (lambda (beg end &optional _base64url)
+              (decode-coding-region
+               beg end (or coding-system-for-write
+                           buffer-file-coding-system)))
+            '((name . base64-decode-region-with-buffer-coding)))
 
 
 ;;; C-z my-map
@@ -1418,14 +1433,16 @@ Goes backward if ARG is negative; error if CHAR not found."
 
 ;; (add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
 ;; To clean also after ispell lazy-highlight
-(advice-add 'lazy-highlight-cleanup :after (lambda (&optional _force _procrastinate)
-                                             (isearch-lazy-hints-cleanup)))
+(advice-add 'lazy-highlight-cleanup :after
+            (lambda (&optional _force _procrastinate)
+              (isearch-lazy-hints-cleanup)))
 
 ;; TODO: add to the end of isearch-lazy-highlight-new-loop
 (add-hook 'isearch-update-post-hook 'isearch-lazy-hints)
 
 ;; TODO: call isearch-lazy-hint from isearch-lazy-highlight-update?
-(advice-add 'isearch-lazy-highlight-update :after 'isearch-lazy-hints)
+(advice-add 'isearch-lazy-highlight-update :after
+            'isearch-lazy-hints)
 
 (define-key isearch-mode-map (kbd "C-+") 'isearch-toggle-lazy-hints)
 
@@ -4126,14 +4143,14 @@ then output is inserted in the current buffer."
 ;; From (info "(gnus) Tabbed Interface")
 (push '("\\`\\*Group\\*\\'" .
         (display-buffer-in-tab
-         (name . "Gnus")))
+         (tab-name . "Gnus")))
       display-buffer-alist)
 (push '("\\`\\*Summary .*\\*\\'" .
         (display-buffer-in-tab
-         (name . (lambda (buffer _alist)
-                   (setq buffer (buffer-name buffer))
-                   (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
-                     (format "Group %s" (match-string 1 buffer)))))))
+         (tab-name . (lambda (buffer _alist)
+                       (setq buffer (buffer-name buffer))
+                       (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
+                         (format "Group %s" (match-string 1 buffer)))))))
       display-buffer-alist)
 
 (defun my-gnus ()
@@ -4680,7 +4697,7 @@ Cancel the clock if called with C-u."
             ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
             ;; This needs to run with timer since ‘normal-top-level’ does
             ;; (setenv "TERM" "dumb") at the end without running more hooks.
-            (run-at-time "1 second" nil 'setenv "TERM" "ansi")))
+            (run-at-time "15 seconds" nil 'setenv "TERM" "ansi")))
 
 ;; Display the time of the Emacs initialization.
 (when (fboundp 'emacs-init-time)
