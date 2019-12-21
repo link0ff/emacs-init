@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-12-19 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2019-12-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -189,21 +189,21 @@
   '((name . tab-bar-display-time)))
 
 (when (featurep 'tab-bar)
-  (define-key global-map [(meta  ?\xa7)] 'tab-bar-list)
-  ;; (define-key global-map [(meta ?\x8a7)] 'tab-bar-list)
-  (define-key global-map [(meta     ?`)] 'tab-bar-list)
-  (define-key global-map [(super    ?`)] 'tab-bar-list)
+  (define-key global-map [(meta  ?\xa7)] 'tab-switcher)
+  ;; (define-key global-map [(meta ?\x8a7)] 'tab-switcher)
+  (define-key global-map [(meta     ?`)] 'tab-switcher)
+  (define-key global-map [(super    ?`)] 'tab-switcher)
   (with-eval-after-load 'tab-bar
-    (define-key tab-bar-list-mode-map [(meta  ?\xa7)] 'tab-bar-list-select)
-    ;; (define-key tab-bar-list-mode-map [(meta ?\x8a7)] 'tab-bar-list-select)
-    (define-key tab-bar-list-mode-map [(meta     ?`)] 'tab-bar-list-select)
-    (define-key tab-bar-list-mode-map [(super    ?`)] 'tab-bar-list-select)
-    (define-key tab-bar-list-mode-map [( ?\xa7)] 'tab-bar-list-next-line)
-    ;; (define-key tab-bar-list-mode-map [(?\x8a7)] 'tab-bar-list-next-line)
-    (define-key tab-bar-list-mode-map [(    ?`)] 'tab-bar-list-next-line)
-    (define-key tab-bar-list-mode-map [( ?\xbd)] 'tab-bar-list-prev-line)
-    ;; (define-key tab-bar-list-mode-map [(?\x8bd)] 'tab-bar-list-prev-line)
-    (define-key tab-bar-list-mode-map [(    ?~)] 'tab-bar-list-prev-line)))
+    (define-key tab-switcher-mode-map [(meta  ?\xa7)] 'tab-switcher-select)
+    ;; (define-key tab-switcher-mode-map [(meta ?\x8a7)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(meta     ?`)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(super    ?`)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [( ?\xa7)] 'tab-switcher-next-line)
+    ;; (define-key tab-switcher-mode-map [(?\x8a7)] 'tab-switcher-next-line)
+    (define-key tab-switcher-mode-map [(    ?`)] 'tab-switcher-next-line)
+    (define-key tab-switcher-mode-map [( ?\xbd)] 'tab-switcher-prev-line)
+    ;; (define-key tab-switcher-mode-map [(?\x8bd)] 'tab-switcher-prev-line)
+    (define-key tab-switcher-mode-map [(    ?~)] 'tab-switcher-prev-line)))
 
 (when tab-bar-history-mode
   (define-key global-map [(control c) left]  'tab-bar-history-back)
@@ -1947,7 +1947,7 @@ goes to the saved location."
     ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
     (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev)))
 
-;; Standalone wincows.el is replaced by `tab-bar-list' above now.
+;; Standalone wincows.el is replaced by `tab-switcher' above now.
 (when nil ;; (require 'wincows nil t)
   (define-key global-map [(meta  ?\xa7)] 'wincows)
   ;; (define-key global-map [(meta ?\x8a7)] 'wincows)
