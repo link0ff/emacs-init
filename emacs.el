@@ -1,11 +1,11 @@
 ;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 1989-2019  Juri Linkov <juri@linkov.net>
+;; Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>
 
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2019-12-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-01-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -158,35 +158,6 @@
 (when (fboundp 'tab-bar-mode) (tab-bar-mode 1) (tab-bar-history-mode 1))
 (when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
 (unless window-system (xterm-mouse-mode 1))
-
-;; Shorten long tab names in tab-bar - show only current buffer name when
-;; there are long names like in Gnus, otherwise show all buffer names.
-(require 'seq)
-(setq tab-bar-tab-name-function
-      (lambda ()
-        (if (seq-some (lambda (buffer)
-                        (with-current-buffer buffer
-		          (derived-mode-p 'gnus-summary-mode 'gnus-article-mode)))
-                      ;; TODO: implement and use `tab-bar-tab-buffers'
-                      (mapcar #'window-buffer (window-list-1 (frame-first-window) 'nomini)))
-            (tab-bar-tab-name-current-with-count)
-          (tab-bar-tab-name-all))))
-
-(advice-add 'tab-bar-make-keymap-1 :around
-  (lambda (orig-fun)
-    (append `(keymap (display-time menu-item ,(format-time-string "%H:%M") ignore))
-            (cdr (funcall orig-fun))))
-  '((name . tab-bar-display-time)))
-
-(advice-add 'tab-bar-make-keymap-1 :around
-  (lambda (orig-fun)
-    (append (funcall orig-fun)
-            `((display-time menu-item
-               ,(concat
-                 (propertize " " 'display '(space :align-to (- right 5)))
-                 (format-time-string "%H:%M"))
-               ignore))))
-  '((name . tab-bar-display-time)))
 
 (when (featurep 'tab-bar)
   (define-key global-map [(meta  ?\xa7)] 'tab-switcher)
@@ -724,8 +695,9 @@ in the minibuffer history before typing RET to insert the item."
 (advice-add 'base64-decode-region :after
             (lambda (beg end &optional _base64url)
               (decode-coding-region
-               beg end (or coding-system-for-write
-                           buffer-file-coding-system)))
+               beg (min end (point-max))
+               (or coding-system-for-write
+                   buffer-file-coding-system)))
             '((name . base64-decode-region-with-buffer-coding)))
 
 
@@ -1102,6 +1074,22 @@ With C-u, C-0 or M-0, cancel the timer."
 
 (define-key my-map "4" 'split-window-horizontally-4)
 (define-key my-map "f4" 'follow-mode-4)
+
+
+;;; display-buffer-alist
+
+(push `(,(rx bos
+             "*"
+             (or "Help" "Apropos" "Colors" "Buffer List" "Command History" "Locate"
+                 "Messages" "Proced" "eww" "snd" (and "gud-" (+ (any "a-z0-9")))
+                 "compilation" "grep" "erlang" "haskell" "shell" "Shell Command Output"
+                 "Diff" "vc-dir" "vc-log" "vc-search-log")
+             "*"
+             ;; Uniquifed buffer name with optional suffix in angle brackets
+             (? (and "<" (+ (not (any ">"))) ">"))
+             eos)
+        display-buffer-same-window)
+      display-buffer-alist)
 
 
 ;;; mark-active-window
@@ -2739,10 +2727,21 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 
 ;;; org
 
-(with-eval-after-load 'org-mode
+(with-eval-after-load 'org-keys
+  ;; Revert hijacked keys to their original bindings
+  (define-key org-mode-map (kbd "C-<tab>") 'tab-next)
+  (define-key org-mode-map (kbd "M-<left>") 'my-go-back)
+  (define-key org-mode-map (kbd "M-<right>") 'my-find-thing-at-point)
+
+  ;; Undefine hijacked remappings
+  (define-key org-mode-map (vector 'remap 'backward-paragraph) nil)
+  (define-key org-mode-map (vector 'remap 'forward-paragraph) nil)
+
   (add-hook
    'org-mode-hook
    (lambda ()
+     ;; For (info "(org) Structure Templates")
+     (require 'org-tempo)
      ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
      ;; to make the current org outline heading visible.
      (setq-local beginning-of-defun-function
@@ -2754,10 +2753,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;;; diff
 
 (with-eval-after-load 'diff-mode
-  (define-key diff-mode-map [(control meta down)] 'diff-hunk-next)
-  (define-key diff-mode-map [(control meta up)]   'diff-hunk-prev)
-  (define-key diff-mode-map [(control meta shift down)] 'diff-file-next)
-  (define-key diff-mode-map [(control meta shift up)]   'diff-file-prev)
+  (define-key diff-mode-map [(meta down)] 'diff-hunk-next)
+  (define-key diff-mode-map [(meta up)]   'diff-hunk-prev)
+  (define-key diff-mode-map [(control meta down)] 'diff-file-next)
+  (define-key diff-mode-map [(control meta up)]   'diff-file-prev)
   (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
 
   ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
@@ -2957,7 +2956,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (with-eval-after-load 'doc-view
   ;; Shift-Space to scroll back (already added in bug#2145).
   ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
-  (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer))
+  (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer)
+  ;; Get back original keybindings overridden below in ‘image-mode-map’.
+  ;; Left/right arrows are needed in PDF to scroll horizontally
+  ;; PDF images that often are wider than window dimensions,
+  ;; but in image-mode non-PDF images are scaled automatically
+  ;; to fit to the window dimensions.
+  (define-key doc-view-mode-map [(left)] 'image-backward-hscroll)
+  (define-key doc-view-mode-map [(right)] 'image-forward-hscroll))
 
 
 ;;; image-mode
@@ -2980,6 +2986,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (define-key image-mode-map "q" 'quit-window-kill-buffer)
   (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
   ;; Browse prev/next images according to their order in Dired
+  ;; ALSO in Emacs 27 ‘n’ (image-next-file) and ‘p’ are available
   (define-key image-mode-map [(left)] 'my-image-prev-dired)
   (define-key image-mode-map [(right)] 'my-image-next-dired)
   (define-key image-mode-map [(control left)] 'image-backward-hscroll)
@@ -3071,8 +3078,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
      ;; ((string-match "\\.html?$" file) (w3-open-local file))
      ((string-match "\\.html?$" file)
       (cond
-       ((fboundp 'w3m-goto-url-new-session)
-        (w3m-find-file-new-session file))
        ((fboundp 'browse-url)
         (browse-url file))))
      ((string-match "\\.elc?$" file)
@@ -3294,7 +3299,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
             ;; I don't want to miss omitted files in unknown directories!
             ;; Omit only in some large directories that I use often.
             (when (string-match-p "emacs/\\(git\\|bzr\\|cvs\\)" default-directory)
-              (dired-omit-mode 1))
+              (setq dired-omit-mode t)
+              ;; Set variable above because the next calls dired-omit-expunge twice:
+              ;; (dired-omit-mode 1)
+              )
             ;; Use old "\M-o" instead of new "\C-x\M-o".
             (define-key dired-mode-map "\M-o" 'dired-omit-mode)))
 
@@ -3374,7 +3382,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
          (root (and project (car (project-roots project))))
          (default-directory (or (and root (file-directory-p root) root)
                                 default-directory)))
-    (shell)))
+    ;; Use ‘create-file-buffer’ to uniquify shell buffer names.
+    (shell (create-file-buffer "*shell*"))))
 
 (define-key my-map "s" 'shell-in-project-root)
 
@@ -3386,7 +3395,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                            (shell-in-project-root))))
 
 (with-eval-after-load 'shell
-  (add-hook 'shell-mode-hook 'rename-uniquely)
+  ;; (add-hook 'shell-mode-hook 'rename-uniquely)
   ;; Turn off dirtrack because it fails in Bash on Heroku.
   (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
   (define-key shell-mode-map "\C-d"
@@ -3676,6 +3685,14 @@ Example:
                        buffer-name)
        (memq this-command '(xref-find-definitions))))
 
+(push '(display-buffer-to-xref-p
+        ;; TODO:
+        ;; display-buffer-maybe-below-selected
+        display-buffer-in-direction
+        (direction . below)
+        (window-height . fit-window-to-buffer))
+      display-buffer-alist)
+
 ;; UNUSED
 (defun display-buffer-from-xref-p (_buffer-name _action)
   ;; TODO: check xref--original-window xref--original-window-intent?
@@ -3774,6 +3791,9 @@ Example:
   (unless current-prefix-arg
     (with-current-buffer (window-buffer)
       (eq major-mode 'help-mode))))
+
+(push '(display-buffer-from-help-p display-buffer-same-window)
+      display-buffer-alist)
 
 
 ;;; info
@@ -4006,6 +4026,9 @@ then output is inserted in the current buffer."
               ;; (define-key dictem-mode-map [(meta left)]  'my-dictem-prev-word?)
               (define-key dictem-mode-map [(meta right)] 'my-dictem-run-search)))
 
+  (push '("\\`\\*dictem.*" display-buffer-same-window)
+        display-buffer-alist)
+
   ;; Stupid bug pushes an empty string to kill-ring
   (advice-add 'dictem-base-do-default-server :around
               (lambda (orig-fun &rest args)
@@ -4140,17 +4163,22 @@ then output is inserted in the current buffer."
 
 ;;; gnus
 
+;; Make tab names as short as possible.
 ;; From (info "(gnus) Tabbed Interface")
 (push '("\\`\\*Group\\*\\'" .
         (display-buffer-in-tab
-         (tab-name . "Gnus")))
+         (tab-name . "G")))
       display-buffer-alist)
 (push '("\\`\\*Summary .*\\*\\'" .
         (display-buffer-in-tab
          (tab-name . (lambda (buffer _alist)
-                       (setq buffer (buffer-name buffer))
-                       (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
-                         (format "Group %s" (match-string 1 buffer)))))))
+                       (setq buffer (replace-regexp-in-string
+                                     (rx (or (and bos "*Summary "
+                                                  (or (and "nnml:" (? (or "mail" "list") "."))
+                                                      "nndoc+ephemeral:bug#"))
+                                             (and "*" eos))) ""
+                                     (buffer-name buffer)))
+                       (format "G %s" buffer)))))
       display-buffer-alist)
 
 (defun my-gnus ()
