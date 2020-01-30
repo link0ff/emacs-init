@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-01-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-01-31 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -392,8 +392,7 @@ or forward in the buffer.  See more at `backward-sexp'."
   (interactive)
   ;; Keep the buffer displayed on the frame or in a tab
   (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
-          (not (eq (car (tab-bar-get-buffer-tab (current-buffer) t))
-                   'current-tab)))
+          (tab-bar-get-buffer-tab (current-buffer) t t))
       (dired-jump)
     ;; Go to the top to not store emacs-places.
     (goto-char (point-min))
@@ -3032,7 +3031,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 ;; `identify -list delegate` confirms it's supported:
 ;; webp => "dwebp' -pam '%i' -o '%o"
 
-(add-to-list 'imagemagick-enabled-types 'WEBP)
+(when (boundp 'imagemagick-enabled-types)
+  (add-to-list 'imagemagick-enabled-types 'WEBP))
 
 (advice-add 'imagemagick-types :around
             (lambda (orig-fun &rest args)
@@ -3395,7 +3395,8 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                            (shell-in-project-root))))
 
 (with-eval-after-load 'shell
-  ;; (add-hook 'shell-mode-hook 'rename-uniquely)
+  ;; This affects also “*Async Shell Command*” buffers
+  (add-hook 'shell-mode-hook 'rename-uniquely)
   ;; Turn off dirtrack because it fails in Bash on Heroku.
   (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
   (define-key shell-mode-map "\C-d"
@@ -3471,7 +3472,12 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   ;; `shell-prompt-pattern' can't be used: it finds too many false matches
   `((,(rx-let ((c (* (not (any "#$%>\12"))))) ; any non-prompt char
         (rx bol
-            (group-n 1 c (or "@" "irb") c ":" c (any "#$%>") (* " "))
+            (group-n 1 c (or
+                          ;; Bash or Ruby prompt
+                          (and (or "@" "irb" ) c ":" c)
+                          ;; Elixir prompt
+                          (and "iex" c))
+                     (any "#$%>") (* " "))
             (group-n 2 (* nonl))
             eol))
      (1 'comint-highlight-prompt)
@@ -3712,7 +3718,8 @@ Example:
     (lambda ()
       (interactive)
       (if (memq xref--original-command '(xref-find-definitions))
-          (call-interactively 'xref-quit-and-goto-xref)
+          ;; (call-interactively 'xref-quit-and-goto-xref)
+          (call-interactively 'xref-goto-xref)
         (setq xref--original-window nil)
         (call-interactively 'xref-goto-xref)))))
 
@@ -4644,7 +4651,7 @@ Cancel the clock if called with C-u."
 
 ;;; desktop
 
-;; Save only such dired buffers that are visible in windows or tabs
+;; Save only such Dired buffers that are visible in windows or tabs
 (when (boundp 'desktop-buffers-not-to-save-function)
   (setq desktop-buffers-not-to-save-function
         (lambda (_filename bufname mode &rest _)

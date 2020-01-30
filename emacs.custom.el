@@ -169,6 +169,7 @@
  '(message-log-max t)
  '(message-send-mail-function 'smtpmail-send-it)
  '(minibuffer-depth-indicate-mode t)
+ '(minibuffer-electric-default-mode t)
  '(mm-discouraged-alternatives nil)
  '(mm-text-html-renderer 'shr)
  '(mmm-submode-decoration-level 0)

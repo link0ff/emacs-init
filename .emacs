@@ -67,9 +67,5 @@
 
 (defvar ruby-use-smie nil)
 
-(with-eval-after-load 'ruby-mode
-  (define-key ruby-mode-map [(control left)] 'ruby-backward-sexp)
-  (define-key ruby-mode-map [(control right)] 'ruby-forward-sexp))
-
 (when (fboundp 'global-diff-hl-mode)
   (global-diff-hl-mode))

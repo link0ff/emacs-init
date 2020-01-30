@@ -1,6 +1,6 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov <juri@linkov.net>
-#+DATE: 2020-01-23
+#+DATE: 2020-01-31
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+URL: <http://www.linkov.net/emacs>
@@ -13,7 +13,7 @@
 
 * Most significant Emacs customizations
 
-- Full-screen Emacs desktop.
+- Full-screen Emacs desktop to maximize information density.
 - Efficient navigation in different modes and between buffers.
   - Lynx-like navigation in Info, Man, Dired, W3, W3M modes
 - Disabled most of the default limitations.
