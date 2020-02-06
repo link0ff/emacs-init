@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-01-31 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-02-06 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -554,10 +554,12 @@ or forward in the buffer.  See more at `backward-sexp'."
 (advice-add 'gui-selection-value :around
             (lambda (orig-fun &rest args)
               (let ((value (apply orig-fun args)))
-                (when (and (stringp value) (string-match-p "^http.*%" value))
-                  (setq value (decode-coding-string
-                               (url-unhex-string value)
-                               'utf-8)))
+                (when (and (stringp value)
+                           (string-match-p
+                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
+                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
+                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
+                  (setq value (replace-regexp-in-string " " "%20" value)))
                 value))
             '((name . gui-selection-value-url-decode)))
 
@@ -2970,12 +2972,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (defun my-image-prev-dired ()
   (interactive)
   (kill-current-buffer-and-dired-jump)
+  (clear-image-cache)
   (dired-previous-line 1)
   (dired-view-file))
 
 (defun my-image-next-dired ()
   (interactive)
   (kill-current-buffer-and-dired-jump)
+  (clear-image-cache)
   (dired-next-line 1)
   (dired-view-file))
 
@@ -4278,6 +4282,9 @@ then output is inserted in the current buffer."
               ;; I don't need line and column numbers in the summary buffer
               (setq-local line-number-mode nil)
               (setq-local column-number-mode nil)))
+
+  (add-hook 'gnus-summary-exit-hook 'quit-window)
+
   ;; Zebra stripes for the summary buffer
   ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
   ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
