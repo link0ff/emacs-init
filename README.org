@@ -25,6 +25,8 @@
 
 * Efficient navigation in different modes and between buffers.
 
+** Smart moves
+
 ** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
 
 * Disabled most of the default limitations.
@@ -33,10 +35,11 @@
 
 * Added new functionality and new keybindings.
 
-Local Variables:
-eval: (add-hook 'before-save-hook 'time-stamp nil t)
-time-stamp-start: "DATE: "
-time-stamp-format: "%:y-%02m-%02d"
-time-stamp-end: "$"
-time-stamp-line-limit: 15
-End:
+* Local Variables :noexport:
+- Local Variables:
+- eval: (add-hook 'before-save-hook 'time-stamp nil t)
+- time-stamp-start: "DATE: "
+- time-stamp-format: "%:y-%02m-%02d"
+- time-stamp-end: "$"
+- time-stamp-line-limit: 15
+- End:
