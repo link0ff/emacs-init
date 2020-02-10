@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-02-06 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-02-11 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2609,7 +2609,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (define-key global-map [(shift f5)] 'outline-minor-mode)
 
 (with-eval-after-load 'outline
-  (define-key outline-mode-map [(control ?o)] outline-mode-prefix-map)
+;;   (define-key outline-mode-map [(control ?o)] outline-mode-prefix-map)
 ;;   (define-key outline-mode-map [(control meta left)]
 ;;               'my-outline-hide-entry-or-subtree)
 ;;   (define-key outline-mode-map [(control meta right)]

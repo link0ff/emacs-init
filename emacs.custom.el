@@ -191,6 +191,7 @@
  '(nnmail-extra-headers '(To Cc))
  '(nnmail-treat-duplicates 'delete)
  '(org-replace-disputed-keys t)
+ '(org-special-ctrl-o nil)
  '(org-startup-folded nil)
  '(org-support-shift-select t)
  '(parens-require-spaces nil)
