@@ -1,19 +1,17 @@
+(org-babel-load-file (locate-file "README.org" load-path))
 
-(defun load-literate-org (file)
-  "Load literate org config."
-  (with-temp-buffer
-    ;; Set ‘buffer-file-name’ to help *Help* buffer point to the right source file.
-    (setq buffer-file-name file)
-    (insert-file-contents file)
-    (while (re-search-forward (rx (*? anything)
-                                  "#+begin_src emacs-lisp"
-                                  (group-n 1 (*? anything))
-                                  "#+end_src")
-                              nil t)
-      (replace-match (match-string 1) nil nil))
-    (delete-region (point) (point-max))
-    (set-buffer-modified-p nil)
-    (setq lexical-binding t)
-    (eval-buffer)))
+;; TODO: later move all that is below to README.org
+;; TODO: qv (info "(use-package) after")
 
-(load-literate-org "README.org")
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+
+(package-initialize)
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+(require 'use-package)
+
+(setq org-confirm-babel-evaluate nil
+      org-src-fontify-natively t
+      org-src-tab-acts-natively t)

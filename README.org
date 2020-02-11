@@ -1,10 +1,13 @@
 #+TITLE: .emacs --- Emacs init file
-#+AUTHOR: Juri Linkov <juri@linkov.net>
+#+AUTHOR: Juri Linkov
+#+EMAIL: juri@linkov.net
 #+DATE: 2020-02-11
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+URL: <http://www.linkov.net/emacs>
-#+HTML: <p align="center"><img src="emacs-logo.png" /></p>
+#+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
+#+ATTR_HTML: :target _blank
+#+OPTIONS: broken-links:mark email:t
 
 #+BEGIN_QUOTE
 "/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
@@ -12,14 +15,54 @@
 
 /Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>/
 
+* Literate programming
+
+First of all, as you already noted, this file follows the paradigm called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programming]].
+It is a text document that has both of these features:
+
+1. Weaving: it is rendered to HTML while displayed either on GitLab/GitHub or when exported;
+2. Tangling: the same document is executed during Emacs loading.
+   One line of code that initiates loading is in the separate file [[init.el][init.el]].
+
+This fits nicely into the definition of Emacs where Emacs is the
+self-documenting editor, and this file is a self-documenting init file.
+
+There are many different definitions what Emacs really is - some call it
+Integrated Development Environment (IDE), some call it a Lisp machine, etc.
+and all of them are right.  What definition would be more relevant in the
+context of this configuration file is that Emacs not just an editor, but
+the *Editor Construction Kit* - that means an editor creation system whose
+blocks could be combined in infinitely many ways to build a completely new editor.
+
+And indeed, looking at different customizations, it's easy to notice that
+none of them are like other editors based on the same Emacs core.
+Their differences are so significant that it is hard to believe that they
+come from the same source.
+
+* Space-time optimization
+
+While constructing an own editor, one of the most important goals is to
+optimize it in both dimensions: in space and time.
+
+Optimization of space means to make usage of screen space more optimal, and
+optimization of time means to reduce time required to perform different tasks.
+
+** Space optimization
+
+By default, Emacs looks like a typical GUI application with the menu bar,
+tool bar, scroll bar, etc.  The problem is that these nice-looking UI elements
+occupy precious screen space.
+
+Some parts of this configuration deal with this problem by reclaiming
+unused space to maximize information density on the screen.
+
+Remove unused display elements
+
+Full-screen Emacs desktop
+
+** Time optimization
+
 * Most significant Emacs customizations
-
-#+BEGIN_SRC emacs-lisp
-;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
-(and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
-#+END_SRC
-
-* Full-screen Emacs desktop to maximize information density.
 
 * Window management
 
@@ -34,6 +77,13 @@
 * Improved many standard Emacs commands and modes.
 
 * Added new functionality and new keybindings.
+
+* Other
+
+#+BEGIN_SRC emacs-lisp
+;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
+(and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
+#+END_SRC
 
 * Local Variables :noexport:
 - Local Variables:
