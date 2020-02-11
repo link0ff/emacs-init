@@ -7,7 +7,7 @@
 #+URL: <http://www.linkov.net/emacs>
 #+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
 #+ATTR_HTML: :target _blank
-#+OPTIONS: broken-links:mark email:t
+#+OPTIONS: broken-links:mark creator:t email:t
 
 #+BEGIN_QUOTE
 "/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
@@ -15,10 +15,12 @@
 
 /Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>/
 
+* Table of Content                                                      :TOC:
+
 * Literate programming
 
-First of all, as you already noted, this file follows the paradigm called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programming]].
-It is a text document that has both of these features:
+First of all, as you may already noticed, this file follows the paradigm
+called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programming]].  It is a text document that has both of these features:
 
 1. Weaving: it is rendered to HTML while displayed either on GitLab/GitHub or when exported;
 2. Tangling: the same document is executed during Emacs loading.
@@ -26,6 +28,8 @@ It is a text document that has both of these features:
 
 This fits nicely into the definition of Emacs where Emacs is the
 self-documenting editor, and this file is a self-documenting init file.
+
+* Editor Construction Kit
 
 There are many different definitions what Emacs really is - some call it
 Integrated Development Environment (IDE), some call it a Lisp machine, etc.
@@ -50,11 +54,10 @@ optimization of time means to reduce time required to perform different tasks.
 ** Space optimization
 
 By default, Emacs looks like a typical GUI application with the menu bar,
-tool bar, scroll bar, etc.  The problem is that these nice-looking UI elements
-occupy precious screen space.
-
-Some parts of this configuration deal with this problem by reclaiming
-unused space to maximize information density on the screen.
+tool bar, scroll bars, etc.  The problem is that these nice-looking UI
+elements occupy precious screen space.  Some parts of this configuration
+deal with this problem by reclaiming unused space to maximize information
+density on the screen.
 
 Remove unused display elements
 
@@ -86,6 +89,11 @@ Full-screen Emacs desktop
 #+END_SRC
 
 * Local Variables :noexport:
+
+~time-stamp~ in these local variables specifies the format
+of the property =DATE= at the beginning of this file, so that
+on saving it is updated automatically.
+
 - Local Variables:
 - eval: (add-hook 'before-save-hook 'time-stamp nil t)
 - time-stamp-start: "DATE: "
