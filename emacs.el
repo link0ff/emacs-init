@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-02-11 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-02-12 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -648,6 +648,7 @@ in the minibuffer history before typing RET to insert the item."
 
 ;; Alternative Keyboard Feature implemented in bug#9751
 ;; and posted to http://ru-emacs.livejournal.com/82428.html
+;; This is now available from https://github.com/a13/reverse-im.el
 (defun reverse-input-method (input-method)
   "Build the reverse mapping of single letters from INPUT-METHOD."
   (interactive
@@ -4347,7 +4348,9 @@ then output is inserted in the current buffer."
           ;; or point is on the bottom of the window while scrolling
           (eq (point) (save-excursion (move-to-window-line -1) (point))))
       (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
-    (gnus-article-press-button)))
+    (if (eq (get-char-property (point) 'category) 'shr)
+        (shr-browse-url)
+      (gnus-article-press-button))))
 
 ;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
 (defun my-gnus-copy-link-gnu-lists (&optional _arg)

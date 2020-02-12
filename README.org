@@ -4,7 +4,7 @@
 #+DATE: 2020-02-11
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
-#+URL: <http://www.linkov.net/emacs>
+#+HTML_LINK_HOME: http://www.linkov.net/emacs
 #+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
 #+ATTR_HTML: :target _blank
 #+OPTIONS: broken-links:mark creator:t email:t
@@ -24,7 +24,7 @@ called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programmin
 
 1. Weaving: it is rendered to HTML while displayed either on GitLab/GitHub or when exported;
 2. Tangling: the same document is executed during Emacs loading.
-   One line of code that initiates loading is in the separate file [[init.el][init.el]].
+   One line of code that initiates loading is in the separate file [[file:init.el][init.el]].
 
 This fits nicely into the definition of Emacs where Emacs is the
 self-documenting editor, and this file is a self-documenting init file.
@@ -55,7 +55,7 @@ optimization of time means to reduce time required to perform different tasks.
 
 By default, Emacs looks like a typical GUI application with the menu bar,
 tool bar, scroll bars, etc.  The problem is that these nice-looking UI
-elements occupy precious screen space.  Some parts of this configuration
+elements occupy precious screen real estate.  Some parts of this configuration
 deal with this problem by reclaiming unused space to maximize information
 density on the screen.
 
