@@ -2737,6 +2737,10 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   ;; Undefine hijacked remappings
   (define-key org-mode-map (vector 'remap 'backward-paragraph) nil)
   (define-key org-mode-map (vector 'remap 'forward-paragraph) nil)
+  (define-key org-mode-map (vector 'remap 'fill-paragraph) nil)
+
+  (when delete-selection-mode
+    (put 'org-return 'delete-selection t))
 
   (add-hook
    'org-mode-hook

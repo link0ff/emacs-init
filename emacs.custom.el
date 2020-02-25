@@ -205,7 +205,6 @@
  '(rainbow-delimiters-max-face-count 5)
  '(read-file-name-completion-ignore-case t)
  '(read-quoted-char-radix 16)
- '(read-regexp-defaults-function 'find-tag-default-as-regexp)
  '(recenter-positions '(0.15 top))
  '(recentf-exclude '("/[^/]+[@:]"))
  '(recentf-mode t)
