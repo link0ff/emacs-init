@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-02-12 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-02-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2537,7 +2537,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
 (add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . conf-mode))
 
 
 ;;; sql

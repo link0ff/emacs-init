@@ -58,7 +58,6 @@
 (require 'erlang-start nil t)
 
 ;; (add-to-list 'auto-mode-alist '("\\.sass\\'" . scss-mode))
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
 ;; (add-to-list 'auto-mode-alist '("\\.rb\\'" . enh-ruby-mode))
 ;; (with-eval-after-load 'enh-ruby-mode
