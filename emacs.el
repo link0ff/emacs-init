@@ -31,22 +31,6 @@
 
 ;;; settings
 
-;; Enable all disabled commands (eval-expression, narrow-to-..., etc.)
-(setq disabled-command-function nil)
-
-;; Get rid of all space-wasting garbage and minimize clutter
-(and (fboundp 'menu-bar-mode)   (menu-bar-mode   -1))
-(and (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
-(and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
-(and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
-;; tab-bar is enabled below
-
-;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
-(and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
-
-;; Use "y or n" for answers instead of complete words "yes or no"
-(fset 'yes-or-no-p 'y-or-n-p)
-
 ;; If not on AC power line, then display battery status on the mode line
 (defvar my-battery-timer nil)
 (when (and (require 'battery nil t)

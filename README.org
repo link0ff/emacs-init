@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-02-22
+#+DATE: 2020-02-25
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
@@ -62,38 +62,62 @@ elements occupy precious screen real estate.  Some parts of this configuration
 deal with this problem by reclaiming unused space to maximize information
 density on the screen.
 
-Remove unused display elements
+*** Remove unused display elements
 
-Full-screen Emacs desktop
+Get rid of all space-wasting garbage and minimize clutter.
+
+#+begin_src emacs-lisp
+(and (fboundp 'menu-bar-mode)   (menu-bar-mode   -1))
+(and (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+(and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
+(and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
+#+end_src
+
+*** Full-screen Emacs desktop
 
 ** Time optimization
 
-** Less typing
+Time optimization mostly means less clanking on keyboard to save time
+for more productive activities.
 
-yes-no -> y
+*** Shorter answers
+
+Use single letters ~y~ or ~n~ for answers instead of complete words ~yes~ or ~no~.
+A longer word was intended for cases where giving the wrong answer would
+have serious consequences, but in reality with short answers you decide
+how long a pause you need in order to realize what the question is about.
+
+#+begin_src emacs-lisp
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+** Don't spend time answering useless questions
+
+Enable all disabled commands such as ~narrow-to-region~, etc.
+
+#+begin_src emacs-lisp
+(setq disabled-command-function nil)
+#+end_src
 
 * Most significant Emacs customizations
-
 * Window management
-
 * Efficient navigation in different modes and between buffers.
-
 ** Smart moves
-
 ** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
-
 * Disabled most of the default limitations.
-
 * Improved many standard Emacs commands and modes.
-
 * Added new functionality and new keybindings.
 
 * Other
 
-#+BEGIN_SRC emacs-lisp
-;; Blinking cursors are distracting - turn blink OFF: (*) (*) (*) indicates cursor blinks
+** No blinking
+
+Blinking cursors are distracting - turn blink OFF:
+here ~(*) (*) (*)~ indicates how cursor blinks.
+
+#+begin_src emacs-lisp
 (and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
-#+END_SRC
+#+end_src
 
 * Local Variables :noexport:
 
