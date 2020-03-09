@@ -1,4 +1,4 @@
-(org-babel-load-file (locate-file "README.org" load-path))
+(org-babel-load-file (locate-file "README.org" load-path) t)
 
 ;; TODO: later move all that is below to README.org
 ;; TODO: qv (info "(use-package) after")
@@ -6,7 +6,7 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
-(package-initialize)
+;; (package-initialize) ;; Unnecessary call to ‘package-initialize’ in init file
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))

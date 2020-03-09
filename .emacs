@@ -20,7 +20,7 @@
 ;;   )
 
 (load (setq custom-file (or custom-file "emacs.custom.el")))
-
+(load "init.el")
 (load "emacs");;loaded twice because of custom-file by startup.el
 
 (load "emacs.patches")

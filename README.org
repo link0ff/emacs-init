@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-02-25
+#+DATE: 2020-02-27
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
@@ -9,6 +9,7 @@
 #+ATTR_HTML: :target _blank
 #+INFOJS_OPT: view:info toc:t
 #+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t
+#+PROPERTY: header-args:emacs-lisp :lexical yes
 
 #+BEGIN_QUOTE
 "/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified

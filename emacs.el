@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-02-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-03-09 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -272,6 +272,11 @@ i.e. in daylight or under bright electric lamps."
               (funcall orig-fun monitor display
                        (append '((undecorated . t)) parameters)))
             '((name . make-frame-on-monitor-undecorated)))
+
+(advice-add 'make-frame-on-current-monitor :around
+            (lambda (orig-fun &optional parameters)
+              (funcall orig-fun (append '((undecorated . t)) parameters)))
+            '((name . make-frame-on-current-monitor-undecorated)))
 
 ;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
 (set-frame-parameter nil 'undecorated t)
@@ -3589,7 +3594,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (with-eval-after-load 'grep
   (push '("ch" . "*.[chm]") grep-files-aliases) ; override existing alias with added *.m
   (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee Gemfile Gemfile.lock") grep-files-aliases)
+  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee *.sass Gemfile Gemfile.lock") grep-files-aliases)
   (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
   (push '("clj" . "*.clj*") grep-files-aliases))
 
