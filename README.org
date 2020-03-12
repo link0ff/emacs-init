@@ -1,19 +1,20 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-02-27
+#+DATE: 2020-03-12
 #+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
 #+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
 #+ATTR_HTML: :target _blank
 #+INFOJS_OPT: view:info toc:t
-#+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t
+#+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t toc:t
 #+PROPERTY: header-args:emacs-lisp :lexical yes
+#+LINK: bug https://debbugs.gnu.org/%s
 
-#+BEGIN_QUOTE
+#+begin_quote
 "/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
-#+END_QUOTE
+#+end_quote
 
 /Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>/
 
@@ -76,6 +77,87 @@ Get rid of all space-wasting garbage and minimize clutter.
 
 *** Full-screen Emacs desktop
 
+To use maximum screen space, my Emacs frame covers the entire screen
+and has no menus, no toolbars, no scrollbars, no title and no borders.
+Such customization on 1024x768 display mode and 6x10 font produces
+Emacs text screen resolution 168 columns x 75 lines.
+~split-window-horizontally~ gives two windows with 83 columns x 75 lines.
+And ~follow-mode~ displays one buffer with 83 columns x 150 lines.
+On 1366x768 this gives 225 columns x 75 lines, this means either
+2 horizontally split windows each 112 columns wide, or
+3 horizontally split windows each 75 columns wide.
+
+#+begin_src emacs-lisp
+(cond
+ ((eq window-system 'x)
+  ;;(create-fontset-from-ascii-font "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
+  (create-fontset-from-ascii-font "-misc-fixed-medium-r-*--10-*-*-*-*-*-*-*")
+  (setq default-frame-alist
+        (append
+         '(
+           ;; A lot of different fonts were tried to pick the best one:
+           ;;(font . "-*-*-medium-r-normal--10-*-*-*-c-60-fontset-koi8_r_10")
+           ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
+           ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-*-*")
+           ;; (font . "-misc-fixed-medium-r-normal--10-100-75-75-c-60-iso10646-1")
+           ;; (font . "-*-*-medium-r-*--10-*-*-*-*-*-fontset-iso8859_1_10")
+           ;; (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso8859-1")
+           ;; Unlike iso8859-1, iso10646-* correctly combines accented chars:
+           (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso10646-*")
+           (cursor-type . bar)
+           ;; To win a lot of screen pixels:
+           (vertical-scroll-bars . nil)
+           (horizontal-scroll-bars . nil)
+           (scroll-bar-width . 0)
+           (internal-border-width . 0)
+           (menu-bar-lines . 0)
+           (tool-bar-lines . 0)
+           (line-spacing . 0))
+         default-frame-alist))))
+#+end_src
+
+To make the Emacs frame truly maximized, we need additionally make it ~undecorated~
+that removes any remaining window decorations including the title bar:
+
+#+begin_src emacs-lisp
+(add-hook 'after-make-frame-functions 'toggle-frame-maximized)
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (set-frame-parameter frame 'undecorated t)
+            ;; Some OS resources change background to grey, revert it back to white:
+            (modify-frame-parameters frame (list (cons 'background-color "white")))
+            ;; For some OS window managers that don't put focus to new frames:
+            (select-frame-set-input-focus frame)))
+
+;; Apply `undecorated' to new frames created by these commands:
+(advice-add 'make-frame-on-monitor :around
+            (lambda (orig-fun monitor &optional display parameters)
+              (funcall orig-fun monitor display
+                       (append '((undecorated . t)) parameters)))
+            '((name . make-frame-on-monitor-undecorated)))
+
+(advice-add 'make-frame-on-current-monitor :around
+            (lambda (orig-fun &optional parameters)
+              (funcall orig-fun (append '((undecorated . t)) parameters)))
+            '((name . make-frame-on-current-monitor-undecorated)))
+
+;; qv https://debbugs.gnu.org/31968 "Allow to hide title bar on maximize"
+(set-frame-parameter nil 'undecorated t)
+#+end_src
+
+In earlier versions there was no way to unframe and maximize Emacs window from Emacs,
+so it was necessary to use such code in =~/.sawfish/rc=:
+
+TODO: maybe add 'export: no'  OR  :tangle no from (info "(org) Extracting Source Code")
+#+begin_src lisp
+(require 'sawfish.wm.state.maximize)
+(define (my-customize-emacs-window w)
+  (when (string-match "emacs" (nth 2 (get-x-property w 'WM_CLASS)))
+    (window-put w 'type 'unframed)
+    (maximize-window w)))
+(add-hook 'before-add-window-hook my-customize-emacs-window t)
+#+end_src
+
 ** Time optimization
 
 Time optimization mostly means less clanking on keyboard to save time
@@ -108,6 +190,37 @@ Enable all disabled commands such as ~narrow-to-region~, etc.
 * Disabled most of the default limitations.
 * Improved many standard Emacs commands and modes.
 * Added new functionality and new keybindings.
+
+* Fixes for packages
+
+When some package lacks necessary features that I need, and
+I'm not sure if such functionality would be generally useful
+to be added to that package, in this case I implement such a feature
+in my init file that later could be adapted into a patch to submit
+for the package to improve.
+
+** battery
+
+The built-in package ~battery~ doesn't provide an additional timer that
+periodically would check if the laptop is not on AC power line, then
+display battery status on the mode line.
+
+#+begin_src emacs-lisp
+(defvar my-battery-timer nil)
+(when (and (require 'battery nil t)
+           (bound-and-true-p battery-status-function)
+           (functionp battery-status-function))
+  (when (and (boundp 'my-battery-timer) (timerp  my-battery-timer))
+    (cancel-timer my-battery-timer))
+  (setq my-battery-timer
+        ;; Check periodically if went off-line and
+        ;; discharging battery needs to be displayed
+        (run-at-time t 600 (lambda ()
+                             (display-battery-mode
+                              (if (member (cdr (assoc ?L (funcall battery-status-function)))
+                                          '("AC" "on-line"))
+                                  0 1))))))
+#+end_src
 
 * Other
 

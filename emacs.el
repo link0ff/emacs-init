@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-03-09 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-03-11 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -30,22 +30,6 @@
 
 
 ;;; settings
-
-;; If not on AC power line, then display battery status on the mode line
-(defvar my-battery-timer nil)
-(when (and (require 'battery nil t)
-           (bound-and-true-p battery-status-function)
-           (functionp battery-status-function))
-  (when (and (boundp 'my-battery-timer) (timerp  my-battery-timer))
-    (cancel-timer my-battery-timer))
-  (setq my-battery-timer
-        ;; Check periodically if went off-line and
-        ;; discharging battery needs to be displayed
-        (run-at-time t 600 (lambda ()
-                             (display-battery-mode
-                              (if (member (cdr (assoc ?L (funcall battery-status-function)))
-                                          '("AC" "on-line"))
-                                  0 1))))))
 
 ;; Create display table to modify some display elements
 (or standard-display-table (setq standard-display-table (make-display-table)))
@@ -86,55 +70,6 @@
                                (fundamental-mode)
                              (let ((buffer-file-name (buffer-name)))
                                (set-auto-mode)))))
-
-
-;;; frame
-
-;; To use maximum screen space, my Emacs frame covers the entire screen
-;; and has no menus, no toolbars, no scrollbars, no title and no borders.
-;; Such customization on 1024x768 display mode and 6x10 font produces
-;; Emacs text screen resolution 168 columns x 75 lines.
-;; `split-window-horizontally' gives two windows with 83 columns x 75 lines.
-;; And `follow-mode' displays one buffer with 83 columns x 150 lines.
-;; On 1366x768 this gives 225 columns x 75 lines, this means either
-;; 2 horizontally split windows each 112 columns wide, or
-;; 3 horizontally split windows each 75 columns wide.
-
-(cond
- ((eq window-system 'x)
-  ;;(create-fontset-from-ascii-font "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
-  (create-fontset-from-ascii-font "-misc-fixed-medium-r-*--10-*-*-*-*-*-*-*")
-  (setq default-frame-alist
-        (append
-         '(
-           ;;TRY: maximize instead of (width . 168)
-           ;;TRY: maximize instead of (height . 77)
-           ;; This is useful with the next code in the ~/.sawfish/rc,
-           ;; because I can't find a way to unframe and maximize Emacs window from Emacs:
-           ;; (require 'sawfish.wm.state.maximize)
-           ;; (define (my-customize-emacs-window w)
-           ;;   (when (string-match "emacs" (nth 2 (get-x-property w 'WM_CLASS)))
-           ;;     (window-put w 'type 'unframed)
-           ;;     (maximize-window w)))
-           ;; (add-hook 'before-add-window-hook my-customize-emacs-window t)
-           ;;(font . "-*-*-medium-r-normal--10-*-*-*-c-60-fontset-koi8_r_10")
-           ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
-           ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-*-*")
-           ;; (font . "-misc-fixed-medium-r-normal--10-100-75-75-c-60-iso10646-1")
-           ;; (font . "-*-*-medium-r-*--10-*-*-*-*-*-fontset-iso8859_1_10")
-           ;; (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso8859-1")
-           ;; Unlike iso8859-1, iso10646-* correctly combines accented chars
-           (font . "-misc-fixed-medium-r-normal--10-*-*-*-c-60-iso10646-*")
-           (cursor-type . bar)
-           ;; To win a lot of screen pixels:
-           (vertical-scroll-bars . nil)
-           (horizontal-scroll-bars . nil)
-           (scroll-bar-width . 0)
-           (internal-border-width . 0)
-           (menu-bar-lines . 0)
-           (tool-bar-lines . 0)
-           (line-spacing . 0))
-         default-frame-alist))))
 
 
 ;;; tab-bar tabs
@@ -258,28 +193,6 @@ i.e. in daylight or under bright electric lamps."
 
 ;; (my-colors-set)
 ;; (add-hook 'after-make-frame-functions 'my-colors-set)
-
-(add-hook 'after-make-frame-functions 'toggle-frame-maximized)
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (modify-frame-parameters frame (list (cons 'background-color "white")))
-            (set-frame-parameter frame 'undecorated t)
-            ;; For some OS window managers that don't put focus to new frames:
-            (select-frame-set-input-focus frame)))
-
-(advice-add 'make-frame-on-monitor :around
-            (lambda (orig-fun monitor &optional display parameters)
-              (funcall orig-fun monitor display
-                       (append '((undecorated . t)) parameters)))
-            '((name . make-frame-on-monitor-undecorated)))
-
-(advice-add 'make-frame-on-current-monitor :around
-            (lambda (orig-fun &optional parameters)
-              (funcall orig-fun (append '((undecorated . t)) parameters)))
-            '((name . make-frame-on-current-monitor-undecorated)))
-
-;; qv "bug#31968: Allow to hide title bar on maximize (gtk/gnome/csd)"
-(set-frame-parameter nil 'undecorated t)
 
 
 ;;; faces
@@ -460,9 +373,11 @@ or forward in the buffer.  See more at `backward-sexp'."
 (define-key goto-map "re" 'grep)
 (define-key goto-map "rr" 'rgrep)
 (define-key goto-map "rl" 'lgrep)
+(define-key goto-map "rv" 'vc-git-grep)
 (define-key goto-map "\M-r\M-e" 'grep)
 (define-key goto-map "\M-r\M-r" 'rgrep)
 (define-key goto-map "\M-r\M-l" 'lgrep)
+(define-key goto-map "\M-r\M-v" 'vc-git-grep)
 
 ;; (define-key global-map [(control escape)]
 ;;   (lambda () (interactive) (buffer-menu 1))) ; not needed
