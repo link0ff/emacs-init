@@ -1,8 +1,8 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-03-12
-#+VERSION: GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+#+DATE: 2020-03-24
+#+VERSION: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
 #+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
@@ -25,11 +25,30 @@
 First of all, as you may already noticed, this file follows the paradigm
 called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programming]].  It is a text document that has both of these features:
 
-1. Weaving: it is rendered to HTML while displayed either on GitLab/GitHub or when exported;
+1. Weaving: it is rendered to HTML while displayed either on GitLab/GitHub
+   or when exported to HTML;
 2. Tangling: the same document is executed during Emacs loading.
-   One line of code that initiates loading is in the separate file [[file:init.el][init.el]].
 
-This fits nicely into the definition of Emacs where Emacs is the
+One line of code that initiates loading is in the separate file [[file:init.el][init.el]].
+This makes it the smallest ~init.el~ file possible, having metric of just 1 [[https://en.wikipedia.org/wiki/Source_lines_of_code][SLOC]].
+The single line in ~init.el~ is the following:
+
+#+begin_src emacs-lisp :tangle no
+(org-babel-load-file (locate-file "README.org" load-path))
+#+end_src
+
+It exports source code from this file to the file ~README.el~.
+To support lexical binding, the output file should have the
+~lexical-binding~ cookie in its header:
+
+#+begin_src emacs-lisp
+;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
+#+end_src
+
+You can read more about details of weaving and tangling in [[info:org#Extracting Source Code][the Org manual]].
+
+Using the same file ~README.org~ as an self-executable document
+fits nicely into the definition of Emacs where Emacs is the
 self-documenting editor, and this file is a self-documenting init file.
 
 * Construction Kit
@@ -56,7 +75,7 @@ optimize it in both dimensions: in space and time.
 Optimization of space means to make usage of screen space more optimal, and
 optimization of time means to reduce time required to perform different tasks.
 
-** Space optimization
+* Space optimization
 
 By default, Emacs looks like a typical GUI application with the menu bar,
 tool bar, scroll bars, etc.  The problem is that these nice-looking UI
@@ -64,7 +83,7 @@ elements occupy precious screen real estate.  Some parts of this configuration
 deal with this problem by reclaiming unused space to maximize information
 density on the screen.
 
-*** Remove unused display elements
+** Remove unused display elements
 
 Get rid of all space-wasting garbage and minimize clutter.
 
@@ -75,7 +94,7 @@ Get rid of all space-wasting garbage and minimize clutter.
 (and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
 #+end_src
 
-*** Full-screen Emacs desktop
+** Full-screen Emacs desktop
 
 To use maximum screen space, my Emacs frame covers the entire screen
 and has no menus, no toolbars, no scrollbars, no title and no borders.
@@ -148,7 +167,6 @@ that removes any remaining window decorations including the title bar:
 In earlier versions there was no way to unframe and maximize Emacs window from Emacs,
 so it was necessary to use such code in =~/.sawfish/rc=:
 
-TODO: maybe add 'export: no'  OR  :tangle no from (info "(org) Extracting Source Code")
 #+begin_src lisp
 (require 'sawfish.wm.state.maximize)
 (define (my-customize-emacs-window w)
@@ -158,12 +176,12 @@ TODO: maybe add 'export: no'  OR  :tangle no from (info "(org) Extracting Source
 (add-hook 'before-add-window-hook my-customize-emacs-window t)
 #+end_src
 
-** Time optimization
+* Time optimization
 
 Time optimization mostly means less clanking on keyboard to save time
 for more productive activities.
 
-*** Shorter answers
+** Shorter answers
 
 Use single letters ~y~ or ~n~ for answers instead of complete words ~yes~ or ~no~.
 A longer word was intended for cases where giving the wrong answer would
