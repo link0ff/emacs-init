@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-03-24
+#+DATE: 2020-03-31
 #+VERSION: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
@@ -45,7 +45,7 @@ To support lexical binding, the output file should have the
 ;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
 #+end_src
 
-You can read more about details of weaving and tangling in [[info:org#Extracting Source Code][the Org manual]].
+You can read more about details of weaving and tangling in [[https://www.gnu.org/software/emacs/manual/html_mono/org.html#Extracting-source-code][the Org manual]].
 
 Using the same file ~README.org~ as an self-executable document
 fits nicely into the definition of Emacs where Emacs is the
