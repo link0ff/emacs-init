@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-03-11 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-03-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2723,20 +2723,14 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (define-key vc-prefix-map "+" 'vc-diff)
   (define-key vc-prefix-map "S" 'vc-log-search))
 
-;; Highlight found occurrences in vc-search-log output buffer.
+;; Highlight found occurrences in *vc-search-log* output buffer of vc-log-search.
 ;; Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
-(add-hook 'vc-post-command-functions
-          (lambda (command files flags)
-            (save-match-data
-              (let* ((matches
-                      (delq nil (mapcar (lambda (flag)
-                                          (and (stringp flag)
-                                               (string-match "^--grep=\\(.*\\)$" flag)
-                                               (match-string 1 flag)))
-                                        flags)))
-                     (match (car matches)))
-                (when match
-                  (highlight-regexp match 'hi-yellow))))))
+(advice-add 'vc-git-log-search :after
+            (lambda (buffer pattern)
+              (with-current-buffer buffer
+                (vc-run-delayed
+                  (highlight-regexp pattern 'hi-yellow))))
+            '((name . vc-git-log-search-highlight)))
 
 (with-eval-after-load 'vc-dir
   ;; Because ‘=’ is easily mistyped as ‘+’
@@ -2759,6 +2753,11 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
           (lambda ()
             (setq display-fill-column-indicator-column 78)
             (display-fill-column-indicator-mode t)))
+
+(add-hook 'log-view-mode-hook
+          (lambda ()
+            (vc-run-delayed
+              (highlight-regexp "[Bb]ug#" 'hi-yellow))))
 
 
 ;;; text
@@ -3521,6 +3520,18 @@ Modifies the grep-find template to add the option `-w' that matches whole words.
         (grep-find-template
          (replace-regexp-in-string "<C>" "-w \\&" grep-find-template)))
     (call-interactively 'rgrep)))
+
+;; Don't pollute manually added entries in `grep-history' with constructed commands
+(advice-add 'lgrep :around
+            (lambda (orig-fun &rest args)
+              (let ((grep-history '()))
+                (apply orig-fun args)))
+            '((name . vc-git-grep-no-history)))
+(advice-add 'vc-git-grep :around
+            (lambda (orig-fun &rest args)
+              (let ((grep-history '()))
+                (apply orig-fun args)))
+            '((name . vc-git-grep-no-history)))
 
 
 ;;; proced
