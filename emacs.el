@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-03-25 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-14 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -2424,7 +2424,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (define-key flymake-mode-map [left-fringe mouse-1]
     'flymake-show-diagnostics-buffer))
 
-(add-to-list 'auto-mode-alist '("\\.cr\\'" . ruby-mode)) ; Crystal
+(add-to-list 'auto-mode-alist '("\\.slang\\'" . slim-mode)) ; for Crystal/Amber
 
 
 ;;; css
@@ -2757,7 +2757,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
 (add-hook 'log-view-mode-hook
           (lambda ()
             (vc-run-delayed
-              (highlight-regexp "[Bb]ug#" 'hi-yellow))))
+              (highlight-regexp "bug#" 'hi-yellow))))
 
 
 ;;; text
@@ -3265,23 +3265,15 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (setq locate-make-command-line 'locate-make-command-line-ignore-case))
 
 ;; Highlight all matches in the *Locate* buffer like in the *Occur* buffer
-(add-hook
- 'locate-post-command-hook
- (lambda ()
-   (save-excursion
-     (goto-char (point-min))
-     (when (or (re-search-forward "Matches for .* using filter \\(.*\\):" nil t)
-               (re-search-forward "Matches for \\(.*\\):" nil t))
-       (highlight-regexp
-        ;; Case-insensitive hack from `isearch-highlight-regexp'.
-        (mapconcat
-         (lambda (c)
-           (let ((s (string c)))
-             (if (string-match "[[:alpha:]]" s)
-                 (format "[%s%s]" (upcase s) (downcase s))
-               (regexp-quote s))))
-         (match-string-no-properties 1) "")
-        'match)))))
+(add-hook 'locate-post-command-hook
+          (lambda ()
+            (save-excursion
+              (goto-char (point-min))
+              (when (or (re-search-forward "Matches for .* using filter \\(.*\\):" nil t)
+                        (re-search-forward "Matches for \\(.*\\):" nil t))
+                (highlight-regexp
+                 (match-string-no-properties 1)
+                 'match)))))
 
 
 ;;; shell
