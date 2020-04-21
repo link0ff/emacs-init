@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-03-31
+#+DATE: 2020-04-21
 #+VERSION: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
@@ -142,9 +142,9 @@ that removes any remaining window decorations including the title bar:
 (add-hook 'after-make-frame-functions 'toggle-frame-maximized)
 (add-hook 'after-make-frame-functions
           (lambda (frame)
-            (set-frame-parameter frame 'undecorated t)
+            (modify-frame-parameters frame '((undecorated . t)))
             ;; Some OS resources change background to grey, revert it back to white:
-            (modify-frame-parameters frame (list (cons 'background-color "white")))
+            (modify-frame-parameters frame '((background-color . "white")))
             ;; For some OS window managers that don't put focus to new frames:
             (select-frame-set-input-focus frame)))
 
@@ -160,8 +160,8 @@ that removes any remaining window decorations including the title bar:
               (funcall orig-fun (append '((undecorated . t)) parameters)))
             '((name . make-frame-on-current-monitor-undecorated)))
 
-;; qv https://debbugs.gnu.org/31968 "Allow to hide title bar on maximize"
-(set-frame-parameter nil 'undecorated t)
+;; Undecorate the initial frame as well
+(modify-frame-parameters nil '((undecorated . t)))
 #+end_src
 
 In earlier versions there was no way to unframe and maximize Emacs window from Emacs,
