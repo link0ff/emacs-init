@@ -103,7 +103,7 @@ like task switcher in some window managers invoked by =Alt+Tab=.
 
 Whereas tab-bar and tab-lines still take screen space, they are sometimes
 indispensable especially on devices with touch screen such as smartphones
-where you can touch tabs to select them.
+where you can touch tabs to select them:
 
 #+begin_src emacs-lisp
 (when (fboundp 'tab-bar-mode) (tab-bar-mode 1))
@@ -112,13 +112,24 @@ where you can touch tabs to select them.
 (unless window-system (xterm-mouse-mode 1))
 #+end_src
 
+When the tab-bar is displayed, it's useful to show tab numbers,
+to be able to select a tab by its ordinal number by typing e.g.
+=s-1= to select the first tab, etc.
+
+#+begin_src emacs-lisp
+(setq tab-bar-tab-hints t
+      tab-bar-select-tab-modifiers '(super))
+#+end_src
+
 To make tab switching as quick as possible, this configuration uses
-the key =`= located near the =TAB= tab, so switching frames
+the key =`= located near the =TAB= key, so switching frames
 with the help of a window manager is performed by =Alt+Tab=,
 and switching tabs with window configurations is by =Alt+`=.
+So you don't need to rely on mouse that is too slow UI device.
+And this ~tab-switcher~ can be used even without the tab-bar.
 
 After displaying a list of tabs, a previous tab can by selected
-by one key =`=, the second tab with two keys =`=, etc.  Moving up
+by one key =`=, the second tab by two keys =`=, etc.  Moving up
 is by =Shift-`=, and selecting a previous tab is by =Alt+`=:
 
 #+begin_src emacs-lisp
@@ -149,6 +160,13 @@ with the same keybindings when ~tab-bar-mode~ is enabled:
 (when tab-bar-history-mode
   (define-key global-map [(control c) left]  'tab-bar-history-back)
   (define-key global-map [(control c) right] 'tab-bar-history-forward))
+#+end_src
+
+By default, the tab shows the name of the current buffer, but I prefer
+to show all buffer names in the tab name:
+
+#+begin_src emacs-lisp
+(setq tab-bar-tab-name-function 'tab-bar-tab-name-all)
 #+end_src
 
 ** Full-screen Emacs desktop
