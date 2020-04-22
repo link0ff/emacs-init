@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-23 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 ;;                                      -- old proverb modified by me
 
 
-;;; settings
+;;; Display settings
 
 ;; Create display table to modify some display elements
 (or standard-display-table (setq standard-display-table (make-display-table)))
@@ -60,16 +60,6 @@
 ;; Tabify only initial whitespace
 (with-eval-after-load 'tabify
   (setq tabify-regexp "^\t* [ \t]+"))
-
-;; For a new non-file buffer set its major mode based on the buffer name.
-;; http://thread.gmane.org/gmane.emacs.devel/115520/focus=115794
-;; But this has problems, e.g. in autoinsert.el that uses
-;; `(eq major-mode (default-value 'major-mode))'.
-(setq-default major-mode (lambda ()
-                           (if buffer-file-name
-                               (fundamental-mode)
-                             (let ((buffer-file-name (buffer-name)))
-                               (set-auto-mode)))))
 
 
 ;;; mouse
@@ -222,45 +212,6 @@ i.e. in daylight or under bright electric lamps."
 
 ;;; keybindings
 
-;; Fix inconsistency in motion keys: there was no symmetry for sexp
-;; like in right-char/left-char and right-word/left-word (bug#36923)
-(defun right-sexp (&optional arg)
-  "Move across one balanced expression (sexp) to the right.
-Depending on the bidirectional context, this may move either forward
-or backward in the buffer.  See more at `forward-sexp'."
-  (interactive "^p")
-  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
-      (forward-sexp arg)
-    (backward-sexp arg)))
-
-(defun left-sexp (&optional arg)
-  "Move across one balanced expression (sexp) to the left.
-Depending on the bidirectional context, this may move either backward
-or forward in the buffer.  See more at `backward-sexp'."
-  (interactive "^p")
-  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
-      (backward-sexp arg)
-    (forward-sexp arg)))
-
-(define-key global-map [(control left)]       'left-sexp)
-(define-key global-map [(control right)]      'right-sexp)
-(define-key global-map [(control kp-left)]    'left-sexp)
-(define-key global-map [(control kp-right)]   'right-sexp)
-(define-key global-map [(control meta left)]  'left-word)
-(define-key global-map [(control meta right)] 'right-word)
-
-(define-key global-map [(control meta up)]    'backward-paragraph)
-(define-key global-map [(control meta down)]  'forward-paragraph)
-
-;; fix new controversial keybindings in Emacs 23
-(define-key global-map [home] 'beginning-of-visual-line)
-(define-key global-map [end]  'end-of-visual-line)
-(define-key global-map [up]   'previous-line)
-(define-key global-map [down] 'next-line)
-;; This is BAD because C-n/C-p are useful in the multi-line minibuffer:
-;; (define-key global-map "\C-p" 'previous-logical-line) ; previous-real-line
-;; (define-key global-map "\C-n" 'next-logical-line)     ; next-real-line
-
 (defun my-go-back ()
   "Go back from current buffer and jump to Dired."
   (interactive)
@@ -296,12 +247,6 @@ or forward in the buffer.  See more at `backward-sexp'."
 ;; (define-key global-map [(meta backspace)] 'undo)
 ;; (define-key global-map [(meta backspace)] 'backward-kill-word)
 ;; (define-key global-map [(control backspace)] 'join-lines)
-
-(define-key global-map [(control ?=)] 'compare-windows)
-;; alternative: (lambda () (interactive) (compare-windows t))
-
-;; I often mistype `compare-windows' as `comapre-windows', allow both:
-(defalias 'comapre-windows 'compare-windows)
 
 (define-key global-map [(control kp-home)] 'beginning-of-buffer)
 (define-key global-map [(control kp-end)]  'end-of-buffer)
@@ -418,91 +363,6 @@ or forward in the buffer.  See more at `backward-sexp'."
 ;; (define-key global-map [?\x8e4] 'next-line)
 ;; (define-key global-map [?\x8f6] 'backward-char)
 ;; (define-key global-map [?'] 'forward-char)
-
-
-;;; copy-paste
-
-;; Decode URL copied from web browser.  It converts e.g.
-;; https://en.wikipedia.org/wiki/%CE%A9
-;; to more nice-looking
-;; https://en.wikipedia.org/wiki/Ω
-(advice-add 'gui-selection-value :around
-            (lambda (orig-fun &rest args)
-              (let ((value (apply orig-fun args)))
-                (when (and (stringp value)
-                           (string-match-p
-                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
-                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
-                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
-                  (setq value (replace-regexp-in-string " " "%20" value)))
-                value))
-            '((name . gui-selection-value-url-decode)))
-
-(defvar kill-ring-save-set-region-p nil)
-
-;; When M-w (kill-ring-save) is called without region, copy text at point.
-(advice-add 'kill-ring-save :before
-            (lambda (&rest _args)
-              (interactive (lambda (spec)
-                             (setq kill-ring-save-set-region-p nil)
-                             (unless (use-region-p)
-                               (let ((bounds (or (bounds-of-thing-at-point 'url)
-                                                 (bounds-of-thing-at-point 'filename)
-                                                 (bounds-of-thing-at-point 'symbol)
-                                                 (bounds-of-thing-at-point 'sexp))))
-                                 (unless bounds
-                                   (signal 'mark-inactive nil))
-                                 (goto-char (car bounds))
-                                 (push-mark (cdr bounds) t t)
-                                 (setq kill-ring-save-set-region-p t)))
-                             (advice-eval-interactive-spec spec))))
-            '((name . set-region-if-inactive)))
-
-;; Indicate copied region, especially needed when
-;; the region was activated by the advice above
-(advice-add 'kill-ring-save :after
-            (lambda (&rest _args)
-              ;; When the region was set by the advice above,
-              ;; only then display its text.
-              (when kill-ring-save-set-region-p
-                (let ((text (substring-no-properties (current-kill 0))))
-                  (message "Copied text \"%s\""
-                           (query-replace-descr ; don't show newlines literally
-                            (if (> (length text) 64)
-                                (concat (substring text 0 64) "..." (substring text -16))
-                              text))))))
-            '((name . indicate-copied-region)))
-
-(defvar yank-from-kill-ring-history nil)
-(defun yank-from-kill-ring (string)
-  "Insert the kill-ring item selected from the minibuffer history.
-Use minibuffer navigation and search commands to browse the kill-ring
-in the minibuffer history before typing RET to insert the item."
-  (interactive
-   (list (let ((history-add-new-input nil)
-               ;; Remove keymaps from text properties of copied string,
-               ;; because typing RET in the minibuffer might call
-               ;; an irrelevant command from the map of copied string.
-               (yank-from-kill-ring-history
-                (mapcar (lambda (h)
-                          ;; TODO: remove all props except face/font-lock-face
-                          (remove-list-of-text-properties
-                           0 (length h)
-                           '(
-                             keymap local-map action mouse-action
-                             button category help-args)
-                           h)
-                          h)
-                        kill-ring)))
-           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
-  (setq yank-window-start (window-start))
-  (push-mark)
-  (insert-for-yank string))
-
-(global-set-key "\M-\C-y" 'yank-from-kill-ring)
-
-(when delete-selection-mode
-  (put 'yank-from-kill-ring 'delete-selection t))
 
 
 ;;; quail

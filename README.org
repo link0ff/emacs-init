@@ -392,6 +392,106 @@ when after jumping point stays within current window bounds:
             '((name . recenter-top)))
 #+end_src
 
+* Useful features
+
+** copy-paste
+
+*** Select items from the kill-ring using the minibuffer history
+
+Please read the docstring, it describes the command pretty well:
+
+#+begin_src emacs-lisp
+(defvar yank-from-kill-ring-history nil)
+(defun yank-from-kill-ring (string)
+  "Insert the kill-ring item selected from the minibuffer history.
+Use minibuffer navigation and search commands to browse the kill-ring
+in the minibuffer history before typing RET to insert the item."
+  (interactive
+   (list (let ((history-add-new-input nil)
+               ;; Remove keymaps from text properties of copied string,
+               ;; because typing RET in the minibuffer might call
+               ;; an irrelevant command from the map of copied string.
+               (yank-from-kill-ring-history
+                (mapcar (lambda (h)
+                          ;; TODO: remove all props except face/font-lock-face
+                          (remove-list-of-text-properties
+                           0 (length h)
+                           '(
+                             keymap local-map action mouse-action
+                             button category help-args)
+                           h)
+                          h)
+                        kill-ring)))
+           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
+  (setq yank-window-start (window-start))
+  (push-mark)
+  (insert-for-yank string))
+
+(global-set-key "\M-\C-y" 'yank-from-kill-ring)
+
+(when delete-selection-mode
+  (put 'yank-from-kill-ring 'delete-selection t))
+#+end_src
+
+*** Decode URL copied from web browser
+
+It converts e.g. https://en.wikipedia.org/wiki/%CE%A9
+to more nice-looking https://en.wikipedia.org/wiki/Ω
+when copying a URL from a web browser to Emacs:
+
+#+begin_src emacs-lisp
+(advice-add 'gui-selection-value :around
+            (lambda (orig-fun &rest args)
+              (let ((value (apply orig-fun args)))
+                (when (and (stringp value)
+                           (string-match-p
+                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
+                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
+                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
+                  (setq value (replace-regexp-in-string " " "%20" value)))
+                value))
+            '((name . gui-selection-value-url-decode)))
+#+end_src
+
+*** Copy text at point without activating the region
+
+#+begin_src emacs-lisp
+(defvar kill-ring-save-set-region-p nil)
+
+;; When M-w (kill-ring-save) is called without active region, copy text at point.
+(advice-add 'kill-ring-save :before
+            (lambda (&rest _args)
+              (interactive (lambda (spec)
+                             (setq kill-ring-save-set-region-p nil)
+                             (unless (use-region-p)
+                               (let ((bounds (or (bounds-of-thing-at-point 'url)
+                                                 (bounds-of-thing-at-point 'filename)
+                                                 (bounds-of-thing-at-point 'symbol)
+                                                 (bounds-of-thing-at-point 'sexp))))
+                                 (unless bounds
+                                   (signal 'mark-inactive nil))
+                                 (goto-char (car bounds))
+                                 (push-mark (cdr bounds) t t)
+                                 (setq kill-ring-save-set-region-p t)))
+                             (advice-eval-interactive-spec spec))))
+            '((name . set-region-if-inactive)))
+
+;; Indicate copied region, especially needed when
+;; the region was activated by the advice above
+(advice-add 'kill-ring-save :after
+            (lambda (&rest _args)
+              ;; When the region was set by the advice above,
+              ;; only then display its text.
+              (when kill-ring-save-set-region-p
+                (let ((text (substring-no-properties (current-kill 0))))
+                  (message "Copied text \"%s\""
+                           (query-replace-descr ; don't show newlines literally
+                            (if (> (length text) 64)
+                                (concat (substring text 0 64) "..." (substring text -16))
+                              text))))))
+            '((name . indicate-copied-region)))
+#+end_src
+
 * Most significant Emacs customizations
 * Window management
 * Efficient navigation in different modes and between buffers.
@@ -401,6 +501,25 @@ when after jumping point stays within current window bounds:
 * Improved many standard Emacs commands and modes.
 * Added new functionality and new keybindings.
 
+
+
+* Major modes
+
+For a new non-file buffer set its major mode based on the buffer name.
+For example, =C-x b newbuffer.el= will set the major mode in a new buffer
+to ~emacs-lisp-mode~ by the file extension =.el= in the buffer name.
+
+#+begin_src emacs-lisp
+(setq-default major-mode (lambda ()
+                           (if buffer-file-name
+                               (fundamental-mode)
+                             (let ((buffer-file-name (buffer-name)))
+                               (set-auto-mode)))))
+#+end_src
+
+Note that this has some problems, e.g. in =autoinsert.el= that uses
+~(eq major-mode (default-value 'major-mode))~.
+
 * Fixes for packages
 
 When some package lacks necessary features that I need, and
@@ -409,7 +528,7 @@ to be added to that package, in this case I implement such a feature
 in my init file that later could be adapted into a patch to submit
 for the package to improve.
 
-** battery
+** Fix timer in battery
 
 The built-in package ~battery~ doesn't provide an additional timer that
 periodically would check if the laptop is not on AC power line, then
@@ -430,6 +549,59 @@ display battery status on the mode line.
                               (if (member (cdr (assoc ?L (funcall battery-status-function)))
                                           '("AC" "on-line"))
                                   0 1))))))
+#+end_src
+
+** Fix inconsistency in motion keys
+
+There was no symmetry for sexp like in =right-char= / =left-char=
+and =right-word= / =left-word= ([[bug:36923]])
+
+#+begin_src emacs-lisp
+(defun right-sexp (&optional arg)
+  "Move across one balanced expression (sexp) to the right.
+Depending on the bidirectional context, this may move either forward
+or backward in the buffer.  See more at `forward-sexp'."
+  (interactive "^p")
+  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
+      (forward-sexp arg)
+    (backward-sexp arg)))
+
+(defun left-sexp (&optional arg)
+  "Move across one balanced expression (sexp) to the left.
+Depending on the bidirectional context, this may move either backward
+or forward in the buffer.  See more at `backward-sexp'."
+  (interactive "^p")
+  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
+      (backward-sexp arg)
+    (forward-sexp arg)))
+
+(define-key global-map [(control left)]       'left-sexp)
+(define-key global-map [(control right)]      'right-sexp)
+(define-key global-map [(control kp-left)]    'left-sexp)
+(define-key global-map [(control kp-right)]   'right-sexp)
+(define-key global-map [(control meta left)]  'left-word)
+(define-key global-map [(control meta right)] 'right-word)
+(define-key global-map [(control meta up)]    'backward-paragraph)
+(define-key global-map [(control meta down)]  'forward-paragraph)
+#+end_src
+
+Fix controversial keybindings added in Emacs 23:
+
+#+begin_src emacs-lisp
+(define-key global-map [home] 'beginning-of-visual-line)
+(define-key global-map [end]  'end-of-visual-line)
+(define-key global-map [up]   'previous-line)
+(define-key global-map [down] 'next-line)
+#+end_src
+
+Fix ~compare-windows~:
+
+#+begin_src emacs-lisp
+(define-key global-map [(control ?=)] 'compare-windows)
+;; alternative: (lambda () (interactive) (compare-windows t))
+
+;; I often mistype `compare-windows' as `comapre-windows', allow both:
+(defalias 'comapre-windows 'compare-windows)
 #+end_src
 
 * Other
