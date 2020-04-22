@@ -2,15 +2,14 @@
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
 #+DATE: 2020-04-22
-#+VERSION: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
-#+KEYWORDS: dotemacs, init
-#+HTML_LINK_HOME: http://www.linkov.net/emacs
-#+HTML_HEAD: <script type="text/javascript" src="load.js"></script>
-#+ATTR_HTML: :target _blank
-#+INFOJS_OPT: view:info toc:t
-#+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t toc:t
+#+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+#+Keywords: dotemacs, init
+#+HTML_link_home: http://www.linkov.net/emacs
+#+HTML_head: <script type="text/javascript" src="load.js"></script>
+#+InfoJS_opt: view:info toc:t
 #+PROPERTY: header-args:emacs-lisp :lexical yes
 #+LINK: bug https://debbugs.gnu.org/%s
+#+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t toc:t
 
 #+begin_quote
 "/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
@@ -19,6 +18,23 @@
 /Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>/
 
 * Table of Content                                                      :TOC:
+
+- [[#literate-programming][Literate programming]]
+- [[#construction-kit][Construction Kit]]
+- [[#space-time-optimization][Space-time optimization]]
+- [[#space-optimization][Space optimization]]
+  - [[#remove-unused-display-elements][Remove unused display elements]]
+  - [[#tabs-with-tab-bar-and-tab-lines][Tabs with tab-bar and tab-lines]]
+  - [[#full-screen-emacs-desktop][Full-screen Emacs desktop]]
+- [[#time-optimization][Time optimization]]
+  - [[#window-navigation][Window navigation]]
+  - [[#recenter-windows][Recenter windows]]
+  - [[#shorter-answers][Shorter answers]]
+  - [[#dont-spend-time-answering-useless-questions][Don't spend time answering useless questions]]
+- [[#fixes-for-packages][Fixes for packages]]
+  - [[#battery][battery]]
+- [[#other][Other]]
+  - [[#no-blinking][No blinking]]
 
 * Literate programming
 
