@@ -382,7 +382,6 @@ or forward in the buffer.  See more at `backward-sexp'."
     (kill-buffer my-next-error-prev-buffer))
   (setq my-next-error-prev-buffer (current-buffer)))
 (add-hook 'next-error-hook 'my-next-error)
-(add-hook 'next-error-hook 'reposition-window)
 
 ;; See bug#20489: 25.0.50; next-error-find-buffer chooses non-current buffer without good reason
 ;; See bug#28864: 25.3.50; next-error-no-select does select
@@ -815,71 +814,6 @@ With C-u, C-0 or M-0, cancel the timer."
   (other-window -1))
 
 (define-key my-map "wb" 'my-windows-balance)
-
-;; [2009-11-29] TRY TO USE `recenter-top-bottom' instead of this:
-;; (defvar my-recenter-line 15)
-;; (defun my-recenter (&optional arg)
-;;   "Places point in window on eyes level."
-;;   (interactive "P")
-;;   (if (equal arg '(16))
-;;       (setq my-recenter-line (count-screen-lines
-;;                               (window-start)
-;;                               (save-excursion (beginning-of-line) (point)))
-;;             arg nil
-;;             my-recenter-position (/ (float my-recenter-line)
-;;                                     (count-screen-lines
-;;                                      (window-start) (window-end)))))
-;;   (if arg (recenter arg) (recenter my-recenter-line)))
-;; (put 'my-recenter 'isearch-scroll t)
-;;
-;; (define-key my-map "\C-l" 'my-recenter)
-;; (define-key global-map "\C-l" 'my-recenter)
-
-;; [2009-11-29] TRY TO USE `move-to-window-line-top-bottom' instead of this:
-;; (defun my-move-to-window-line (&optional arg)
-;;   "Places point in window on eyes level."
-;;   (interactive "P")
-;;   (if (equal arg '(16))
-;;       (setq my-recenter-line (count-screen-lines
-;;                               (window-start)
-;;                               (save-excursion (beginning-of-line) (point)))
-;;             arg nil))
-;;   (if arg (move-to-window-line arg) (move-to-window-line my-recenter-line)))
-;;
-;; (define-key my-map "\M-r" 'my-move-to-window-line)
-;; (define-key global-map "\M-r" 'my-move-to-window-line)
-
-(defvar my-recenter-position nil
-  "Default recenter position.")
-
-(when (boundp 'recenter-positions)
-  (setq my-recenter-position (car recenter-positions)))
-
-;; Instead of the default hook that recenters to the middle of the screen,
-;; add hooks that recenter to the middle of the top half of the screen
-(defun recenter-top ()
-  (interactive)
-  (recenter (round (* my-recenter-position (window-height)))))
-
-(add-hook 'xref-after-jump-hook 'reposition-window)
-(add-hook 'xref-after-return-hook 'reposition-window)
-(add-hook 'find-function-after-hook 'reposition-window)
-
-;; Let `C-M-a' (beginning-of-defun) not scroll the window
-;; when after jump point stays within current window bounds
-(advice-add 'beginning-of-defun :around
-            (lambda (orig-fun &rest args)
-              (let ((w-s (window-start))
-                    (w-e (window-end)))
-                (apply orig-fun args)
-                (when (and
-                       ;; Only when used interactively
-                       (eq this-command 'beginning-of-defun)
-                       ;; And only when jumping outside of window
-                       ;; to the center of the window
-                       (or (< (point) w-s) (> (point) w-e)))
-                  (recenter-top))))
-            '((name . recenter-top)))
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -2587,6 +2521,7 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
   (define-key org-mode-map (vector 'remap 'fill-paragraph) nil)
 
   (when delete-selection-mode
+    (put 'org-self-insert-commandorg-return 'delete-selection t)
     (put 'org-return 'delete-selection t))
 
   (add-hook
