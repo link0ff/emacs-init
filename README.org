@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-04-21
+#+DATE: 2020-04-22
 #+VERSION: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+KEYWORDS: dotemacs, init
 #+HTML_LINK_HOME: http://www.linkov.net/emacs
@@ -92,6 +92,63 @@ Get rid of all space-wasting garbage and minimize clutter.
 (and (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 (and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
 (and (fboundp 'tooltip-mode) (fboundp 'x-show-tip) (tooltip-mode -1))
+#+end_src
+
+** Tabs with tab-bar and tab-lines
+
+Tabs introduced in Emacs 27 can be used without the tab-bar when
+~tab-bar-show~ is customized to ~nil~.  Without the tab-bar you can switch
+between tabs using completion on tab names, or using ~tab-switcher~ that is
+like task switcher in some window managers invoked by =Alt+Tab=.
+
+Whereas tab-bar and tab-lines still take screen space, they are sometimes
+indispensable especially on devices with touch screen such as smartphones
+where you can touch tabs to select them.
+
+#+begin_src emacs-lisp
+(when (fboundp 'tab-bar-mode) (tab-bar-mode 1))
+(when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
+;; Allow selecting tabs in xterm on Android
+(unless window-system (xterm-mouse-mode 1))
+#+end_src
+
+To make tab switching as quick as possible, this configuration uses
+the key =`= located near the =TAB= tab, so switching frames
+with the help of a window manager is performed by =Alt+Tab=,
+and switching tabs with window configurations is by =Alt+`=.
+
+After displaying a list of tabs, a previous tab can by selected
+by one key =`=, the second tab with two keys =`=, etc.  Moving up
+is by =Shift-`=, and selecting a previous tab is by =Alt+`=:
+
+#+begin_src emacs-lisp
+(when (featurep 'tab-bar)
+  (define-key global-map [(meta     ?`)] 'tab-switcher)
+  (define-key global-map [(super    ?`)] 'tab-switcher)
+  (define-key global-map [(meta  ?\xa7)] 'tab-switcher)
+  ;; (define-key global-map [(meta ?\x8a7)] 'tab-switcher)
+  (with-eval-after-load 'tab-bar
+    (define-key tab-switcher-mode-map [(meta     ?`)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(super    ?`)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(meta  ?\xa7)] 'tab-switcher-select)
+    ;; (define-key tab-switcher-mode-map [(meta ?\x8a7)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(    ?`)] 'tab-switcher-next-line)
+    (define-key tab-switcher-mode-map [( ?\xa7)] 'tab-switcher-next-line)
+    ;; (define-key tab-switcher-mode-map [(?\x8a7)] 'tab-switcher-next-line)
+    (define-key tab-switcher-mode-map [(    ?~)] 'tab-switcher-prev-line)
+    (define-key tab-switcher-mode-map [( ?\xbd)] 'tab-switcher-prev-line)
+    ;; (define-key tab-switcher-mode-map [(?\x8bd)] 'tab-switcher-prev-line)
+    ))
+#+end_src
+
+~tab-bar-history-mode~ is like ~winner-mode~ but replaces it
+with the same keybindings when ~tab-bar-mode~ is enabled:
+
+#+begin_src emacs-lisp
+(when (fboundp 'tab-bar-history-mode) (tab-bar-history-mode 1))
+(when tab-bar-history-mode
+  (define-key global-map [(control c) left]  'tab-bar-history-back)
+  (define-key global-map [(control c) right] 'tab-bar-history-forward))
 #+end_src
 
 ** Full-screen Emacs desktop

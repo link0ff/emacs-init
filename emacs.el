@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-14 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-22 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -70,34 +70,6 @@
                                (fundamental-mode)
                              (let ((buffer-file-name (buffer-name)))
                                (set-auto-mode)))))
-
-
-;;; tab-bar tabs
-
-(when (fboundp 'tab-bar-mode) (tab-bar-mode 1) (tab-bar-history-mode 1))
-(when (fboundp 'global-tab-line-mode) (global-tab-line-mode 1))
-(unless window-system (xterm-mouse-mode 1))
-
-(when (featurep 'tab-bar)
-  (define-key global-map [(meta  ?\xa7)] 'tab-switcher)
-  ;; (define-key global-map [(meta ?\x8a7)] 'tab-switcher)
-  (define-key global-map [(meta     ?`)] 'tab-switcher)
-  (define-key global-map [(super    ?`)] 'tab-switcher)
-  (with-eval-after-load 'tab-bar
-    (define-key tab-switcher-mode-map [(meta  ?\xa7)] 'tab-switcher-select)
-    ;; (define-key tab-switcher-mode-map [(meta ?\x8a7)] 'tab-switcher-select)
-    (define-key tab-switcher-mode-map [(meta     ?`)] 'tab-switcher-select)
-    (define-key tab-switcher-mode-map [(super    ?`)] 'tab-switcher-select)
-    (define-key tab-switcher-mode-map [( ?\xa7)] 'tab-switcher-next-line)
-    ;; (define-key tab-switcher-mode-map [(?\x8a7)] 'tab-switcher-next-line)
-    (define-key tab-switcher-mode-map [(    ?`)] 'tab-switcher-next-line)
-    (define-key tab-switcher-mode-map [( ?\xbd)] 'tab-switcher-prev-line)
-    ;; (define-key tab-switcher-mode-map [(?\x8bd)] 'tab-switcher-prev-line)
-    (define-key tab-switcher-mode-map [(    ?~)] 'tab-switcher-prev-line)))
-
-(when tab-bar-history-mode
-  (define-key global-map [(control c) left]  'tab-bar-history-back)
-  (define-key global-map [(control c) right] 'tab-bar-history-forward))
 
 
 ;;; mouse
