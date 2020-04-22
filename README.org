@@ -281,7 +281,26 @@ Below is the only way that works reliably on GNU/Linux:
 Time optimization mostly means less clanking on keyboard to save time
 for more productive activities.
 
-** TODO Window navigation
+** Window navigation
+
+The fastest way to navigate between windows is by using directional keys
+set by ~windmove~, so typing an arrow key will show the direction where you
+want to move, e.g. =s-right= switches to the right window, etc.
+
+With this configuration you can also type =s-M-right= to display the next
+buffer in the right window, =C-x s-right= to delete the window on the right,
+and =S-s-right= to swap the current buffer with the buffer in the right window.
+Holding the =S-s-= keys and typing arrow keys will move windows up/down, left/right
+like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
+
+#+begin_src emacs-lisp
+(windmove-default-keybindings 'super)
+(windmove-display-default-keybindings '(super meta))
+(windmove-delete-default-keybindings nil 'super)
+(windmove-swap-states-default-keybindings '(shift super))
+#+end_src
+
+** TODO Recenter windows
 
 
 
@@ -303,6 +322,9 @@ Enable all disabled commands such as ~narrow-to-region~, etc.
 #+begin_src emacs-lisp
 (setq disabled-command-function nil)
 #+end_src
+
+
+
 
 
 * Most significant Emacs customizations

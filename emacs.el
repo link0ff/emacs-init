@@ -791,35 +791,6 @@ With C-u, C-0 or M-0, cancel the timer."
 
 ;;; window
 
-(windmove-default-keybindings 'super)
-(windmove-display-default-keybindings '(super meta))
-(windmove-delete-default-keybindings nil 'super)
-(windmove-swap-states-default-keybindings '(shift super)) ; like 15 puzzle
-
-;; Prev version posted to emacs-devel Subject: Re: Include buffer-move.el
-;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00685.html
-;; Maybe add recipe to http://www.emacswiki.org/cgi-bin/wiki/TransposeWindows
-;; Now I use the standard command `window-swap-states' instead of this.
-;; (defun rotate-window-buffers (&optional n)
-;;   "Exchange buffers in all windows N times.
-;; With positive N, it uses the window order of `window-list'.
-;; With negative N, does this in the reverse order."
-;;   (interactive "p")
-;;   (let* ((ws (window-list))
-;;          (ls (mapcar (lambda (w)
-;;                        (list (window-buffer w)
-;;                              (window-point w)
-;;                              (window-next-buffers w)
-;;                              (window-prev-buffers w)))
-;;                      ws))
-;;          (n  (mod (or n 1) (length ws))))
-;;     (dolist (w (append (last ws n) (butlast ws n)))
-;;       (let ((l (pop ls)))
-;;         (set-window-buffer w (nth 0 l))
-;;         (set-window-point  w (nth 1 l))
-;;         (set-window-next-buffers w (nth 2 l))
-;;         (set-window-prev-buffers w (nth 3 l))))))
-
 (defun my-move-to-window-top ()
   "Position point to the top line of the window."
   (interactive)
