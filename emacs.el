@@ -687,7 +687,7 @@ in the minibuffer history before typing RET to insert the item."
 ;; (define-key esc-map "(" 'insert-pair-with-space)
 
 
-;;; advices
+;;; variables
 
 ;; Allow set-variable to set internal variables, not only customizable ones:
 (advice-add 'set-variable :around
@@ -4583,41 +4583,6 @@ Cancel the clock if called with C-u."
               gud-gdb-history
               )
             (delq 'register-alist desktop-globals-to-save)))))
-
-;; Prepare Emacs desktop after loading Emacs.
-(add-hook 'after-init-hook
-          (lambda ()
-            ;; Show home directory on the left panel,
-            ;; and the last visited file on the right.
-            ;; (split-window-horizontally)
-            ;; (dired "~")
-            )
-          ;; Please note that 3-rd argument of this `add-hook' should be `t'
-          ;; to append the call of the `dired' after other hooked functions,
-          ;; most importantly after `desktop-read'.
-          t)
-
-;; There are different ways to maximize initial frame after loading .emacs
-;; "emacs -mm" that sets (setq initial-frame-alist '((fullscreen . maximized)))
-;; or (add-to-list 'default-frame-alist '(fullscreen . maximized))
-;; or (toggle-frame-maximized) or (set-frame-size (selected-frame) 200 80)
-;; But below is the only way that works reliably on GNU/Linux:
-(add-hook 'after-init-hook
-          (lambda ()
-            ;; (set-frame-size (selected-frame) 210 80)
-            ;; This works only in KDE.
-            (run-at-time
-             "1 second" nil
-             'shell-command-to-string   ; to not overwrite the echo area
-             "wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz")
-            ;; FIX a recent bug that breaks frame dimensions after desktop frame restore:
-            ;; I get a maximized frame visually, but internally with unmaximized dimensions,
-            ;; i.e. mouse avoidance moves the mouse pointer to the middle of the frame
-            ;; instead to the edges, etc.
-            ;; (toggle-frame-maximized)
-            ;; (toggle-frame-maximized)
-            )
-          t)
 
 (add-hook 'after-init-hook
           (lambda ()

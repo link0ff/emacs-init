@@ -251,10 +251,39 @@ so it was necessary to use such code in =~/.sawfish/rc=:
 (add-hook 'before-add-window-hook my-customize-emacs-window t)
 #+end_src
 
+There are different ways to maximize initial frame after loading the init file:
+=emacs -mm= that sets ~(setq initial-frame-alist '((fullscreen . maximized)))~
+or ~(add-to-list 'default-frame-alist '(fullscreen . maximized))~
+or ~(toggle-frame-maximized)~ or ~(set-frame-size (selected-frame) 210 80)~
+(that works only in KDE).
+
+Below is the only way that works reliably on GNU/Linux:
+
+#+begin_src emacs-lisp
+(add-hook 'after-init-hook
+          (lambda ()
+            (run-at-time
+             "1 second" nil
+             'shell-command-to-string   ; to not overwrite the echo area
+             "wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz")
+            ;; Fix a recent bug that breaks frame dimensions after desktop frame restore:
+            ;; I get a maximized frame visually, but internally with unmaximized dimensions,
+            ;; i.e. mouse avoidance moves the mouse pointer to the middle of the frame
+            ;; instead to the edges, etc.
+            ;; (toggle-frame-maximized)
+            ;; (toggle-frame-maximized)
+            )
+          t)
+#+end_src
+
 * Time optimization
 
 Time optimization mostly means less clanking on keyboard to save time
 for more productive activities.
+
+** TODO Window navigation
+
+
 
 ** Shorter answers
 
@@ -274,6 +303,7 @@ Enable all disabled commands such as ~narrow-to-region~, etc.
 #+begin_src emacs-lisp
 (setq disabled-command-function nil)
 #+end_src
+
 
 * Most significant Emacs customizations
 * Window management
