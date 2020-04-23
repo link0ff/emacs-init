@@ -394,6 +394,372 @@ when after jumping point stays within current window bounds:
 
 * Useful features
 
+** isearch
+
+*** Enable new isearch features
+
+The following features are new in Emacs 27:
+1. Show match numbers in the search prompt;
+2. Use =shift= key to pull text from the buffer to the search string;
+3. Scroll off the screen while Isearch is still active:
+
+#+begin_src emacs-lisp
+(setq isearch-lazy-count t
+      isearch-yank-on-move 'shift
+      isearch-allow-scroll 'unlimited)
+#+end_src
+
+*** Smoother isearch navigation
+
+Save and restore window start positions on returning back to previous search hit.
+So when the next search hit is off the screen, then use ~reposition-window~
+to fit the text unit as much as possible on the screen.  When the next search hit
+is still on the same screen, don't scroll the screen to avoid shaking.
+On returning to previous search results with the =DEL= key, restore exactly
+the same screen state that was before.
+
+#+begin_src emacs-lisp
+;; TODO: try to use ‘add-function’
+(setq isearch-push-state-function
+      (lambda ()
+        ;; Recenter new search hits outside of window boundaries
+        (when (and isearch-success (not (pos-visible-in-window-p)))
+          ;; reposition-window takes too much time in large buffers
+          (if (or (eq major-mode 'fundamental-mode)
+                  (> (buffer-size) 1000000))
+              (recenter-top)
+            (condition-case nil
+                ;; Prevent errors from reposition-window
+                (reposition-window)
+              (error nil))))
+        `(lambda (cmd)
+           (when isearch-success
+             (set-window-start nil ,(window-start))))))
+
+(defun isearch-refresh-state ()
+  "Refresh the last search state.
+This might be necessary when e.g. the window was manually recentered with
+`C-l C-l', so new window-start should be updated in push-state-function above
+before searching for the next hit."
+  ;; Pop and discard the previous state
+  (pop isearch-cmds)
+  ;; Push a new state
+  (isearch-push-state))
+
+(advice-add 'isearch-repeat-forward :before
+            (lambda (&rest _args)
+              (isearch-refresh-state))
+            '((name . refresh-state)))
+
+(advice-add 'isearch-repeat-backward :before
+            (lambda (&rest _args)
+              (isearch-refresh-state))
+            '((name . refresh-state)))
+#+end_src
+
+*** Useful isearch keys
+
+In Emacs 27, ~isearch-beginning-of-buffer~ is bound to =M-s M-<=.
+Bind it to the shorter key that doesn't exit Isearch:
+
+#+begin_src emacs-lisp
+(define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
+(define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
+
+(define-key isearch-mode-map             "\t" 'isearch-complete)
+(define-key minibuffer-local-isearch-map "\t" 'isearch-complete-edit)
+#+end_src
+
+*** Start isearch with text from the active region
+
+Use key =M-s r= or =M-s M-.= to run Isearch and pull text from the active region
+to the search string:
+
+#+begin_src emacs-lisp
+(defun isearch-forward-region ()
+  "Do incremental search forward for text from the active region.
+Like ordinary incremental search except that text from the region
+is added to the search string initially if the region is active."
+  (interactive)
+  (isearch-forward nil 1)
+  (cond
+   ((use-region-p)
+    (when (< (mark) (point))
+      (exchange-point-and-mark))
+    (isearch-yank-string
+     (buffer-substring-no-properties (region-beginning) (region-end)))
+    (deactivate-mark))
+   (t
+    (setq isearch-error "No active region")
+    (isearch-push-state)
+    (isearch-update))))
+
+(define-key search-map "r"    'isearch-forward-region)
+(define-key search-map "\M-." 'isearch-forward-region)
+#+end_src
+
+*** isearch-lazy-hints
+
+I admit this could be a separate package:
+
+#+begin_src emacs-lisp
+(require 'seq)
+
+(defcustom isearch-lazy-hints nil
+  "Show numeric hints on isearch lazy-highlighted matches."
+  :type 'boolean
+  :group 'lazy-highlight)
+
+(defface isearch-lazy-hint
+  '((t :inherit lazy-highlight))
+  "Face for lazy highlighting of counter hints."
+  :group 'lazy-highlight
+  :group 'basic-faces)
+
+(defvar isearch-lazy-hints-overlays nil)
+
+(defun isearch-lazy-hints-cleanup ()
+  (while isearch-lazy-hints-overlays
+    (delete-overlay (pop isearch-lazy-hints-overlays))))
+
+(defun isearch-lazy-hint (pos count)
+  (let* ((ov (make-overlay pos pos)
+             ;; (if (or (and isearch-forward (> count 0))
+             ;;         (and (not isearch-forward) (< count 0)))
+             ;;     (make-overlay (1- pos) pos)
+             ;;   (make-overlay pos (1+ pos)))
+             )
+         (hint (number-to-string count)))
+    (set-text-properties 0 (length hint)
+                         '(face isearch-lazy-hint
+                           display ((height 0.7) (raise 0.3)))
+                         hint)
+    (overlay-put ov 'after-string hint)
+    ;; (overlay-put ov 'display hint)
+    (overlay-put ov 'priority 1000)
+    (overlay-put ov 'window (selected-window))
+    (push ov isearch-lazy-hints-overlays)))
+
+(defun isearch-lazy-hints ()
+  (when isearch-lazy-hints
+    (isearch-lazy-hints-cleanup)
+    (let* ((wgs (window-group-start))
+           (wge (window-group-end))
+           (p (or isearch-other-end (point)))
+           (grouped-overlays
+            (seq-group-by (lambda (ov)
+                            (let* ((os (overlay-start ov))
+                                   (oe (overlay-end   ov)))
+                              (cond
+                               ((or (< os wgs) (> oe wge)) nil)
+                               ((> oe p) 'after)
+                               (t 'before))))
+                          isearch-lazy-highlight-overlays)))
+      (seq-map-indexed
+       (lambda (ov index)
+         (isearch-lazy-hint (if isearch-forward (overlay-end ov) (overlay-start ov))
+                            (1+ index)))
+       (cdr
+        ;; Skip the current match
+        (seq-sort-by #'overlay-start (if isearch-forward #'< #'>)
+                     (cdr (assq (if isearch-forward 'after 'before)
+                                grouped-overlays)))))
+      (seq-map-indexed
+       (lambda (ov index)
+         (isearch-lazy-hint (if isearch-forward (overlay-start ov) (overlay-end ov))
+                            (- (1+ index))))
+       (seq-sort-by #'overlay-start (if isearch-forward #'> #'<)
+                    (cdr (assq (if isearch-forward 'before 'after)
+                               grouped-overlays)))))))
+
+(defun isearch-toggle-lazy-hints ()
+  (interactive)
+  (when isearch-lazy-hints
+    (isearch-lazy-hints-cleanup))
+  (setq isearch-lazy-hints (not isearch-lazy-hints))
+  (when isearch-lazy-hints
+    (isearch-lazy-hints)))
+
+;; (add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
+;; To clean also after ispell lazy-highlight
+(advice-add 'lazy-highlight-cleanup :after
+            (lambda (&optional _force _procrastinate)
+              (isearch-lazy-hints-cleanup)))
+
+;; TODO: add to the end of isearch-lazy-highlight-new-loop
+(add-hook 'isearch-update-post-hook 'isearch-lazy-hints)
+
+;; TODO: call isearch-lazy-hint from isearch-lazy-highlight-update?
+(advice-add 'isearch-lazy-highlight-update :after
+            'isearch-lazy-hints)
+
+(define-key isearch-mode-map (kbd "C-+") 'isearch-toggle-lazy-hints)
+#+end_src
+
+*** isearch-yank-until-char alike
+
+This is like =M-z= (~zap-to-char~):
+
+#+begin_src emacs-lisp
+(defun skip-to-char (arg char)
+  "Skip up to and including ARGth occurrence of CHAR.
+Case is ignored if ‘case-fold-search’ is non-nil in the current buffer.
+Goes backward if ARG is negative; error if CHAR not found."
+  (interactive "^p\ncSkip to char: ")
+  (search-forward (char-to-string char) nil nil arg))
+#+end_src
+
+and it can be used in Isearch:
+
+#+begin_src emacs-lisp
+;; Allow `C-SPC C-M-z $ M-s M-.'
+(define-key esc-map "\C-z" 'skip-to-char)
+;; Allow `C-s C-M-z $' when `isearch-yank-on-move' is `t'
+;; (put 'skip-to-char 'isearch-move t)
+#+end_src
+
+*** isearch-diff-hunk
+
+Ignore diff-mode hunk indicators such as =+= or =-= at the
+beginning of the diff lines while searching if the diff hunk
+is unchanged.  For example, put the deleted hunk to the search string,
+then search it for the next match, and it will find the hunk
+moved to another part of the file:
+
+#+begin_src emacs-lisp
+(isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
+Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
+
+(defun diff-hunk-to-regexp (string &optional _lax _from)
+  (replace-regexp-in-string
+   "[[:space:]]+" "[[:space:]]+"
+   (replace-regexp-in-string
+    "^\\(\\\\\\+\\|-\\)" "\\(^\\)[+-]"
+    (regexp-quote string) nil t)))
+
+(add-hook 'diff-mode-hook
+          (lambda ()
+            (setq-local search-default-mode 'diff-hunk-to-regexp)))
+#+end_src
+
+*** Better isearch exiting
+
+=C-RET= exits but doesn't add the current search string to the search ring.
+Also moves point to the beginning of the found search string.
+
+#+begin_src emacs-lisp
+(define-key isearch-mode-map [(control return)] 'isearch-exit)
+
+(add-hook 'isearch-mode-end-hook
+          (lambda ()
+            ;; Exiting isearch with C-RET
+            (when (eq last-input-event 'C-return)
+              ;; Move point to the beginning of the found search string
+              (if (and isearch-forward isearch-other-end)
+                  (goto-char isearch-other-end))
+              ;; Don't add the current search string to the search ring
+              (if isearch-regexp
+                  (setq regexp-search-ring (cdr regexp-search-ring))
+                (setq search-ring (cdr search-ring))))))
+#+end_src
+
+=S-RET= exits and leaves lazy-highlighted matches on the screen after exiting isearch.
+
+#+begin_src emacs-lisp
+(define-key isearch-mode-map [(shift return)]
+                             'my-isearch-exit-leave-lazy-highlight)
+
+(defun my-isearch-exit-leave-lazy-highlight ()
+  "Exit search and leave extra match highlighting."
+  (interactive)
+  (let ((lazy-highlight-cleanup nil))
+    (when isearch-lazy-highlight
+      (isearch-lazy-highlight-new-loop (point-min) (point-max)))
+    (isearch-exit)))
+#+end_src
+
+Note that to make the feature above more useful, you might want also
+to enable highlighting all matches in the buffer, not only the portion
+visible on the screen, then after exiting all matches in the buffer
+remain highlighted:
+
+#+begin_src emacs-lisp
+(setq lazy-highlight-buffer t
+      lazy-highlight-initial-delay 0
+      lazy-highlight-max-at-a-time nil)
+#+end_src
+
+*** char-fold settings
+
+Enable char-folding in isearch:
+
+#+begin_src emacs-lisp
+(setq search-default-mode #'char-fold-to-regexp)
+#+end_src
+
+and customize it:
+
+#+begin_src emacs-lisp
+(require 'char-fold)
+
+(setq char-fold-symmetric t)
+
+;; Allow search to match accented Cyrillic chars, so e.g. in etc/HELLO
+;; “Здравствуйте” will match “Здра́вствуйте” and vice versa:
+(setq char-fold-include
+      (append char-fold-include
+              '((?а "а́") (?А "А́")
+                (?е "е́") (?Е "Е́")
+                (?и "и́") (?И "И́")
+                (?о "о́") (?О "О́")
+                (?у "у́") (?У "У́")
+                (?ы "ы́") (?Ы "Ы́")
+                (?э "э́") (?Э "Э́")
+                (?ю "ю́") (?Ю "Ю́")
+                (?я "я́") (?Я "Я́"))))
+
+;; Allow searching with Cyrillic translit
+;; https://en.wikipedia.org/wiki/Transliteration
+;; https://en.wikipedia.org/wiki/Romanization_of_Russian#Transliteration_table
+(setq char-fold-include
+      (append char-fold-include
+              '((?а "a")
+                (?б "b")
+                (?в "v" "w")
+                (?г "g")
+                (?д "d")
+                (?е "e")
+                (?ё "jo" "yo")
+                (?ж "v" "zh")
+                (?з "z")
+                (?и "i")
+                (?й "j" "y")
+                (?к "k")
+                (?л "l")
+                (?м "m")
+                (?н "n")
+                (?о "o")
+                (?п "p")
+                (?р "r")
+                (?с "s")
+                (?т "t")
+                (?у "u")
+                (?ф "f")
+                (?х "h")
+                (?ц "c")
+                (?ч "ch")
+                (?ш "sh")
+                (?щ "sch")
+                ;; (?ъ "")
+                (?ы "y")
+                ;; (?ь "")
+                (?э "e")
+                (?ю "ju" "yu")
+                (?я "ja" "ya"))))
+
+(char-fold-update-table)
+#+end_src
+
 ** copy-paste
 
 *** Select items from the kill-ring using the minibuffer history
@@ -491,6 +857,7 @@ when copying a URL from a web browser to Emacs:
                               text))))))
             '((name . indicate-copied-region)))
 #+end_src
+
 
 * Most significant Emacs customizations
 * Window management
@@ -602,6 +969,23 @@ Fix ~compare-windows~:
 
 ;; I often mistype `compare-windows' as `comapre-windows', allow both:
 (defalias 'comapre-windows 'compare-windows)
+#+end_src
+
+** Fix isearch
+
+Set ~isearch-scroll~ on some commands:
+
+#+begin_src emacs-lisp
+(put 'narrow-to-defun 'isearch-scroll t)
+(put 'widen 'isearch-scroll t)
+(put 'toggle-truncate-lines 'isearch-scroll t)
+(put 'comint-show-output 'isearch-scroll t) ;; bound to `C-M-l'
+
+;; Mostly for `C-s M-s o'
+(put 'windmove-display-up    'isearch-scroll t)
+(put 'windmove-display-down  'isearch-scroll t)
+(put 'windmove-display-left  'isearch-scroll t)
+(put 'windmove-display-right 'isearch-scroll t)
 #+end_src
 
 * Other
