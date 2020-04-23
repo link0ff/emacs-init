@@ -459,11 +459,6 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key isearch-mode-map "\C-z" 'isearch-other-control-char)
 
 (when window-system
-  ;; Use single escape keypress instead of knocking it 3 times.
-  ;; On a window system there is no need to use ESC as a prefix key.
-  (define-key global-map [escape] 'keyboard-escape-quit)
-  (define-key isearch-mode-map  [escape] 'isearch-cancel)
-
   ;; Set ESC-modifier to C-z escape
   ;; This is useful to invoke `M-TAB' or `M-|' on keyboards with AltGr key,
   ;; as `C-z ESC TAB' or `C-z ESC |'

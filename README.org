@@ -352,6 +352,25 @@ Enable all disabled commands such as ~narrow-to-region~, etc.
 (setq disabled-command-function nil)
 #+end_src
 
+** Using the =ESC= key as a cancel key
+
+One of the biggest productivity boosts is making the =ESC= key
+to get out of some modal states like it does in other programs
+and what is the main purpose of this key according to its name
+=ESCAPE=.
+
+By default, in Emacs =ESC= is a useless duplicate of the =Meta= key
+that doesn't work on consoles.  But it makes no sense on window systems
+and text terminals where the =Meta= key works fine, so on a window system
+there is no need to use =ESC= as a prefix key.  Use a single =[escape]= key
+instead of knocking it 3 times:
+
+#+begin_src emacs-lisp
+(when window-system
+  (define-key global-map [escape] 'keyboard-escape-quit)
+  (define-key isearch-mode-map  [escape] 'isearch-cancel))
+#+end_src
+
 ** Recenter windows
 
 Instead of the default behavior that recenters to the middle of the screen,
