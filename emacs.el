@@ -862,104 +862,6 @@ Uses the value of the variable `search-whitespace-regexp'."
 ;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
 
 
-;;; text-property-search
-
-;; Better interactive arguments for text-property-search-forward (see bug#36486)
-(defun search-text-property (property &optional value predicate not-current)
-  "Same as `text-property-search-forward', but better interactive arguments.
-Added support for reading the second argument VALUE that allows reading
-symbols as well as strings.  Unlike `text-property-search-forward', this
-command can find combined text properties, e.g. can find the property
-`face' and the value `hi-yellow' in the buffer with the text property
-containing the list of values `(hi-yellow font-lock-keyword-face)'.
-Also ensure the whole buffer is fontified by `font-lock' to be able
-to find all text properties with font-lock face."
-  (interactive
-   (let* ((property (completing-read "Search for property: " obarray
-                                     nil nil nil nil '("markchars")))
-          (property (when (> (length property) 0)
-                      (intern property obarray)))
-          (value (when property
-                   (read-from-minibuffer "Search for property value (quote strings): "
-                                         nil nil t nil '("nil" "confusable")))))
-     (list property value)))
-  (font-lock-ensure)
-  (text-property-search-forward property value
-                                (or predicate
-                                    (lambda (val p-val)
-                                      (if (and (listp p-val) (not (listp val)))
-                                          (member val p-val)
-                                        (equal val p-val))))
-                                not-current))
-
-
-;;; occur
-
-;; Make *Occur* buffer names unique and writable
-;; (like in `compilation-mode-hook' below).
-(add-hook 'occur-hook
-          (lambda ()
-            (occur-rename-buffer t)
-            (setq buffer-read-only nil)))
-
-;; Based on `occur-mode-goto-occurrence-other-window'
-(defun occur-mode-goto-occurrence-kill-buffer ()
-  "Go to the occurrence the current line describes, and kill the Occur buffer."
-  (interactive)
-  (let ((buf (current-buffer))
-        (pos (occur-mode-find-occurrence)))
-    (switch-to-buffer-other-window (marker-buffer pos))
-    (goto-char pos)
-    (kill-buffer buf)
-    (run-hooks 'occur-mode-find-occurrence-hook)))
-
-;; Bind to "o" in place of `occur-mode-goto-occurrence'.
-(define-key occur-mode-map [(control return)] 'occur-mode-goto-occurrence-kill-buffer)
-
-
-;;; replace
-
-(defun substitute-regexp (substitution)
-  "Use s/old/new/g regexp syntax for `query-replace'."
-  (interactive
-   (list
-    (read-from-minibuffer "Substitute regexp: " '("s///g" . 3) nil nil
-                          'query-replace-history nil t)))
-  (if (string-match "\\`s/\\(.*\\)/\\(.*\\)/\\([gi]*\\)" substitution)
-      (let* ((sregex (match-string 1 substitution))
-             (ssubst (match-string 2 substitution))
-             (sflags (match-string 3 substitution))
-             (case-fold-search (string-match "i" sflags)))
-        (perform-replace
-         sregex ssubst (string-match "g" sflags)
-         t nil nil nil
-         (if (and transient-mark-mode mark-active) (region-beginning))
-         (if (and transient-mark-mode mark-active) (region-end))))
-    (error "Invalid syntax")))
-
-;; FROM http://emacs.stackexchange.com/questions/27135/search-replace-like-feature-for-swapping-text/27170#27170
-(defun query-swap-strings (from-string to-string &optional delimited start end backward region-noncontiguous-p)
-  "Swap occurrences of FROM-STRING and TO-STRING."
-  (interactive
-   (let ((common
-          (query-replace-read-args
-           (concat "Query swap"
-                   (if current-prefix-arg
-                       (if (eq current-prefix-arg '-) " backward" " word")
-                     "")
-                   (if (use-region-p) " in region" ""))
-           nil)))
-     (list (nth 0 common) (nth 1 common) (nth 2 common)
-           (if (use-region-p) (region-beginning))
-           (if (use-region-p) (region-end))
-           (nth 3 common)
-           (if (use-region-p) (region-noncontiguous-p)))))
-  (perform-replace
-   (concat "\\(" (regexp-quote from-string) "\\)\\|" (regexp-quote to-string))
-   `(replace-eval-replacement replace-quote (if (match-string 1) ,to-string ,from-string))
-   t t delimited nil nil start end backward region-noncontiguous-p))
-
-
 ;;; minibuffer
 
 ;; See http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
