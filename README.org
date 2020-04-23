@@ -371,10 +371,133 @@ instead of knocking it 3 times:
   (define-key isearch-mode-map  [escape] 'isearch-cancel))
 #+end_src
 
+** List structural editing
+
+This is my most frequently used DWIM command bound to =C-RET= in Lisp modes.
+Since I don't use ~electric-indent-mode~, this is its less-obtrusive replacement
+that does all the necessary things depending on context: indents the
+current line, inserts a newline, and indents the next expression.
+
+#+begin_src emacs-lisp
+(defun my-reindent-then-newline-and-indent-and-indent-sexp ()
+  "Reindent current line, insert newline, then indent the new line.
+Move backward out of one level of parentheses.
+Indent each line of the list starting just after point."
+  (interactive "*")
+  (reindent-then-newline-and-indent)
+  (save-excursion
+    (condition-case nil (backward-up-list) (error nil))
+    (indent-sexp)))
+
+(define-key emacs-lisp-mode-map [(control return)]
+            'my-reindent-then-newline-and-indent-and-indent-sexp)
+(define-key lisp-interaction-mode-map [(control return)]
+            'my-reindent-then-newline-and-indent-and-indent-sexp)
+(define-key lisp-mode-map [(control return)]
+            'my-reindent-then-newline-and-indent-and-indent-sexp)
+(with-eval-after-load 'scheme
+  (define-key scheme-mode-map [(control return)]
+    'my-reindent-then-newline-and-indent-and-indent-sexp))
+#+end_src
+
+This is another frequently used DWIM command bound to =C-backspace=.
+It's almost the reverse of =C-RET= defined above: joins two lines
+and indents the joined code.  IOW, both commands keep the indentation
+always consistent.
+
+#+begin_src emacs-lisp
+(defun my-join-line-and-indent-sexp ()
+  "Join this line to previous and fix up whitespace at join.
+Move backward out of one level of parentheses.
+Indent each line of the list starting just after point."
+  (interactive "*")
+  (join-line)
+  (save-excursion
+    (condition-case nil (backward-up-list) (error nil))
+    (let ((indent-sexp-function (key-binding "\e\C-q")))
+      (if indent-sexp-function (call-interactively indent-sexp-function)))))
+
+(defun my-join-line-and-indent-sexp-or-backward-kill-word ()
+  "If point is on the whitespaces at the beginning of a line,
+then join this line to previous and indent each line of the upper list.
+Otherwise, kill characters backward until encountering the end of a word."
+  (interactive)
+  (if (save-excursion (and (skip-chars-backward " \t") (bolp)))
+      (my-join-line-and-indent-sexp)
+    (backward-kill-word 1)))
+
+;; Bind globally, not only in Lisp modes:
+(global-set-key [C-backspace] 'my-join-line-and-indent-sexp-or-backward-kill-word)
+;; (define-key lisp-mode-map [(control backspace)]
+;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
+;; (define-key emacs-lisp-mode-map [(control backspace)]
+;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
+;; (with-eval-after-load 'scheme
+;;   (define-key scheme-mode-map [(control backspace)]
+;;     'my-join-line-and-indent-sexp-or-backward-kill-word))
+#+end_src
+
+A smart version if completion is bound to =TAB= in Lisp modes:
+
+#+begin_src emacs-lisp
+(defun my-lisp-indent-or-complete (&optional arg)
+  "Complete Lisp symbol, or indent line or region.
+If the character preceding point is symbol-constituent, then perform
+completion on Lisp symbol preceding point using `lisp-complete-symbol'.
+Otherwise, call `indent-for-tab-command' that indents line or region."
+  (interactive "P")
+  (if (and (not (and transient-mark-mode mark-active
+                     (not (eq (region-beginning) (region-end)))))
+           (memq (char-syntax (preceding-char)) (list ?w ?_))
+           (not (bobp)))
+      (completion-at-point)
+    (indent-for-tab-command arg)))
+
+(define-key emacs-lisp-mode-map [tab] 'my-lisp-indent-or-complete)
+#+end_src
+
+A smarter jumping to the beginning of the line:
+
+#+begin_src emacs-lisp
+(defun my-beginning-of-line-or-indentation (arg)
+  "Jump to the beginning of the line or to the indentation (like `M-m')."
+  (interactive "^p")
+  (if (bolp)
+      (beginning-of-line-text arg) ; (back-to-indentation) ?
+    (if (fboundp 'move-beginning-of-line)
+        (move-beginning-of-line arg)
+      (beginning-of-line arg))))
+
+;; (put 'my-beginning-of-line-or-indentation 'isearch-move t)
+(define-key global-map [(control ?a)] 'my-beginning-of-line-or-indentation)
+#+end_src
+
+This is a more general version that also handles numbered lists:
+
+#+begin_src emacs-lisp
+(defun my-reindent-then-newline-and-indent ()
+  "Create the next number item in the numbered list, or reindent."
+  (interactive)
+  (let ((num 1))
+    (if (save-excursion
+          (backward-paragraph)
+          (forward-line)
+          (not (and (looking-at "^\\s-*\\([0-9]\\)\\.")
+                    (setq num (match-string 1)))))
+        (reindent-then-newline-and-indent)
+      (insert (format "\n\n%s. " (1+ (string-to-number num)))))))
+
+(define-key global-map [(control       return)] 'reindent-then-newline-and-indent)
+(define-key global-map [(control shift return)] 'my-reindent-then-newline-and-indent)
+
+(define-key global-map [S-return] 'electric-newline-and-maybe-indent)
+#+end_src
+
 ** Recenter windows
 
 Instead of the default behavior that recenters to the middle of the screen,
-add customization that recenter to the middle of the top half of the screen:
+add customization that recenter to the middle of the top half of the screen
+to reduce time spent for scrolling and adjusting the position of edited text:
 
 #+begin_src emacs-lisp
 (setq recenter-positions '(0.15 top)

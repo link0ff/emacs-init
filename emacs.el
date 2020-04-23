@@ -1199,101 +1199,6 @@ goes to the saved location."
 
 ;;; lisp
 
-;; This is my most frequently used command bound to C-RET in Lisp modes.
-(defun my-reindent-then-newline-and-indent-and-indent-sexp ()
-  "Reindent current line, insert newline, then indent the new line.
-Move backward out of one level of parentheses.
-Indent each line of the list starting just after point."
-  (interactive "*")
-  (reindent-then-newline-and-indent)
-  (save-excursion
-    (condition-case nil (backward-up-list) (error nil))
-    (indent-sexp)))
-
-(defun my-join-line-and-indent-sexp ()
-  "Join this line to previous and fix up whitespace at join.
-Move backward out of one level of parentheses.
-Indent each line of the list starting just after point."
-  (interactive "*")
-  (join-line)
-  (save-excursion
-    (condition-case nil (backward-up-list) (error nil))
-    (let ((indent-sexp-function (key-binding "\e\C-q")))
-      (if indent-sexp-function (call-interactively indent-sexp-function)))))
-
-;; This is another frequently used command bound to C-backspace.
-;; It's almost the reverse of C-RET defined above.
-(defun my-join-line-and-indent-sexp-or-backward-kill-word ()
-  "If point is on the whitespaces at the beginning of a line,
-then join this line to previous and indent each line of the upper list.
-Otherwise, kill characters backward until encountering the end of a word."
-  (interactive)
-  (if (save-excursion (and (skip-chars-backward " \t") (bolp)))
-      (my-join-line-and-indent-sexp)
-    (backward-kill-word 1)))
-
-(global-set-key [C-backspace] 'my-join-line-and-indent-sexp-or-backward-kill-word)
-
-;; This is bound to TAB in Lisp modes.
-(defun my-lisp-indent-or-complete (&optional arg)
-  "Complete Lisp symbol, or indent line or region.
-If the character preceding point is symbol-constituent, then perform
-completion on Lisp symbol preceding point using `lisp-complete-symbol'.
-Otherwise, call `indent-for-tab-command' that indents line or region."
-  (interactive "P")
-  (if (and (not (and transient-mark-mode mark-active
-                     (not (eq (region-beginning) (region-end)))))
-           (memq (char-syntax (preceding-char)) (list ?w ?_))
-           (not (bobp)))
-      (completion-at-point)
-    (indent-for-tab-command arg)))
-
-(defun my-beginning-of-line-or-indentation (arg)
-  "Jump to the beginning of the line or to the indentation (like `M-m')."
-  (interactive "^p")
-  (if (bolp)
-      (beginning-of-line-text arg) ; (back-to-indentation) ?
-    (if (fboundp 'move-beginning-of-line)
-        (move-beginning-of-line arg)
-      (beginning-of-line arg))))
-;; (put 'my-beginning-of-line-or-indentation 'isearch-move t)
-(define-key global-map [(control ?a)] 'my-beginning-of-line-or-indentation)
-
-(defun my-reindent-then-newline-and-indent ()
-  "Create the next number item in the numbered list, or reindent."
-  (interactive)
-  (let ((num 1))
-    (if (save-excursion
-          (backward-paragraph)
-          (forward-line)
-          (not (and (looking-at "^\\s-*\\([0-9]\\)\\.")
-                    (setq num (match-string 1)))))
-        (reindent-then-newline-and-indent)
-      (insert (format "\n\n%s. " (1+ (string-to-number num)))))))
-
-(define-key global-map [(control       return)] 'reindent-then-newline-and-indent)
-(define-key global-map [(control shift return)] 'my-reindent-then-newline-and-indent)
-
-(define-key global-map [S-return] 'electric-newline-and-maybe-indent)
-
-;; Lisp mode
-(define-key lisp-mode-map [(control return)]
-            'my-reindent-then-newline-and-indent-and-indent-sexp)
-;; (define-key lisp-mode-map [(control backspace)]
-;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
-(tempo-define-template "lisp-print-map" '("(map (lambda (x) ) " p ")"))
-(define-key lisp-mode-map "\C-zim" 'tempo-template-lisp-print-map)
-
-;; Emacs Lisp mode
-(define-key emacs-lisp-mode-map [(control return)]
-            'my-reindent-then-newline-and-indent-and-indent-sexp)
-;; (define-key emacs-lisp-mode-map [(control backspace)]
-;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
-(define-key emacs-lisp-mode-map [tab] 'my-lisp-indent-or-complete)
-;; use C-M-i instead of
-;; (define-key emacs-lisp-mode-map [(control meta tab)] 'lisp-complete-symbol)
-;; use C-M-i instead of
-;; (define-key emacs-lisp-mode-map "\C-ze\t" 'lisp-complete-symbol)
 (define-key emacs-lisp-mode-map "\C-xF"  'find-function)
 (define-key emacs-lisp-mode-map "\C-x4F" 'find-function-other-window)
 (define-key emacs-lisp-mode-map "\C-x5F" 'find-function-other-frame)
@@ -1307,9 +1212,17 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
                        '("(defun " p " ()\n  (interactive)\n\n)\n"))
 (define-key emacs-lisp-mode-map "\C-zid" 'tempo-template-emacs-lisp-print-defun)
 
+;; Lisp mode
+(tempo-define-template "lisp-print-map" '("(map (lambda (x) ) " p ")"))
+(define-key lisp-mode-map "\C-zim" 'tempo-template-lisp-print-map)
+
+;; Emacs Lisp mode
+;; use C-M-i instead of
+;; (define-key emacs-lisp-mode-map [(control meta tab)] 'lisp-complete-symbol)
+;; use C-M-i instead of
+;; (define-key emacs-lisp-mode-map "\C-ze\t" 'lisp-complete-symbol)
+
 ;; Lisp Interaction mode
-(define-key lisp-interaction-mode-map [(control return)]
-            'my-reindent-then-newline-and-indent-and-indent-sexp)
 ;; (define-key lisp-interaction-mode-map [(control backspace)]
 ;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
 ;; use C-M-i instead of
@@ -1323,13 +1236,6 @@ Otherwise, call `indent-for-tab-command' that indents line or region."
     (0 (progn (compose-region (match-beginning 0) (match-end 0)
                               ,(make-char 'greek-iso8859-7 107))
               nil)))))
-
-(with-eval-after-load 'scheme
-  (define-key scheme-mode-map [(control return)]
-    'my-reindent-then-newline-and-indent-and-indent-sexp)
-  ;; (define-key scheme-mode-map [(control backspace)]
-  ;;             'my-join-line-and-indent-sexp-or-backward-kill-word)
-  )
 
 
 ;;; clojure
