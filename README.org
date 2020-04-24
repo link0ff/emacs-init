@@ -29,11 +29,22 @@
   - [[#full-screen-emacs-desktop][Full-screen Emacs desktop]]
 - [[#time-optimization][Time optimization]]
   - [[#window-navigation][Window navigation]]
-  - [[#recenter-windows][Recenter windows]]
   - [[#shorter-answers][Shorter answers]]
   - [[#dont-spend-time-answering-useless-questions][Don't spend time answering useless questions]]
+  - [[#using-the-esc-key-as-a-cancel-key][Using the =ESC= key as a cancel key]]
+  - [[#list-structural-editing][List structural editing]]
+  - [[#efficient-navigation-in-different-modes][Efficient navigation in different modes]]
+  - [[#recenter-windows][Recenter windows]]
+- [[#useful-features][Useful features]]
+  - [[#searchreplace][Search/Replace]]
+  - [[#copy-paste][copy-paste]]
+- [[#major-modes][Major modes]]
+- [[#used-packages][Used packages]]
+  - [[#org][org]]
 - [[#fixes-for-packages][Fixes for packages]]
-  - [[#battery][battery]]
+  - [[#fix-timer-in-battery][Fix timer in battery]]
+  - [[#fix-inconsistency-in-motion-keys][Fix inconsistency in motion keys]]
+  - [[#fix-isearch][Fix isearch]]
 - [[#other][Other]]
   - [[#no-blinking][No blinking]]
 
@@ -102,10 +113,16 @@ One function that help to achieve optimal reposition is ~reposition-window~,
 use it where possible in hooks that display a new location:
 
 #+begin_src emacs-lisp
-(add-hook 'next-error-hook 'reposition-window)
-(add-hook 'xref-after-jump-hook 'reposition-window)
-(add-hook 'xref-after-return-hook 'reposition-window)
-(add-hook 'find-function-after-hook 'reposition-window)
+(defun my-reposition-window ()
+  "Override default command that doesn't handle some modes."
+  (if (eq major-mode 'fundamental-mode)
+      (recenter-top)
+    (reposition-window)))
+
+(add-hook 'next-error-hook 'my-reposition-window)
+(add-hook 'xref-after-jump-hook 'my-reposition-window)
+(add-hook 'xref-after-return-hook 'my-reposition-window)
+(add-hook 'find-function-after-hook 'my-reposition-window)
 #+end_src
 
 * Space optimization
