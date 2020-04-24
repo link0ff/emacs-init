@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-04-23
+#+DATE: 2020-04-24
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+HTML_link_home: http://www.linkov.net/emacs
@@ -47,14 +47,14 @@ called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programmin
 2. Tangling: the same document is executed during Emacs loading.
 
 One line of code that initiates loading is in the separate file [[file:init.el][init.el]].
-This makes it the smallest ~init.el~ file possible, having metric of just 1 [[https://en.wikipedia.org/wiki/Source_lines_of_code][SLOC]].
-The single line in ~init.el~ is the following:
+This makes it the smallest =init.el= file possible, having metric of just 1 [[https://en.wikipedia.org/wiki/Source_lines_of_code][SLOC]].
+The single line in =init.el= is the following:
 
 #+begin_src emacs-lisp :tangle no
 (org-babel-load-file (locate-file "README.org" load-path))
 #+end_src
 
-It exports source code from this file to the file ~README.el~.
+It exports source code from this file to the file =README.el=.
 To support lexical binding, the output file should have the
 ~lexical-binding~ cookie in its header:
 
@@ -64,7 +64,7 @@ To support lexical binding, the output file should have the
 
 You can read more about details of weaving and tangling in [[https://www.gnu.org/software/emacs/manual/html_mono/org.html#Extracting-source-code][the Org manual]].
 
-Using the same file ~README.org~ as an self-executable document
+Using the same file =README.org= as an self-executable document
 fits nicely into the definition of Emacs where Emacs is the
 self-documenting editor, and this file is a self-documenting init file.
 
@@ -335,7 +335,7 @@ like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 ** Shorter answers
 
-Use single letters ~y~ or ~n~ for answers instead of complete words ~yes~ or ~no~.
+Use single letters =y= or =n= for answers instead of complete words =yes= or =no=.
 A longer word was intended for cases where giving the wrong answer would
 have serious consequences, but in reality with short answers you decide
 how long a pause you need in order to realize what the question is about.
@@ -492,6 +492,11 @@ This is a more general version that also handles numbered lists:
 
 (define-key global-map [S-return] 'electric-newline-and-maybe-indent)
 #+end_src
+
+** Efficient navigation in different modes
+
+*** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
+
 
 ** Recenter windows
 
@@ -1103,18 +1108,6 @@ when copying a URL from a web browser to Emacs:
             '((name . indicate-copied-region)))
 #+end_src
 
-
-* Most significant Emacs customizations
-* Window management
-* Efficient navigation in different modes and between buffers.
-** Smart moves
-** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
-* Disabled most of the default limitations.
-* Improved many standard Emacs commands and modes.
-* Added new functionality and new keybindings.
-
-
-
 * Major modes
 
 For a new non-file buffer set its major mode based on the buffer name.
@@ -1132,6 +1125,35 @@ to ~emacs-lisp-mode~ by the file extension =.el= in the buffer name.
 Note that this has some problems, e.g. in =autoinsert.el= that uses
 ~(eq major-mode (default-value 'major-mode))~.
 
+* Used packages
+
+#+begin_src emacs-lisp
+(require 'package)
+(setq package-enable-at-startup nil)
+(unless (assoc "melpa" package-archives)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
+(unless package--initialized
+  (package-initialize))
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package t))
+(eval-when-compile
+  (require 'use-package))
+(setq use-package-always-ensure t)
+#+end_src
+
+** org
+
+#+begin_src emacs-lisp
+(setq org-confirm-babel-evaluate nil
+      org-src-fontify-natively t
+      org-src-tab-acts-natively t)
+
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cb" 'org-iswitchb)
+#+end_src
+
 * Fixes for packages
 
 When some package lacks necessary features that I need, and
@@ -1142,7 +1164,7 @@ for the package to improve.
 
 ** Fix timer in battery
 
-The built-in package ~battery~ doesn't provide an additional timer that
+The built-in package =battery= doesn't provide an additional timer that
 periodically would check if the laptop is not on AC power line, then
 display battery status on the mode line.
 
@@ -1238,7 +1260,7 @@ Set ~isearch-scroll~ on some commands:
 ** No blinking
 
 Blinking cursors are distracting - turn blink OFF:
-here ~(*) (*) (*)~ indicates how cursor blinks.
+here =(*) (*) (*)= indicates how cursor blinks.
 
 #+begin_src emacs-lisp
 (and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
