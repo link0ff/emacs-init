@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-23 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -380,62 +380,7 @@ i.e. in daylight or under bright electric lamps."
 ;; TODO for Emacs23: if toggle-input-method is called on the active region
 ;; then convert region to other coding, this is very useful when the region
 ;; was typed with a wrong input method, when the user forgot to toggle it
-
-;; Alternative Keyboard Feature implemented in bug#9751
-;; and posted to http://ru-emacs.livejournal.com/82428.html
-;; This is now available from https://github.com/a13/reverse-im.el
-(defun reverse-input-method (input-method)
-  "Build the reverse mapping of single letters from INPUT-METHOD."
-  (interactive
-   (list (read-input-method-name "Use input method (default current): ")))
-  (if (and input-method (symbolp input-method))
-      (setq input-method (symbol-name input-method)))
-  (let ((current current-input-method)
-        (modifiers '(nil (control) (meta) (control meta))))
-    (when input-method
-      (activate-input-method input-method))
-    (when (and current-input-method (bound-and-true-p quail-keyboard-layout))
-      (dolist (map (cdr (quail-map)))
-        (let* ((to (car map))
-               (from (quail-get-translation
-                      (cadr map) (char-to-string to) 1)))
-          (when (and (characterp from) (characterp to))
-            (dolist (mod modifiers)
-              (define-key local-function-key-map
-                (vector (append mod (list from)))
-                (vector (append mod (list to)))))))))
-    (when input-method
-      (activate-input-method current))))
-;; (reverse-input-method "cyrillic-jcuken")
-
-
-;;; mule
-
-;; Delete codings like `utf-*-with-signature' (they hide BOMs)
-;; to allow to always display the BOM (Byte-order mark signature)
-;; to be able to remove it without the need to visit files literally
-;; or with `C-x RET c utf-8 RET C-x C-f'.
-;; SEE ALSO http://thread.gmane.org/gmane.emacs.devel/116668/focus=116738
-
-(setq auto-coding-regexp-alist
-      (delete (rassoc 'utf-16be-with-signature auto-coding-regexp-alist)
-      (delete (rassoc 'utf-16le-with-signature auto-coding-regexp-alist)
-      (delete (rassoc 'utf-8-with-signature auto-coding-regexp-alist)
-              auto-coding-regexp-alist))))
-
-;; Use Unicode ellipsis in `C-x C-b' (list-buffers)
-(with-eval-after-load 'mule-util
-  (setq truncate-string-ellipsis "…"))
-
-;; Use buffer's coding for the output of base64-decode (bug#38587)
-;; (can be overridden by ‘C-x RET c’)
-(advice-add 'base64-decode-region :after
-            (lambda (beg end &optional _base64url)
-              (decode-coding-region
-               beg (min end (point-max))
-               (or coding-system-for-write
-                   buffer-file-coding-system)))
-            '((name . base64-decode-region-with-buffer-coding)))
+;; (this is like venerable PuntoSwitcher)
 
 
 ;;; C-z my-map

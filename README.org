@@ -1171,6 +1171,72 @@ Note that this has some problems, e.g. in =autoinsert.el= that uses
 (global-set-key "\C-cb" 'org-iswitchb)
 #+end_src
 
+** quail
+
+Alternative Keyboard Feature implemented in [[bug:9751]]
+and posted to http://ru-emacs.livejournal.com/82428.html
+This is now available from https://github.com/a13/reverse-im.el
+#+begin_src emacs-lisp
+(defun reverse-input-method (input-method)
+  "Build the reverse mapping of single letters from INPUT-METHOD."
+  (interactive
+   (list (read-input-method-name "Use input method (default current): ")))
+  (if (and input-method (symbolp input-method))
+      (setq input-method (symbol-name input-method)))
+  (let ((current current-input-method)
+        (modifiers '(nil (control) (meta) (control meta))))
+    (when input-method
+      (activate-input-method input-method))
+    (when (and current-input-method (bound-and-true-p quail-keyboard-layout))
+      (dolist (map (cdr (quail-map)))
+        (let* ((to (car map))
+               (from (quail-get-translation
+                      (cadr map) (char-to-string to) 1)))
+          (when (and (characterp from) (characterp to))
+            (dolist (mod modifiers)
+              (define-key local-function-key-map
+                (vector (append mod (list from)))
+                (vector (append mod (list to)))))))))
+    (when input-method
+      (activate-input-method current))))
+;; (reverse-input-method "cyrillic-jcuken")
+#+end_src
+
+** mule
+
+Delete codings like =utf-*-with-signature= (they hide BOMs)
+to allow to always display the BOM (Byte-order mark signature)
+to be able to remove it without the need to visit files literally
+or with =C-x RET c utf-8 RET C-x C-f=.
+
+#+begin_src emacs-lisp
+(setq auto-coding-regexp-alist
+      (delete (rassoc 'utf-16be-with-signature auto-coding-regexp-alist)
+      (delete (rassoc 'utf-16le-with-signature auto-coding-regexp-alist)
+      (delete (rassoc 'utf-8-with-signature auto-coding-regexp-alist)
+              auto-coding-regexp-alist))))
+#+end_src
+
+Use Unicode ellipsis in `C-x C-b' (list-buffers):
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'mule-util
+  (setq truncate-string-ellipsis "…"))
+#+end_src
+
+Use buffer's coding for the output of ~base64-decode~ ([[bug:38587]])
+(can be overridden by =C-x RET c=):
+
+#+begin_src emacs-lisp
+(advice-add 'base64-decode-region :after
+            (lambda (beg end &optional _base64url)
+              (decode-coding-region
+               beg (min end (point-max))
+               (or coding-system-for-write
+                   buffer-file-coding-system)))
+            '((name . base64-decode-region-with-buffer-coding)))
+#+end_src
+
 * Fixes for packages
 
 When some package lacks necessary features that I need, and
