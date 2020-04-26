@@ -514,6 +514,137 @@ This is a more general version that also handles numbered lists:
 
 *** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
 
+** Dedicated keymap C-z my-map
+
+Make the prefix key =C-z= for my personal keymap.
+On qwerty-keyboards =C-z= is one of the most accessible keys
+like =C-x= and =C-c=, but the prefix key =C-c= is reserved
+for mode-specific commands (both user-defined and standard Emacs extensions).
+The standard binding of =C-z= (~suspend-emacs~ or ~iconify-or-deiconify-frame~)
+is reassigned here to double key sequence =C-z C-z=.
+
+#+begin_src emacs-lisp
+(defvar my-map
+  (let ((map (make-sparse-keymap))
+        (c-z (global-key-binding "\C-z")))
+    (global-unset-key "\C-z")
+    (define-key global-map "\C-z" map)
+    (define-key map "\C-z" c-z)
+    map))
+#+end_src
+
+My map can be used from isearch:
+
+#+begin_src emacs-lisp
+;; (define-key isearch-mode-map "\C-z" my-map)
+;; (define-key isearch-mode-map "\C-z" 'isearch-other-control-char)
+#+end_src
+
+Various useful commands are bound on this keymap:
+
+#+begin_src emacs-lisp
+(when window-system
+  ;; Set ESC-modifier to C-z escape
+  ;; This is useful to invoke `M-TAB' or `M-|' on keyboards with AltGr key,
+  ;; as `C-z ESC TAB' or `C-z ESC |'
+  (define-key my-map [escape] esc-map)
+
+  (define-key my-map "t" 'toggle-truncate-lines)
+  (define-key my-map "v" nil)
+  (define-key my-map "vs" 'set-variable)
+  (define-key my-map "vc" 'customize-variable)
+  (define-key my-map "vtw2" (lambda () (interactive) (setq-local tab-width 2) (force-mode-line-update)))
+  (define-key my-map "r" 'revert-buffer)
+  (define-key my-map "\C-q" 'quoted-insert) ; because global C-q is rebound above
+  ;; `C-z -' and `C-z C--' inserts a vertical line.
+  (define-key my-map [(control ?-)] (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
+  (define-key my-map "-" (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
+  ;; TEST: try `C-z C-x C-x C-x C-x ...', try `C-x z C-z C-z C-z' (repeat.el)
+  )
+#+end_src
+
+** Insert-pair keys
+
+One of the most useful commands is ~insert-pair~.  When it's bound to such
+keys as =M-"=, =M-'=, =M-[=, =M-{=, typing these keys always maintains the
+syntactically valid structures of paired and balanced constructs.  So e.g.
+typing =M-(= inserts balanced parentheses, =M-"= inserts a closed string, etc.
+Point is positioned inside the inserted pair.
+
+Here's a short table of mappings:
+
+| Key   | Insert pair  |
+|-------+--------------|
+| =M-(= | =()=         |
+| =M-[= | =[]=         |
+| =M-{= | ={}=         |
+| =M-"= | =""= or =“”= |
+| =M-'= | =''= or =‘’= |
+
+#+begin_src emacs-lisp
+;; Modify esc-map when not on a tty:
+(when window-system
+  ;; Insert paired characters (either ''/"" or ‘’/“” depending on mode)
+  (define-key esc-map "\""
+    (lambda ()
+      (interactive)
+      (let ((insert-pair-alist
+             (cons
+              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+                       (or (and comment-start (nth 4 (syntax-ppss)))
+                           (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'org-mode))
+                                (not (derived-mode-p 'sgml-mode))
+                                (not (derived-mode-p 'vc-git-log-edit-mode))
+                                (not (derived-mode-p 'yaml-mode))
+                                )
+                           ;; (derived-mode-p 'fundamental-mode)
+                           ))
+                  '(?\" ?\“ ?\”)
+                '(?\" ?\" ?\"))
+              insert-pair-alist)))
+        (call-interactively 'insert-pair))))
+  ;; (define-key esc-map "`"  'insert-pair)
+  ;; (define-key global-map "\M-`" 'insert-pair)
+  (define-key esc-map "'"
+    (lambda ()
+      (interactive)
+      (let ((insert-pair-alist
+             (cons
+              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+                       (or (and comment-start (nth 4 (syntax-ppss)))
+                           (and (derived-mode-p 'text-mode)
+                                (not (derived-mode-p 'org-mode))
+                                (not (derived-mode-p 'sgml-mode))
+                                (not (derived-mode-p 'vc-git-log-edit-mode))
+                                (not (derived-mode-p 'yaml-mode))
+                                )
+                           ;; (derived-mode-p 'fundamental-mode)
+                           ))
+                  '(?\' ?\‘ ?\’)
+                '(?\' ?\' ?\'))
+              insert-pair-alist)))
+        (call-interactively 'insert-pair))))
+  ;; Optionally, make ' insert backquote `'.
+  ;; (add-to-list 'insert-pair-alist '(?\' ?\` ?\'))
+  (define-key esc-map "["  'insert-pair)
+  (define-key esc-map "{"  'insert-pair)
+  (define-key esc-map ")"  'up-list))
+
+(define-key my-map  "`"  'insert-pair)
+(define-key my-map  "<"  'insert-pair)
+
+;; (defun insert-pair-without-space ()
+;;   (interactive)
+;;   (let ((parens-require-spaces nil))
+;;     (call-interactively 'insert-pair)))
+;; (defun insert-pair-with-space ()
+;;   (interactive)
+;;   (let ((parens-require-spaces t))
+;;     (call-interactively 'insert-pair)))
+;; (define-key esc-map "[" 'insert-pair-without-space)
+;; (define-key esc-map "(" 'insert-pair-with-space)
+#+end_src
 
 ** Recenter windows
 
@@ -1170,6 +1301,275 @@ Note that this has some problems, e.g. in =autoinsert.el= that uses
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
 #+end_src
+
+** gnus
+
+Make tab names as short as possible (from [[https://www.gnu.org/software/emacs/manual/html_node/gnus/#Tabbed-Interface][the Gnus manual]]):
+
+#+begin_src emacs-lisp
+(push '("\\`\\*Group\\*\\'" .
+        (display-buffer-in-tab
+         (tab-name . "G")))
+      display-buffer-alist)
+(push '("\\`\\*Summary .*\\*\\'" .
+        (display-buffer-in-tab
+         (tab-name . (lambda (buffer _alist)
+                       (setq buffer (replace-regexp-in-string
+                                     (rx (or (and bos "*Summary "
+                                                  (or (and "nnml:" (? (or "mail" "list") "."))
+                                                      "nndoc+ephemeral:bug#"))
+                                             (and "*" eos))) ""
+                                     (buffer-name buffer)))
+                       (format "G %s" buffer)))))
+      display-buffer-alist)
+#+end_src
+
+Run Gnus:
+
+#+begin_src emacs-lisp
+(defun my-gnus ()
+  "Start a new Gnus, or locate the existing buffer *Group*."
+  (interactive)
+  (if (buffer-live-p (get-buffer "*Group*"))
+      (pop-to-buffer-same-window (get-buffer "*Group*"))
+    (gnus)))
+
+(define-key my-map "g" 'my-gnus)
+;; (define-key my-map "g" (lambda () (gnus 3)))
+;; (define-key my-map "G" 'gnus-no-server)
+(define-key my-map "G" (lambda () (interactive)
+                          (gnus-no-server)
+                          ;; BUG? mail groups don't come automatically
+                          (gnus-group-jump-to-group "nnml:mail.inbox")))
+(define-key my-map "Q" 'smtpmail-send-queued-mail)
+#+end_src
+
+Gnus Group buffer:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'gnus
+  (setq gnus-group-line-format
+        "%M%m%S%p%P%4y:%B%(%-43,43g%) %3T %5t %2I %o\n")
+  ;; (setq gnus-group-line-format
+  ;;       "%M%m%S%p%P%4y:%B%(%-30,30g%) %3T %5t %2I %o %s\n")
+  ;; (setq gnus-group-line-format
+  ;;       "%M%S%5y: %(%-30,30g%) %9,9~(cut 4)d %5t %2I %2T %o %n %s\n")
+  (define-key gnus-group-mode-map [tab] 'gnus-group-next-unread-group)
+  (define-key gnus-group-mode-map [(shift iso-lefttab)] 'gnus-group-prev-unread-group)
+  (setq gnus-message-archive-group
+        '((lambda (group)
+            (if (or (message-news-p)
+                    (not group)
+                    (and (stringp group)
+                         (or (eq (length group) 0)
+                             (string-match "^nnml:list\\." gnus-newsgroup-name)
+                             (not (string-match "^nnml:" gnus-newsgroup-name)))))
+                "nnml:archive"
+              group)))))
+#+end_src
+
+Gnus Summary buffers:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'gnus-sum
+  ;; (setq gnus-summary-line-format ; TEST
+  ;;       "%U%R%z%I%(%[%1L: %1,1~(cut 1)L %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+  ;; (setq gnus-summary-line-format
+  ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20n%]%) %s\n")
+  ;; (setq gnus-summary-line-format
+  ;;       "%U%R%z%I%(%[%4L: %4,4~(cut 4)o: %-20,20f%]%) %s\n")
+  ;; Add 2-digit year:
+  (setq gnus-summary-line-format
+        "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
+  (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
+  (define-key gnus-summary-mode-map [(shift iso-lefttab)]
+    'gnus-summary-prev-unread-article)
+  (define-key gnus-summary-mode-map [(meta right)] 'gnus-summary-show-thread)
+  (define-key gnus-summary-mode-map [(meta left)] 'gnus-summary-hide-thread)
+  (define-key gnus-summary-mode-map [delete] 'gnus-summary-delete-article)
+  ;; (define-key gnus-summary-mode-map [f6] 'gnus-summary-move-article)
+  ;; (define-key gnus-summary-mode-map "!" 'my-gnus-summary-tick-article-forward)
+  ;; Commented out because sometimes I mistype "r" without the Shift key:
+  ;; (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
+  (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
+  (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
+
+  ;; Use standard keybinding instead of stupid `gnus-summary-show-thread'
+  (define-key gnus-summary-mode-map "\M-\C-s" 'isearch-forward-regexp)
+
+;; Commented out to test multi-article Isearch
+;; ;; "\M-s"
+;; (define-key gnus-summary-mode-map   "s" 'gnus-summary-search-article-forward)
+;; ;; "\M-S"
+;; (define-key gnus-summary-mode-map "M-s" 'gnus-summary-repeat-search-article-forward)
+
+  ;; (define-key gnus-summary-mode-map "\C-l" 'my-recenter)
+
+  ;; Disable dangerous key bindings
+  (define-key gnus-summary-mode-map [(meta ?g)] nil)
+  (define-key gnus-summary-mode-map "x" nil)
+  (define-key gnus-summary-mode-map "\C-x\C-s" nil)
+  (setq gnus-thread-sort-functions
+        '(gnus-thread-sort-by-number)
+        ;;'(gnus-thread-sort-by-total-score (not gnus-thread-sort-by-number))
+        )
+  (add-hook 'gnus-group-mode-hook
+            (lambda ()
+              ;; I don't need line and column numbers in the group buffer
+              (setq-local line-number-mode nil)
+              (setq-local column-number-mode nil)))
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              ;; I don't need line and column numbers in the summary buffer
+              (setq-local line-number-mode nil)
+              (setq-local column-number-mode nil)))
+
+  (add-hook 'gnus-summary-exit-hook 'quit-window)
+
+  ;; Zebra stripes for the summary buffer
+  ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
+  ;; (add-hook 'gnus-summary-mode-hook 'turn-on-stripes-mode)
+  )
+#+end_src
+
+Gnus Article buffers:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'gnus-art
+  ;; Set more human-readable time units:
+  (setq article-time-units
+        `((year   . ,(* 60 60 24 365.25))
+          (month  . ,(* 60 60 24 30))
+          (week   . ,(* 60 60 24 7))
+          (day    . ,(* 60 60 24))
+          (hour   . ,(* 60 60))
+          (minute .     60)
+          (second .     1)))
+  ;; I'm curious about what news readers do people use (Gnus or not ;)
+  (setq gnus-visible-headers
+        (append
+         (if (listp gnus-visible-headers)
+             gnus-visible-headers
+           (list gnus-visible-headers))
+         (list (concat "^User-Agent:\\|^X-User-Agent:\\|"
+                       "^X-Mailer:\\|^X-Newsreader:\\|^X-FTN-Tearline:\\|"
+                       "^X-Http-User-Agent:"))))
+  ;; Highlight the beginning of the bug report.
+  (setq gnus-emphasis-alist
+        (cons
+         '("\\(the precise symptoms of the bug\\)"
+           0 1 gnus-emphasis-underline)
+         gnus-emphasis-alist))
+  (add-hook 'gnus-article-mode-hook
+            (lambda ()
+              (visual-line-mode)
+              (setq bug-reference-url-format "http://debbugs.gnu.org/%s")
+              (bug-reference-mode 1))
+            t)
+  ;; Put point after headers, so TAB will browse article buttons
+  (add-hook 'gnus-article-prepare-hook
+            (lambda ()
+              (let ((window (get-buffer-window gnus-article-buffer)))
+                (when window
+                  (with-current-buffer (window-buffer window)
+                    ;; (forward-paragraph)
+                    (set-window-point window (point))))))
+            t)
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
+  (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
+  ;; RET scrolls the article one line at a time.
+  (define-key gnus-article-mode-map [return] 'my-gnus-article-press-or-scroll)
+  (define-key gnus-article-mode-map [(meta right)] 'my-gnus-article-press-or-scroll)
+  (define-key gnus-article-mode-map [(meta down)] 'widget-forward)
+  (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
+  ;; Disable dangerous key bindings
+  (define-key gnus-article-mode-map [(meta ?g)] nil))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun my-gnus-article-press-or-scroll ()
+  (interactive)
+  (if (or (not (get-char-property (point) 'button))
+          ;; or point is on the bottom of the window while scrolling
+          (eq (point) (save-excursion (move-to-window-line -1) (point))))
+      (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
+    (if (eq (get-char-property (point) 'category) 'shr)
+        (shr-browse-url)
+      (gnus-article-press-button))))
+
+;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
+(defun my-gnus-copy-link-gnu-lists (&optional _arg)
+  "Put the link to the article in the GNU archives into the kill ring.
+Example:
+\(browse-url (concat \"http://lists.gnu.org/archive/cgi-bin/namazu.cgi?idxname=\"
+\"emacs-devel&query=\" (url-hexify-string (concat \"+message-id:\"
+\"12345678.fsf@gnu.org\"))))"
+  (interactive "P")
+  (unless (eq major-mode 'gnus-summary-mode)
+    (error "Not in a gnus group buffer"))
+  (let ((list-archive
+         (with-current-buffer gnus-original-article-buffer
+           (gnus-fetch-field "list-archive")))
+        (message-id
+         (with-current-buffer gnus-original-article-buffer
+           (replace-regexp-in-string
+            "^<\\(.*\\)>$" "\\1" (gnus-fetch-field "message-id"))))
+        (text-template "\
+\(browse-url (concat \"http://lists.gnu.org/archive/cgi-bin/namazu.cgi?idxname=\"\n\
+\"%s&query=\" (url-hexify-string (concat \"+message-id:\"\n\
+\"%s\"))))")
+        (text))
+    (if (string-match "<http://lists\\.gnu\\.org/[^>]*/\\([^/>]+\\)>" list-archive)
+        (setq text (format text-template (match-string 1 list-archive) message-id))
+      (error "Not in a GNU mailing list"))
+    (kill-new text)
+    (message "%s" text)))
+#+end_src
+
+Actually, the above is not needed due to the supported url scheme like
+http://thread.gmane.org/<Message-ID>
+
+#+begin_src emacs-lisp
+(defun my-gnus-copy-link-gmane (&optional _arg)
+  "Put the link to the article on gmane.org into the kill ring.
+Example:
+\(browse-url (concat \"http://thread.gmane.org/\"
+ (url-hexify-string \"12345678.fsf@gnu.org\")))"
+  (interactive "P")
+  (unless (eq major-mode 'gnus-summary-mode)
+    (error "Not in a gnus group buffer"))
+  (let ((message-id
+         (with-current-buffer gnus-original-article-buffer
+           (replace-regexp-in-string
+            "^<\\(.*\\)>$" "\\1" (gnus-fetch-field "message-id"))))
+        (text-template "(browse-url (concat \"http://thread.gmane.org/\"\
+ (url-hexify-string \"%s\")))")
+        (text))
+    (setq text (format text-template message-id))
+    (kill-new text)
+    (message "%s" text)))
+#+end_src
+
+Improve ~gnus-summary-tick-article-forward~ to allow specifying tick character:
+
+#+begin_src emacs-lisp
+(defun my-gnus-summary-tick-article-forward (n &optional mark)
+  "Tick N articles forwards.
+If N is negative, tick backwards instead.
+The difference between N and the number of articles ticked is returned."
+  (interactive (list
+                (prefix-numeric-value current-prefix-arg)
+                (let ((mark (read-char "Tick char: " t)))
+;;                   (if (memq mark (string-to-list " ?rREK$FXYCAFN*S.OQGM-+%="))
+;;                       (error "Reserved mark"))
+                  mark)))
+  (gnus-summary-mark-forward n (or mark gnus-ticked-mark)))
+#+end_src
+
+* Multi-language features
 
 ** quail
 
