@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-04-24
+#+DATE: 2020-04-27
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+HTML_link_home: http://www.linkov.net/emacs
@@ -115,7 +115,7 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (if (eq major-mode 'fundamental-mode)
+  (if (memq major-mode '(fundamental-mode dired-mode))
       (recenter-top)
     (reposition-window)))
 
@@ -558,6 +558,104 @@ when after jumping point stays within current window bounds:
 
 * Useful features
 
+** Copy/Paste
+
+*** Select items from the kill-ring using the minibuffer history
+
+Please read the docstring, it describes the command pretty well:
+
+#+begin_src emacs-lisp
+(defvar yank-from-kill-ring-history nil)
+(defun yank-from-kill-ring (string)
+  "Insert the kill-ring item selected from the minibuffer history.
+Use minibuffer navigation and search commands to browse the kill-ring
+in the minibuffer history before typing RET to insert the item."
+  (interactive
+   (list (let ((history-add-new-input nil)
+               ;; Remove keymaps from text properties of copied string,
+               ;; because typing RET in the minibuffer might call
+               ;; an irrelevant command from the map of copied string.
+               (yank-from-kill-ring-history
+                (mapcar (lambda (h)
+                          ;; TODO: remove all props except face/font-lock-face
+                          (remove-list-of-text-properties
+                           0 (length h)
+                           '(
+                             keymap local-map action mouse-action
+                             button category help-args)
+                           h)
+                          h)
+                        kill-ring)))
+           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
+  (setq yank-window-start (window-start))
+  (push-mark)
+  (insert-for-yank string))
+
+(global-set-key "\M-\C-y" 'yank-from-kill-ring)
+
+(when delete-selection-mode
+  (put 'yank-from-kill-ring 'delete-selection t))
+#+end_src
+
+*** Decode URL copied from web browser
+
+It converts e.g. https://en.wikipedia.org/wiki/%CE%A9
+to more nice-looking https://en.wikipedia.org/wiki/Ω
+when copying a URL from a web browser to Emacs:
+
+#+begin_src emacs-lisp
+(advice-add 'gui-selection-value :around
+            (lambda (orig-fun &rest args)
+              (let ((value (apply orig-fun args)))
+                (when (and (stringp value)
+                           (string-match-p
+                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
+                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
+                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
+                  (setq value (replace-regexp-in-string " " "%20" value)))
+                value))
+            '((name . gui-selection-value-url-decode)))
+#+end_src
+
+*** Copy text at point without activating the region
+
+#+begin_src emacs-lisp
+(defvar kill-ring-save-set-region-p nil)
+
+;; When M-w (kill-ring-save) is called without active region, copy text at point.
+(advice-add 'kill-ring-save :before
+            (lambda (&rest _args)
+              (interactive (lambda (spec)
+                             (setq kill-ring-save-set-region-p nil)
+                             (unless (use-region-p)
+                               (let ((bounds (or (bounds-of-thing-at-point 'url)
+                                                 (bounds-of-thing-at-point 'filename)
+                                                 (bounds-of-thing-at-point 'symbol)
+                                                 (bounds-of-thing-at-point 'sexp))))
+                                 (unless bounds
+                                   (signal 'mark-inactive nil))
+                                 (goto-char (car bounds))
+                                 (push-mark (cdr bounds) t t)
+                                 (setq kill-ring-save-set-region-p t)))
+                             (advice-eval-interactive-spec spec))))
+            '((name . set-region-if-inactive)))
+
+;; Indicate copied region, especially needed when
+;; the region was activated by the advice above
+(advice-add 'kill-ring-save :after
+            (lambda (&rest _args)
+              ;; When the region was set by the advice above,
+              ;; only then display its text.
+              (when kill-ring-save-set-region-p
+                (let ((text (substring-no-properties (current-kill 0))))
+                  (message "Copied text \"%s\""
+                           (query-replace-descr ; don't show newlines literally
+                            (if (> (length text) 64)
+                                (concat (substring text 0 64) "..." (substring text -16))
+                              text))))))
+            '((name . indicate-copied-region)))
+#+end_src
+
 ** Search/Replace
 
 *** Enable new isearch features
@@ -589,7 +687,7 @@ the same screen state that was before.
         ;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
           ;; reposition-window takes too much time in large buffers
-          (if (or (eq major-mode 'fundamental-mode)
+          (if (or (memq major-mode '(fundamental-mode dired-mode))
                   (> (buffer-size) 1000000))
               (recenter-top)
             (condition-case nil
@@ -1025,104 +1123,6 @@ Make the =*Occur*= buffer names unique and writable
    (concat "\\(" (regexp-quote from-string) "\\)\\|" (regexp-quote to-string))
    `(replace-eval-replacement replace-quote (if (match-string 1) ,to-string ,from-string))
    t t delimited nil nil start end backward region-noncontiguous-p))
-#+end_src
-
-** copy-paste
-
-*** Select items from the kill-ring using the minibuffer history
-
-Please read the docstring, it describes the command pretty well:
-
-#+begin_src emacs-lisp
-(defvar yank-from-kill-ring-history nil)
-(defun yank-from-kill-ring (string)
-  "Insert the kill-ring item selected from the minibuffer history.
-Use minibuffer navigation and search commands to browse the kill-ring
-in the minibuffer history before typing RET to insert the item."
-  (interactive
-   (list (let ((history-add-new-input nil)
-               ;; Remove keymaps from text properties of copied string,
-               ;; because typing RET in the minibuffer might call
-               ;; an irrelevant command from the map of copied string.
-               (yank-from-kill-ring-history
-                (mapcar (lambda (h)
-                          ;; TODO: remove all props except face/font-lock-face
-                          (remove-list-of-text-properties
-                           0 (length h)
-                           '(
-                             keymap local-map action mouse-action
-                             button category help-args)
-                           h)
-                          h)
-                        kill-ring)))
-           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
-  (setq yank-window-start (window-start))
-  (push-mark)
-  (insert-for-yank string))
-
-(global-set-key "\M-\C-y" 'yank-from-kill-ring)
-
-(when delete-selection-mode
-  (put 'yank-from-kill-ring 'delete-selection t))
-#+end_src
-
-*** Decode URL copied from web browser
-
-It converts e.g. https://en.wikipedia.org/wiki/%CE%A9
-to more nice-looking https://en.wikipedia.org/wiki/Ω
-when copying a URL from a web browser to Emacs:
-
-#+begin_src emacs-lisp
-(advice-add 'gui-selection-value :around
-            (lambda (orig-fun &rest args)
-              (let ((value (apply orig-fun args)))
-                (when (and (stringp value)
-                           (string-match-p
-                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
-                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
-                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
-                  (setq value (replace-regexp-in-string " " "%20" value)))
-                value))
-            '((name . gui-selection-value-url-decode)))
-#+end_src
-
-*** Copy text at point without activating the region
-
-#+begin_src emacs-lisp
-(defvar kill-ring-save-set-region-p nil)
-
-;; When M-w (kill-ring-save) is called without active region, copy text at point.
-(advice-add 'kill-ring-save :before
-            (lambda (&rest _args)
-              (interactive (lambda (spec)
-                             (setq kill-ring-save-set-region-p nil)
-                             (unless (use-region-p)
-                               (let ((bounds (or (bounds-of-thing-at-point 'url)
-                                                 (bounds-of-thing-at-point 'filename)
-                                                 (bounds-of-thing-at-point 'symbol)
-                                                 (bounds-of-thing-at-point 'sexp))))
-                                 (unless bounds
-                                   (signal 'mark-inactive nil))
-                                 (goto-char (car bounds))
-                                 (push-mark (cdr bounds) t t)
-                                 (setq kill-ring-save-set-region-p t)))
-                             (advice-eval-interactive-spec spec))))
-            '((name . set-region-if-inactive)))
-
-;; Indicate copied region, especially needed when
-;; the region was activated by the advice above
-(advice-add 'kill-ring-save :after
-            (lambda (&rest _args)
-              ;; When the region was set by the advice above,
-              ;; only then display its text.
-              (when kill-ring-save-set-region-p
-                (let ((text (substring-no-properties (current-kill 0))))
-                  (message "Copied text \"%s\""
-                           (query-replace-descr ; don't show newlines literally
-                            (if (> (length text) 64)
-                                (concat (substring text 0 64) "..." (substring text -16))
-                              text))))))
-            '((name . indicate-copied-region)))
 #+end_src
 
 * Major modes
