@@ -178,6 +178,47 @@ Adjust window to show the current diff hunk completely:
               (setq-local end-of-defun-function       #'diff-end-of-hunk))))
 #+end_src
 
+** Recenter windows
+
+Instead of the default behavior that recenters to the middle of the screen,
+add customization that recenter to the middle of the top half of the screen
+to reduce time spent for scrolling and adjusting the position of edited text:
+
+#+begin_src emacs-lisp
+(setq recenter-positions '(0.15 top)
+      next-error-recenter 15
+      compare-windows-recenter '(15 15))
+
+(defvar my-recenter-position nil
+  "Default recenter position.")
+
+(when (boundp 'recenter-positions)
+  (setq my-recenter-position (car recenter-positions)))
+
+(defun recenter-top ()
+  (interactive)
+  (recenter (round (* my-recenter-position (window-height)))))
+#+end_src
+
+Let =C-M-a= (~beginning-of-defun~) not scroll the window
+when after jumping point stays within current window bounds:
+
+#+begin_src emacs-lisp
+(advice-add 'beginning-of-defun :around
+            (lambda (orig-fun &rest args)
+              (let ((w-s (window-start))
+                    (w-e (window-end)))
+                (apply orig-fun args)
+                (when (and
+                       ;; Only when used interactively
+                       (eq this-command 'beginning-of-defun)
+                       ;; And only when jumping outside of window
+                       ;; to the center of the window
+                       (or (< (point) w-s) (> (point) w-e)))
+                  (recenter-top))))
+            '((name . recenter-top)))
+#+end_src
+
 * Space optimization
 
 By default, Emacs looks like a typical GUI application with the menu bar,
@@ -700,47 +741,6 @@ This is a more general version that also handles numbered lists:
 (define-key global-map [(control shift return)] 'my-reindent-then-newline-and-indent)
 
 (define-key global-map [S-return] 'electric-newline-and-maybe-indent)
-#+end_src
-
-** Recenter windows
-
-Instead of the default behavior that recenters to the middle of the screen,
-add customization that recenter to the middle of the top half of the screen
-to reduce time spent for scrolling and adjusting the position of edited text:
-
-#+begin_src emacs-lisp
-(setq recenter-positions '(0.15 top)
-      next-error-recenter 15
-      compare-windows-recenter '(15 15))
-
-(defvar my-recenter-position nil
-  "Default recenter position.")
-
-(when (boundp 'recenter-positions)
-  (setq my-recenter-position (car recenter-positions)))
-
-(defun recenter-top ()
-  (interactive)
-  (recenter (round (* my-recenter-position (window-height)))))
-#+end_src
-
-Let =C-M-a= (~beginning-of-defun~) not scroll the window
-when after jumping point stays within current window bounds:
-
-#+begin_src emacs-lisp
-(advice-add 'beginning-of-defun :around
-            (lambda (orig-fun &rest args)
-              (let ((w-s (window-start))
-                    (w-e (window-end)))
-                (apply orig-fun args)
-                (when (and
-                       ;; Only when used interactively
-                       (eq this-command 'beginning-of-defun)
-                       ;; And only when jumping outside of window
-                       ;; to the center of the window
-                       (or (< (point) w-s) (> (point) w-e)))
-                  (recenter-top))))
-            '((name . recenter-top)))
 #+end_src
 
 ** Efficient navigation in different modes
