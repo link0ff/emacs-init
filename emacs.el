@@ -1506,88 +1506,6 @@ With prefix arg, insert the current timestamp to the current buffer."
 ;;      (outline-up-heading 1)))
 
 
-;;; diff
-
-(with-eval-after-load 'diff-mode
-  ;; Note that this pollutes with temp buffers in org-src-font-lock-fontify-block
-  ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
-  ;; because it renames internal buffers, so they can't be reused.
-  (add-hook 'diff-mode-hook 'rename-uniquely)
-  (add-hook 'log-view-mode-hook 'rename-uniquely)
-
-  ;; Make revision separators more noticeable:
-  (setq diff-font-lock-keywords
-        (append diff-font-lock-keywords
-                '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend))))))
-
-(define-generic-mode 'diff-generic-mode
-  (list ?#)
-  nil
-  '(("^\\(<-? \\)" 1 'font-lock-keyword-face)
-    ("^\\(-?> \\)" 1 'font-lock-function-name-face)
-    ("^\\(\\(<!\\|!>\\) .*\\)" 1 'font-lock-warning-face))
-  (list "\\.subpatch\\'")
-  nil
-  "For diffuniq and subpatch.")
-
-;; Prevent git-diff from calling pager
-;; (setenv "PAGER" "/bin/cat")
-;; (setenv "PAGER") (getenv "PAGER")
-
-
-;;; ediff
-
-(with-eval-after-load 'ediff-ptch
-  ;; Date-based backup extension with tilde omitted in dired-x
-  (setq ediff-default-backup-extension (format-time-string ".~ediff-%Y-%m-%d~" (current-time)))
-  (custom-reevaluate-setting 'ediff-backup-extension)
-  (custom-reevaluate-setting 'ediff-backup-specs))
-
-
-;;; vc
-
-(with-eval-after-load 'vc-hooks
-  ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
-  (define-key vc-prefix-map "+" 'vc-diff)
-  (define-key vc-prefix-map "S" 'vc-log-search))
-
-;; Highlight found occurrences in *vc-search-log* output buffer of vc-log-search.
-;; Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
-(advice-add 'vc-git-log-search :after
-            (lambda (buffer pattern)
-              (with-current-buffer buffer
-                (vc-run-delayed
-                  (highlight-regexp pattern 'hi-yellow))))
-            '((name . vc-git-log-search-highlight)))
-
-(with-eval-after-load 'vc-dir
-  ;; Because ‘=’ is easily mistyped as ‘+’
-  (define-key vc-dir-mode-map "+" 'vc-diff)
-  ;; Often ‘v’ is mistyped to view files like in Dired
-  (define-key vc-dir-mode-map "v" 'vc-dir-view-file)
-  (define-key vc-dir-mode-map "." 'vc-next-action))
-
-(defun vc-dir-in-project-root ()
-  "Run `vc-dir' in project root directory."
-  (interactive)
-  (let* ((project (project-current))
-         (root (and project (car (project-roots project)))))
-    (vc-dir (or (and root (file-directory-p root) root) default-directory))))
-
-(define-key my-map "d" 'vc-dir-in-project-root)
-
-;; TODO: better to add to .dir-locals.el (bug#36861)
-(add-hook 'vc-git-log-edit-mode-hook
-          (lambda ()
-            (setq display-fill-column-indicator-column 78)
-            (display-fill-column-indicator-mode t)))
-
-(add-hook 'log-view-mode-hook
-          (lambda ()
-            (vc-run-delayed
-              (highlight-regexp "bug#" 'hi-yellow))))
-
-
 ;;; text
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
