@@ -23,6 +23,7 @@
 - [[#construction-kit][Construction Kit]]
 - [[#space-time-optimization][Space-time optimization]]
   - [[#reposition-windows][Reposition windows]]
+  - [[#recenter-windows][Recenter windows]]
 - [[#space-optimization][Space optimization]]
   - [[#remove-unused-display-elements][Remove unused display elements]]
   - [[#tabs-with-tab-bar-and-tab-lines][Tabs with tab-bar and tab-lines]]
@@ -32,11 +33,10 @@
   - [[#shorter-answers][Shorter answers]]
   - [[#dont-spend-time-answering-useless-questions][Don't spend time answering useless questions]]
   - [[#using-the-esc-key-as-a-cancel-key][Using the =ESC= key as a cancel key]]
-  - [[#list-structural-editing][List structural editing]]
-  - [[#efficient-navigation-in-different-modes][Efficient navigation in different modes]]
   - [[#dedicated-keymap-c-z-my-map][Dedicated keymap C-z my-map]]
   - [[#insert-pair-keys][Insert-pair keys]]
-  - [[#recenter-windows][Recenter windows]]
+  - [[#list-structural-editing][List structural editing]]
+  - [[#efficient-navigation-in-different-modes][Efficient navigation in different modes]]
 - [[#useful-features][Useful features]]
   - [[#copypaste][Copy/Paste]]
   - [[#searchreplace][Search/Replace]]
@@ -44,6 +44,10 @@
 - [[#used-packages][Used packages]]
   - [[#org][org]]
   - [[#gnus][gnus]]
+  - [[#message][message]]
+  - [[#mime][mime]]
+  - [[#gnuserv][gnuserv]]
+  - [[#term][term]]
 - [[#multi-language-features][Multi-language features]]
   - [[#quail][quail]]
   - [[#mule][mule]]
@@ -749,24 +753,24 @@ The most efficient way of navigation in Emacs is like those used in
 browsers Lynx and Mozilla.  Its basic features are the following:
 
 - =M-right= visits a link under point.  In Help and Info buffer it's a real link,
-and if there is no link under point, then move in history of visited pages
-forwards.  In Dired when point is on a directory line, then =M-right= opens
-a new Dired buffer, otherwise visits a file under point.  In other modes
-=M-right= tries to use a /thing/ under point: opens a help buffer for
-a variable or function under point, or visits a link found under point, etc.
+  and if there is no link under point, then move in history of visited pages
+  forwards.  In Dired when point is on a directory line, then =M-right= opens
+  a new Dired buffer, otherwise visits a file under point.  In other modes
+  =M-right= tries to use a /thing/ under point: opens a help buffer for
+  a variable or function under point, or visits a link found under point, etc.
 
 - =M-left= goes back: in file buffers it opens the Dired buffer with file directory,
-and puts point on its file line.  When =M-left= is typed in a Dired buffer,
-then it goes up and opens another Dired buffer with the parent directory.
-In Help and Info buffers, =M-left= navigates the history of visited nodes
-backwards.
+  and puts point on its file line.  When =M-left= is typed in a Dired buffer,
+  then it goes up and opens another Dired buffer with the parent directory.
+  In Help and Info buffers, =M-left= navigates the history of visited nodes
+  backwards.
 
 - =M-down= goes to the next thing in the current buffer.  In Help/Info/Man buffers
-it moves point to the next link.  If there are no links visible on the current
-screen, then it scrolls one page forward, like it does in Lynx.
+  it moves point to the next link.  If there are no links visible on the current
+  screen, then it scrolls one page forward, like it does in Lynx.
 
 - =M-up= is the inverse of =M-down=, it either moves point to a previous link,
-or scrolls one page backwards.
+  or scrolls one page backwards.
 
 #+begin_src emacs-lisp
 (defun my-go-back ()
