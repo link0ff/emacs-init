@@ -1900,6 +1900,11 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
             (display-fill-column-indicator-mode t)))
 #+end_src
 
+** dired
+
+#+begin_src emacs-lisp
+#+end_src
+
 * Used packages
 
 #+begin_src emacs-lisp
@@ -1978,8 +1983,22 @@ Pre-load some useful packages:
 
 #+begin_src emacs-lisp
 (setq org-confirm-babel-evaluate nil
+      org-replace-disputed-keys t
+      org-special-ctrl-o nil
+      org-startup-folded nil
+      org-support-shift-select t)
+
+(setq org-src-ask-before-returning-to-edit-buffer nil
       org-src-fontify-natively t
-      org-src-tab-acts-natively t)
+      org-src-preserve-indentation t
+      org-src-tab-acts-natively t
+      org-src-window-setup 'split-window-below)
+
+;; Unfortunately, this has no effect because
+;; `display-buffer-alist' is ignored in `org-no-popups'
+(push `("\\`\\*Org Select\\*\\'"
+        display-buffer-below-selected)
+      display-buffer-alist)
 
 (add-hook 'org-mode-hook
           (lambda ()
