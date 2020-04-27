@@ -745,15 +745,343 @@ This is a more general version that also handles numbered lists:
 
 ** Efficient navigation in different modes
 
-Lynx-like navigation in Info, Man, Dired, W3, W3M modes
+The most efficient way of navigation in Emacs is like those used in
+browsers Lynx and Mozilla.  Its basic features are the following:
 
-*** view
+- =M-right= visits a link under point.  In Help and Info buffer it's a real link,
+and if there is no link under point, then move in history of visited pages
+forwards.  In Dired when point is on a directory line, then =M-right= opens
+a new Dired buffer, otherwise visits a file under point.  In other modes
+=M-right= tries to use a /thing/ under point: opens a help buffer for
+a variable or function under point, or visits a link found under point, etc.
+
+- =M-left= goes back: in file buffers it opens the Dired buffer with file directory,
+and puts point on its file line.  When =M-left= is typed in a Dired buffer,
+then it goes up and opens another Dired buffer with the parent directory.
+In Help and Info buffers, =M-left= navigates the history of visited nodes
+backwards.
+
+- =M-down= goes to the next thing in the current buffer.  In Help/Info/Man buffers
+it moves point to the next link.  If there are no links visible on the current
+screen, then it scrolls one page forward, like it does in Lynx.
+
+- =M-up= is the inverse of =M-down=, it either moves point to a previous link,
+or scrolls one page backwards.
+
+#+begin_src emacs-lisp
+(defun my-go-back ()
+  "Go back from current buffer and jump to Dired."
+  (interactive)
+  ;; Keep the buffer displayed on the frame or in a tab
+  (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+          (tab-bar-get-buffer-tab (current-buffer) t t))
+      (dired-jump)
+    ;; Go to the top to not store emacs-places.
+    (goto-char (point-min))
+    (kill-current-buffer-and-dired-jump)))
+
+(defun my-find-thing-at-point ()
+  "Find variable, function or file at point."
+  (interactive)
+  (cond ((not (eq (variable-at-point) 0))
+         (call-interactively 'describe-variable))
+        ((function-called-at-point)
+         (call-interactively 'describe-function))
+        (t (find-file-at-point))))
+
+(define-key global-map [(meta left)]  'my-go-back)
+(define-key global-map [(meta right)] 'my-find-thing-at-point)
+#+end_src
+
+#+begin_src emacs-lisp
+(defun my-next-link-or-scroll-page-forward (next-point)
+  "Scroll one screen forward when no more next links are visible on the screen.
+The argument `next-point' is the point's position of the next link."
+  (if (and (> (window-end) next-point) (> next-point (point)))
+      (goto-char next-point)
+    (if (>= (window-end) (point-max))
+        (goto-char (point-max))
+      (progn (View-scroll-page-forward-set-page-size) (move-to-window-line 0)))))
+
+(defun my-prev-link-or-scroll-page-backward (prev-point)
+  "Scroll one screen backward when no more previous links are visible on the screen.
+The argument `prev-point' is the point's position of the previous link."
+  (if (and (< (window-start) prev-point) (< prev-point (point)))
+      (goto-char prev-point)
+    (if (<= (window-start) (point-min))
+        (goto-char (point-min))
+      (progn (View-scroll-page-backward-set-page-size)))))
+#+end_src
+
+Below is customization of different modes to support convenient navigation:
 
 *** help
 
+#+begin_src emacs-lisp
+(defun my-help-follow ()
+  "Either follow the link, or go forward in history."
+  (interactive)
+  (if (button-at (point))
+      (push-button)
+    (help-go-forward)))
+
+;; Please note that 'help-next-ref' is better than 'Info-next-reference'
+;; because it uses 'message' instead of 'error' if "No cross references".
+(with-eval-after-load 'help-mode
+  ;; Mozilla-like navigation:
+  (define-key help-mode-map [(meta left)]  'help-go-back)
+  (define-key help-mode-map [(meta right)] 'my-help-follow)
+  ;; Lynx-like navigation:
+  (define-key help-mode-map [(meta up)]
+    (lambda () (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors (backward-button 1))
+         (point)))))
+  (define-key help-mode-map [(meta down)]
+    (lambda () (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors (forward-button 1))
+         (point))))))
+#+end_src
+
 *** info
 
+#+begin_src emacs-lisp
+(defun my-Info-forward (&optional fork)
+  "Follow the nearest node, or to go history forward, if point is not on ref."
+  (interactive "P")
+  (condition-case error
+      (Info-follow-nearest-node fork)
+    (error
+     (if (equal "Point neither on reference nor in menu item description"
+                (cadr error))
+         (Info-history-forward)
+       (message "%s" (cadr error))))))
+
+;; Info with look-and-feel of Midnight Commander, Lynx (Links) and Mozilla.
+(with-eval-after-load 'info
+  (define-key Info-mode-map [(control shift insert)]
+    (lambda () (interactive) (Info-copy-current-node-name 0)))
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key Info-mode-map [?\S-\ ] 'Info-scroll-down)
+  ;; Mozilla-like navigation:
+  (define-key Info-mode-map [(meta right)] 'my-Info-forward)
+  (define-key Info-mode-map [(meta left)]  'Info-last)
+  ;; Lynx-like navigation:
+  (define-key Info-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors
+           (Info-prev-reference))
+         (point)))))
+  (define-key Info-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors
+           (Info-next-reference))
+         (point)))))
+  ;; more/less scrolling style
+  (define-key Info-mode-map [return]
+    (lambda ()
+      (interactive)
+      (if nil ;;TODO: add predicate function to info.el to check (point) for Info refs
+          (my-Info-forward)
+        ;; (View-scroll-line-forward)
+        (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line)))))
+  ;; ThinkPad additional keys, try to use them
+  (when (equal (upcase (system-name)) "THINKPAD")
+    (define-key Info-mode-map [osfPrior] 'Info-last)
+    (define-key Info-mode-map [osfNext] 'Info-follow-nearest-node)))
+#+end_src
+
 *** man
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'man
+  ;; Don't use `man-mode-syntax-table' that sets word syntax to `.', `_', `:'.
+  (add-hook 'Man-mode-hook
+            (lambda ()
+              (set-syntax-table text-mode-syntax-table)))
+  ;; Mozilla-like navigation:
+  (define-key Man-mode-map [(meta right)] 'push-button) ;; 'man-follow
+  ;; No need to kill Man buffer because it is not saved to desktop.
+  (define-key Man-mode-map [(meta left)]  'quit-window)
+  ;; Lynx-like navigation:
+  (define-key Man-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (my-prev-link-or-scroll-page-backward
+       (save-excursion
+         (ignore-errors (Man-previous-section 1))
+         (point)))))
+  (define-key Man-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (my-next-link-or-scroll-page-forward
+       (save-excursion
+         (ignore-errors (Man-next-section 1))
+         (point)))))
+  (define-key Man-mode-map [f2] 'toggle-truncate-lines)
+  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; more/less scrolling style
+  (define-key Man-mode-map [return] 'View-scroll-line-forward))
+#+end_src
+
+*** view
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'view
+  ;; Shift-Space to scroll back (already added in bug#2145).
+  ;; (define-key view-mode-map [?\S-\ ] 'View-scroll-page-backward)
+  (define-key view-mode-map " " 'View-scroll-page-forward-set-page-size)
+  (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
+  (define-key view-mode-map "l" 'View-goto-line)
+  (define-key view-mode-map [f2] 'toggle-truncate-lines)
+  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; global: (define-key view-mode-map [(meta right)] 'find-file-at-point)
+  ;; Commented out to use the global keybinding:
+  ;; (define-key view-mode-map [(meta left)]
+  ;;   (lambda ()
+  ;;     (interactive)
+  ;;     ;; Go to the top to not store emacs-places.
+  ;;     (goto-char (point-min))
+  ;;     (View-quit)))
+  (define-key view-mode-map [(meta down)]
+    (lambda ()
+      (interactive)
+      (if (>= (window-end) (point-max))
+          (goto-char (point-max))
+        (View-scroll-page-forward-set-page-size))))
+  (define-key view-mode-map [(meta up)]
+    (lambda ()
+      (interactive)
+      (if (<= (window-start) (point-min))
+          (goto-char (point-min))
+        (View-scroll-page-backward-set-page-size))))
+
+  ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
+  (defadvice View-scroll-line-forward (after my-View-scroll-line-forward activate)
+    "Fix point position to be at the bottom line."
+    (move-to-window-line -1)
+    (beginning-of-line))
+
+  ;; Remove verbosity from view.el functions (bug#21893):
+  (advice-add 'view-end-message :around
+              (lambda (orig-fun &rest args)
+                (let ((inhibit-message t))
+                  (apply orig-fun args)))
+              '((name . non-verbose-view-end-message))))
+#+end_src
+
+*** diff
+
+#+begin_src emacs-lisp
+(defun diff-goto-source-kill-buffer ()
+  (interactive)
+  (let ((buf (current-buffer)))
+    (call-interactively 'diff-goto-source)
+    (kill-buffer buf)))
+
+(with-eval-after-load 'diff-mode
+  (define-key diff-mode-map [(meta down)] 'diff-hunk-next)
+  (define-key diff-mode-map [(meta up)]   'diff-hunk-prev)
+  (define-key diff-mode-map [(control meta down)] 'diff-file-next)
+  (define-key diff-mode-map [(control meta up)]   'diff-file-prev)
+  (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer))
+#+end_src
+
+*** dired
+
+#+begin_src emacs-lisp
+(define-key dired-mode-map [(meta left)]
+  ;; Mozilla-like navigation
+  (lambda (_arg)
+     (interactive "P")
+     (if (not (and (memq ?R (append dired-actual-switches nil))
+                   (dired-between-files)))
+         (dired-up-directory)
+       (if (dired-subdir-hidden-p (dired-current-directory))
+           (dired-tree-up 1)
+         (progn (dired-hide-subdir 1) (dired-previous-line 1))))))
+
+(define-key dired-mode-map [(meta right)]
+  ;; Mozilla-like navigation
+  (lambda (_arg)
+     (interactive "P")
+     (if (not (and (memq ?R (append dired-actual-switches nil))
+                   (dired-between-files)))
+         (dired-view-file)
+       (if (dired-subdir-hidden-p (dired-current-directory))
+           (progn (dired-hide-subdir 1)
+                  (dired-prev-subdir 1)
+                  (dired-next-line 4))
+         (dired-view-file)))))
+
+(defun my-dired-move-to-next-dir (_arg)
+  (interactive "P")
+  (if (not (memq ?R (append dired-actual-switches nil)))
+      (dired-next-dirline-cycle 1)
+    (progn (dired-next-subdir 1))))
+(define-key dired-mode-map [(meta down)] 'dired-next-line-cycle) ; dired-next-line
+(define-key dired-mode-map [(control meta down)] 'my-dired-move-to-next-dir)
+(define-key dired-mode-map [tab] 'my-dired-move-to-next-dir) ;'other-window
+
+(defun my-dired-move-to-prev-dir (_arg)
+  (interactive "P")
+  (if (not (memq ?R (append dired-actual-switches nil)))
+      (dired-prev-dirline-cycle 1)
+    (progn (dired-prev-subdir 1))))
+(define-key dired-mode-map [(meta up)] 'dired-previous-line-cycle) ; dired-previous-line
+(define-key dired-mode-map [(control meta up)] 'my-dired-move-to-prev-dir)
+(define-key dired-mode-map [(shift iso-lefttab)] 'my-dired-move-to-prev-dir)
+#+end_src
+
+*** archive/tar
+
+#+begin_src emacs-lisp
+(add-hook 'archive-mode-hook
+          (lambda ()
+            (define-key archive-mode-map [f3] 'archive-view)
+            (define-key archive-mode-map "q" 'quit-window-kill-buffer)
+            (define-key archive-mode-map [(meta right)] 'archive-view) ;; archive-extract
+            (define-key archive-mode-map [(meta left)] 'quit-window-kill-buffer)
+            (define-key archive-mode-map [(meta up)] 'archive-previous-line)
+            (define-key archive-mode-map [(meta down)] 'archive-next-line)))
+
+(add-hook 'tar-mode-hook
+          (lambda ()
+            (define-key tar-mode-map [f3] 'tar-view)
+            (define-key tar-mode-map "q" 'quit-window-kill-buffer)
+            (define-key tar-mode-map [(meta right)] 'tar-view)
+            (define-key tar-mode-map [(meta left)] 'quit-window-kill-buffer)
+            (define-key tar-mode-map [(meta up)] 'tar-previous-line)
+            (define-key tar-mode-map [(meta down)] 'tar-next-line)))
+#+end_src
+
+*** comint
+
+#+begin_src emacs-lisp
+(add-hook 'comint-mode-hook ;; 'comint-load-hook
+          (lambda ()
+            ;; See http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
+            (define-key comint-mode-map [S-return] 'newline)
+            ;; (define-key comint-mode-map "\C-zo" 'comint-kill-output-since-last-prompt)
+            ;; define M-up and M-down instead of C-up and C-down
+            (define-key comint-mode-map [(meta down)] 'comint-next-prompt)
+            (define-key comint-mode-map [(meta up)] 'comint-previous-prompt)
+            (define-key comint-mode-map [C-up]   nil)
+            (define-key comint-mode-map [C-down] nil)
+            (define-key comint-mode-map "\er" 'comint-history-isearch-backward)))
+
+(when delete-selection-mode
+  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
+#+end_src
 
 * Useful features
 
