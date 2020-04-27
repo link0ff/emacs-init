@@ -513,22 +513,6 @@ With C-u, C-0 or M-0, cancel the timer."
 (define-key my-map "f4" 'follow-mode-4)
 
 
-;;; display-buffer-alist
-
-(push `(,(rx bos
-             "*"
-             (or "Help" "Apropos" "Colors" "Buffer List" "Command History" "Locate"
-                 "Messages" "Proced" "eww" "snd" (and "gud-" (+ (any "a-z0-9")))
-                 "compilation" "grep" "erlang" "haskell" "shell" "Shell Command Output"
-                 "Diff" "vc-dir" "vc-log" "vc-search-log")
-             "*"
-             ;; Uniquifed buffer name with optional suffix in angle brackets
-             (? (and "<" (+ (not (any ">"))) ">"))
-             eos)
-        display-buffer-same-window)
-      display-buffer-alist)
-
-
 ;;; mark-active-window
 
 ;; Make mark buffer-and-window-local
@@ -657,52 +641,6 @@ Uses the value of the variable `search-whitespace-regexp'."
 
 
 ;;; minibuffer
-
-;; See http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
-(define-key minibuffer-local-map [S-return] 'newline)
-
-;; Remove potentially dangerous commands from the history immediately
-;; Also like in Bash HISTCONTROL: "A colon-separated list of values controlling
-;; how commands are saved on the history list.  If the list of values includes
-;; ignorespace, lines which begin with a space character are not saved in the
-;; history list.  A value of ignoredups causes lines matching the previous
-;; history entry to not be saved."
-;; TODO: We already have ‘history-delete-duplicates’ that corresponds to ‘ignoredups’,
-;; but still no option that would corresponds to ‘ignorespace.’
-(add-hook 'minibuffer-exit-hook
-          (lambda ()
-            (when (string-match
-                   "\\`\\(?:rm\\|git rm\\| \\)"
-                   (or (car-safe (symbol-value minibuffer-history-variable)) ""))
-              (set minibuffer-history-variable
-                   (cdr (symbol-value minibuffer-history-variable))))))
-
-;; This is not needed when isearch C-s/C-r in the minibuffer is available
-;; (but `C-M-r ^command' doesn't match at the beginning of the input area)
-(define-key minibuffer-local-map "\eN" 'next-complete-history-element)
-(define-key minibuffer-local-map "\eP" 'previous-complete-history-element)
-
-;; M-k in the minibuffer deletes the minibuffer history element.
-(defun delete-history-element ()
-  "Delete the current minibuffer history element from the history.
-After deleting the element, the history position is changed either
-to the the previous history element, or to the next history element
-if the deleted element was the last in the history list."
-  (interactive)
-  (cond
-   ((= minibuffer-history-position 1)
-    (set minibuffer-history-variable
-         (cdr (symbol-value minibuffer-history-variable))))
-   ((> minibuffer-history-position 1)
-    (setcdr (nthcdr (- minibuffer-history-position 2)
-                    (symbol-value minibuffer-history-variable))
-            (nthcdr minibuffer-history-position
-                    (symbol-value minibuffer-history-variable)))))
-  (condition-case nil (next-history-element     1) (error nil))
-  (condition-case nil (previous-history-element 1) (error nil)))
-
-(define-key minibuffer-local-map "\ek" 'delete-history-element)
-(define-key minibuffer-local-isearch-map "\ek" 'delete-history-element)
 
 ;; THE NEXT 3 FUNCTIONS WORK WITH BIG DELAY (try to use like icomplete.el)
 ;; see also PC-temp-minibuffer-message, file-cache-temp-minibuffer-message,

@@ -448,6 +448,24 @@ like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 (windmove-swap-states-default-keybindings '(shift super))
 #+end_src
 
+Also by default most buffers pop up in the same window,
+so there is no need to switch windows back and forth:
+
+#+begin_src emacs-lisp
+(push `(,(rx bos
+             "*"
+             (or "Help" "Apropos" "Colors" "Buffer List" "Command History" "Locate"
+                 "Messages" "Proced" "eww" "snd" (and "gud-" (+ (any "a-z0-9")))
+                 "compilation" "grep" "erlang" "haskell" "shell" "Shell Command Output"
+                 "Diff" "vc-dir" "vc-log" "vc-search-log")
+             "*"
+             ;; Uniquifed buffer name with optional suffix in angle brackets
+             (? (and "<" (+ (not (any ">"))) ">"))
+             eos)
+        display-buffer-same-window)
+      display-buffer-alist)
+#+end_src
+
 ** Shorter answers
 
 Use single letters =y= or =n= for answers instead of complete words =yes= or =no=.
@@ -538,20 +556,20 @@ Various useful commands are bound on this keymap:
 ** Insert-pair keys
 
 One of the most useful commands is ~insert-pair~.  When it's bound to such
-keys as =M-"=, =M-'=, =M-[=, =M-{=, typing these keys always maintains the
+keys as M-", M-', M-[, M-{, typing these keys always maintains the
 syntactically valid structures of paired and balanced constructs.  So e.g.
 typing =M-(= inserts balanced parentheses, =M-"= inserts a closed string, etc.
 Point is positioned inside the inserted pair.
 
 Here's a short table of mappings:
 
-| Key   | Insert pair  |
-|-------+--------------|
-| =M-(= | =()=         |
-| =M-[= | =[]=         |
-| =M-{= | ={}=         |
-| =M-"= | =""= or =“”= |
-| =M-'= | =''= or =‘’= |
+| Key | Insert pair |
+|-----+-------------|
+| M-( | ()          |
+| M-[ | []          |
+| M-{ | {}          |
+| M-" | "" or “”    |
+| M-' | '' or ‘’    |
 
 #+begin_src emacs-lisp
 ;; Modify esc-map when not on a tty:
@@ -1654,6 +1672,66 @@ Make the =*Occur*= buffer names unique and writable
    (concat "\\(" (regexp-quote from-string) "\\)\\|" (regexp-quote to-string))
    `(replace-eval-replacement replace-quote (if (match-string 1) ,to-string ,from-string))
    t t delimited nil nil start end backward region-noncontiguous-p))
+#+end_src
+
+** Minibuffer features
+
+See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
+
+#+begin_src emacs-lisp
+(define-key minibuffer-local-map [S-return] 'newline)
+#+end_src
+
+Remove potentially dangerous commands from the history immediately.
+Also like in Bash HISTCONTROL: "A colon-separated list of values controlling
+how commands are saved on the history list.  If the list of values includes
+ignorespace, lines which begin with a space character are not saved in the
+history list.  A value of ignoredups causes lines matching the previous
+history entry to not be saved."
+TODO: We already have ~history-delete-duplicates~ that corresponds to ~ignoredups~,
+but still no option that would corresponds to ~ignorespace~.
+
+#+begin_src emacs-lisp
+(add-hook 'minibuffer-exit-hook
+          (lambda ()
+            (when (string-match
+                   "\\`\\(?:rm\\|git rm\\| \\)"
+                   (or (car-safe (symbol-value minibuffer-history-variable)) ""))
+              (set minibuffer-history-variable
+                   (cdr (symbol-value minibuffer-history-variable))))))
+#+end_src
+
+This is not needed when isearch C-s/C-r in the minibuffer is available
+(but `C-M-r ^command' doesn't match at the beginning of the input area):
+
+#+begin_src emacs-lisp
+(define-key minibuffer-local-map "\eN" 'next-complete-history-element)
+(define-key minibuffer-local-map "\eP" 'previous-complete-history-element)
+#+end_src
+
+=M-k= in the minibuffer deletes the minibuffer history element:
+
+#+begin_src emacs-lisp
+(defun delete-history-element ()
+  "Delete the current minibuffer history element from the history.
+After deleting the element, the history position is changed either
+to the the previous history element, or to the next history element
+if the deleted element was the last in the history list."
+  (interactive)
+  (cond
+   ((= minibuffer-history-position 1)
+    (set minibuffer-history-variable
+         (cdr (symbol-value minibuffer-history-variable))))
+   ((> minibuffer-history-position 1)
+    (setcdr (nthcdr (- minibuffer-history-position 2)
+                    (symbol-value minibuffer-history-variable))
+            (nthcdr minibuffer-history-position
+                    (symbol-value minibuffer-history-variable)))))
+  (condition-case nil (next-history-element     1) (error nil))
+  (condition-case nil (previous-history-element 1) (error nil)))
+
+(define-key minibuffer-local-map "\ek" 'delete-history-element)
+(define-key minibuffer-local-isearch-map "\ek" 'delete-history-element)
 #+end_src
 
 * Major modes
