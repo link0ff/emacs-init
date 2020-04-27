@@ -29,6 +29,10 @@
 ;;                                      -- old proverb modified by me
 
 
+;; This file now contains semi-obsolete settings.
+;; For more up-to-date settings please see the file README.org in the same directory.
+
+
 ;;; Display settings
 
 ;; Create display table to modify some display elements
@@ -812,108 +816,7 @@ With prefix arg, insert the current timestamp to the current buffer."
 (add-hook 'my-buffer-xray 'html-mode)
 
 
-;;; qv (evaluable bookmarks)
-
-;; TODO: use bookmark.el?
-;; TODO: add Info node and line number
-(defun qv (&optional url anchor)
-  "Add or activate live bookmarks.
-When called interactively, put the address of the current location
-inside a function call to `qv' into the clipboard that can be
-pasted in another buffer that stores bookmarks.
-Otherwise, after typing `C-x C-e' on the bookmark funcall
-goes to the saved location."
-  (interactive)
-  (if (called-interactively-p 'any)
-      (kill-new
-       (message "%s"
-                (concat "(qv "
-                        (cond
-                         (buffer-file-name
-                          (format "\"%s\"\n    %S" ;; "\"%s\" %s"
-                                  buffer-file-name
-                                  ;;(line-number-at-pos)
-                                  (replace-regexp-in-string
-                                   "^\\s-*" ""
-                                   (buffer-substring-no-properties
-                                    (line-beginning-position)
-                                    (line-end-position))))))
-                        ")")))
-    (cond
-     ((file-exists-p url)
-      (find-file url)
-      (cond
-       ;; Line number
-       ((integerp anchor)
-        (goto-char (point-min))
-        (forward-line (1- anchor)))
-       ;; Line regexp
-       ((and (stringp anchor)
-             (string-match-p "^^" anchor))
-        (goto-char (point-min))
-        (if (re-search-forward anchor)
-            (goto-char (match-beginning 0))))
-       ;; Line string
-       ((stringp anchor)
-        (goto-char (point-min))
-        (if (re-search-forward (format "^\\s-*%s$" (regexp-quote anchor)))
-            (goto-char (match-beginning 0)))))))))
-
-
-;;; packages
-
-;; Load some useful packages
-(require 'misc)
-(require 'tempo)
-(require 'wid-edit)
-(require 'generic)
-(require 'generic-x)
-;; Use standard js-mode instead of javascript-generic-mode from generic-x.
-(setq auto-mode-alist (delete (rassoc 'javascript-generic-mode auto-mode-alist)
-                              auto-mode-alist))
-
-;; (and (require 'ffap) (ffap-bindings))
-;; Don't bind ffap keybindings anymore, because now `C-x C-f M-n'
-;; gets the filename at point when ffap.el is loaded
-(require 'ffap)
-
-
-;;; ee
-
-(when (require 'ee-autoloads nil t)
-  (define-key global-map [f1] 'ee-info)
-  (define-key global-map [(super tab)] 'ee-buffers)
-  ;; (define-key ctl-x-map [(control tab)] 'ee-buffers)
-  ;; (define-key my-map [(control tab)] 'ee-buffers)
-  (with-eval-after-load 'ee-buffers
-    (define-key ee-buffers-keymap [(super tab)] 'ee-view-record-select-or-expansion-show-or-hide))
-  (define-key my-map "eb"  'ee-buffers)
-  (define-key my-map "ehc" 'ee-history-command)
-  (define-key my-map "ehe" 'ee-history-extended-command)
-  (define-key my-map "ehs" 'ee-history-shell-command)
-  (define-key my-map "ei"  'ee-imenu)
-  (define-key my-map "em"  'ee-marks)
-  (define-key my-map "eo"  'ee-outline)
-  (define-key my-map "epr" 'ee-programs)
-  (define-key my-map "eps" 'ee-ps)
-  (define-key my-map "et"  'ee-tags)
-  (define-key my-map "ewa" 'ee-windows-add)
-  (define-key my-map "eww" 'ee-windows)
-  ;; (define-key global-map [(meta  ?\xa7)] 'ee-windows-and-add-current)
-  ;; (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
-  ;; (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
-  ;; (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
-  (with-eval-after-load 'ee-windows
-    (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
-    ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
-    (define-key ee-windows-keymap [(meta     ?`)] 'ee-windows-select-and-delete-current)
-    (define-key ee-windows-keymap [(super    ?`)] 'ee-windows-select-and-delete-current)
-    (define-key ee-windows-keymap [( ?\xa7)] 'ee-view-record-next)
-    ;; (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
-    (define-key ee-windows-keymap [(    ?`)] 'ee-view-record-next)
-    (define-key ee-windows-keymap [( ?\xbd)] 'ee-view-record-prev)
-    ;; (define-key ee-windows-keymap [(?\x8bd)] 'ee-view-record-prev)
-    (define-key ee-windows-keymap [(    ?~)] 'ee-view-record-prev)))
+;;; wincows
 
 ;; Standalone wincows.el is replaced by `tab-switcher' above now.
 (when nil ;; (require 'wincows nil t)
