@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-27 for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-27 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -267,9 +267,6 @@ i.e. in daylight or under bright electric lamps."
 
 ;; BAD key: (define-key global-map "\M-n" 'clone-buffer)
 (define-key global-map [(control x) (c) (b)] 'clone-buffer)
-
-(define-key ctl-x-map "\C-\M-u" 'raise-sexp)  ;; like `C-M-u'
-(define-key ctl-x-map "\M-("    'delete-pair) ;; the reverse of `M-('
 
 (define-key global-map [f1] 'info)
 (define-key global-map [(control f1)] 'info-lookup-symbol)
@@ -3375,7 +3372,7 @@ Cancel the clock if called with C-u."
 ;;; outline-regexp: ";;;;* "
 ;;; eval: (add-hook 'before-save-hook 'time-stamp nil t)
 ;;; time-stamp-start: "Version: "
-;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 27.0.50 (x86_64-pc-linux-gnu)"
+;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)"
 ;;; time-stamp-end: "$"
 ;;; time-stamp-line-limit: 15
 ;;; End:
