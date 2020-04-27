@@ -243,7 +243,7 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map [(meta backspace)]
 ;;   (lambda () (interactive) (scroll-other-window -1))) ;; [(meta up)]
 
-(define-key global-map [(control backspace)] 'backward-kill-word)
+;; (define-key global-map [(control backspace)] 'backward-kill-word)
 ;; (define-key global-map [(meta backspace)] 'undo)
 ;; (define-key global-map [(meta backspace)] 'backward-kill-word)
 ;; (define-key global-map [(control backspace)] 'join-lines)
@@ -1651,14 +1651,7 @@ goes to the saved location."
      (let ((table (make-syntax-table)))
        (modify-syntax-entry ?` "'   " table)
        (modify-syntax-entry ?' "'   " table)
-       (set-syntax-table table)))
-
-   ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
-   ;; to make the current outline heading visible.
-   (setq-local beginning-of-defun-function
-               (lambda () (outline-previous-visible-heading 1)))
-   (setq-local end-of-defun-function
-               (lambda () (outline-next-visible-heading 1)))))
+       (set-syntax-table table)))))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
@@ -1715,36 +1708,6 @@ goes to the saved location."
 ;;      (outline-up-heading 1)))
 
 
-;;; org
-
-(with-eval-after-load 'org-keys
-  ;; Revert hijacked keys to their original bindings
-  (define-key org-mode-map (kbd "C-<tab>") 'tab-next)
-  (define-key org-mode-map (kbd "M-<left>") 'my-go-back)
-  (define-key org-mode-map (kbd "M-<right>") 'my-find-thing-at-point)
-
-  ;; Undefine hijacked remappings
-  (define-key org-mode-map (vector 'remap 'backward-paragraph) nil)
-  (define-key org-mode-map (vector 'remap 'forward-paragraph) nil)
-  (define-key org-mode-map (vector 'remap 'fill-paragraph) nil)
-
-  (when delete-selection-mode
-    (put 'org-self-insert-commandorg-return 'delete-selection t)
-    (put 'org-return 'delete-selection t))
-
-  (add-hook
-   'org-mode-hook
-   (lambda ()
-     ;; For (info "(org) Structure Templates")
-     (require 'org-tempo)
-     ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
-     ;; to make the current org outline heading visible.
-     (setq-local beginning-of-defun-function
-                 (lambda () (org-previous-visible-heading 1)))
-     (setq-local end-of-defun-function
-                 (lambda () (org-next-visible-heading 1))))))
-
-
 ;;; diff
 
 (with-eval-after-load 'diff-mode
@@ -1759,13 +1722,6 @@ goes to the saved location."
   ;; because it renames internal buffers, so they can't be reused.
   (add-hook 'diff-mode-hook 'rename-uniquely)
   (add-hook 'log-view-mode-hook 'rename-uniquely)
-
-  ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
-  ;; to make the current hunk visible.
-  (add-hook 'diff-mode-hook
-            (lambda ()
-              (setq-local beginning-of-defun-function #'diff-beginning-of-hunk)
-              (setq-local end-of-defun-function       #'diff-end-of-hunk)))
 
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
@@ -3169,41 +3125,6 @@ then output is inserted in the current buffer."
     (sql-sqlite)))
 
 
-
-
-;;; message
-
-(require 'message) ;;(load-library "message")
-
-;; (add-hook 'message-send-hook 'ispell-message)
-;; Bilingual spell-checking of the mail message.
-(add-hook 'message-send-hook
-          (lambda ()
-            ;; (ispell-change-dictionary "american")
-            (ispell-message)
-            ;; (ispell-change-dictionary "russian")
-            ;; (ispell-message)
-            ))
-
-(add-hook 'message-mode-hook
-          (lambda ()
-            (auto-fill-mode 1)
-            ;; Support search of `symbol'
-            (modify-syntax-entry ?` "'   " message-mode-syntax-table)
-            (modify-syntax-entry ?' "'   " message-mode-syntax-table)
-            ;; Prevent premature sending when `C-c C-s'
-            ;; is typed instead of `C-x C-s'
-            (define-key message-mode-map "\C-c\C-s" nil)))
-;; TODO: try to use (message-tab) in message mode
-
-
-;;; mime
-
-(when (require 'mm nil t)
-  (mm-parse-mailcaps)
-  (mm-parse-mimetypes))
-
-
 ;;; bbdb
 
 ;; (when (require 'bbdb nil t)
@@ -3220,10 +3141,6 @@ then output is inserted in the current buffer."
 
 ;;; gnuserv
 
-(require 'server)
-(unless (server-running-p)
-   (server-start))
-
 ;; NOTE: (server-start) conflicts with (customize)!
 ;; (when (require 'gnuserv nil t)
 ;;  (setq gnuserv-frame (selected-frame))
@@ -3231,23 +3148,6 @@ then output is inserted in the current buffer."
 
 ;; TEST: comment in again: [2005-05-09]!
 ;; (and (fboundp 'gnuserv-start) (gnuserv-start))
-
-
-;;; term
-
-(add-hook 'term-mode-hook
-          (lambda ()
-            ;; (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
-            ;; (setq-local mouse-yank-at-point t)
-            ;; (make-local-variable 'transient-mark-mode)
-            (auto-fill-mode -1)
-            (setq tab-width 8)))
-
-
-;;; xterm
-
-(when (featurep 'xterm)
-  (xterm-mouse-mode))
 
 
 ;;; time-stamp

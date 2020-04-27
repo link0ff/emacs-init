@@ -131,6 +131,53 @@ use it where possible in hooks that display a new location:
 (add-hook 'find-function-after-hook 'my-reposition-window)
 #+end_src
 
+And fix packages to support better reposition, i.e. define rules
+how these packages should recenter windows:
+
+*** org
+
+Adjust window to show the current outline completely:
+
+#+begin_src emacs-lisp
+(add-hook
+ 'org-mode-hook
+ (lambda ()
+   ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+   ;; to make the current org outline heading visible.
+   (setq-local beginning-of-defun-function
+               (lambda () (org-previous-visible-heading 1)))
+   (setq-local end-of-defun-function
+               (lambda () (org-next-visible-heading 1)))))
+#+end_src
+
+*** outline
+
+#+begin_src emacs-lisp
+(add-hook
+ 'outline-mode-hook
+ (lambda ()
+   ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+   ;; to make the current outline heading visible.
+   (setq-local beginning-of-defun-function
+               (lambda () (outline-previous-visible-heading 1)))
+   (setq-local end-of-defun-function
+               (lambda () (outline-next-visible-heading 1)))))
+#+end_src
+
+*** diff
+
+Adjust window to show the current diff hunk completely:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'diff-mode
+  ;; ‘C-M-l’ (reposition-window) relies on ‘beginning-of-defun’
+  ;; to make the current hunk visible.
+  (add-hook 'diff-mode-hook
+            (lambda ()
+              (setq-local beginning-of-defun-function #'diff-beginning-of-hunk)
+              (setq-local end-of-defun-function       #'diff-end-of-hunk))))
+#+end_src
+
 * Space optimization
 
 By default, Emacs looks like a typical GUI application with the menu bar,
@@ -516,10 +563,6 @@ This is a more general version that also handles numbered lists:
 (define-key global-map [S-return] 'electric-newline-and-maybe-indent)
 #+end_src
 
-** Efficient navigation in different modes
-
-*** Lynx-like navigation in Info, Man, Dired, W3, W3M modes
-
 ** Dedicated keymap C-z my-map
 
 Make the prefix key =C-z= for my personal keymap.
@@ -692,6 +735,18 @@ when after jumping point stays within current window bounds:
                   (recenter-top))))
             '((name . recenter-top)))
 #+end_src
+
+** Efficient navigation in different modes
+
+Lynx-like navigation in Info, Man, Dired, W3, W3M modes
+
+*** view
+
+*** help
+
+*** info
+
+*** man
 
 * Useful features
 
@@ -1303,9 +1358,33 @@ Note that this has some problems, e.g. in =autoinsert.el= that uses
       org-src-fontify-natively t
       org-src-tab-acts-natively t)
 
+(add-hook 'org-mode-hook
+          (lambda ()
+            ;; For (info "(org) Structure Templates")
+            (require 'org-tempo)))
+
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
+#+end_src
+
+Fix keys broken by org:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org-keys
+  ;; Revert hijacked keys to their original bindings
+  (define-key org-mode-map (kbd "C-<tab>") 'tab-next)
+  (define-key org-mode-map (kbd "M-<left>") 'my-go-back)
+  (define-key org-mode-map (kbd "M-<right>") 'my-find-thing-at-point)
+
+  ;; Undefine hijacked remappings
+  (define-key org-mode-map (vector 'remap 'backward-paragraph) nil)
+  (define-key org-mode-map (vector 'remap 'forward-paragraph) nil)
+  (define-key org-mode-map (vector 'remap 'fill-paragraph) nil)
+
+  (when delete-selection-mode
+    (put 'org-self-insert-commandorg-return 'delete-selection t)
+    (put 'org-return 'delete-selection t)))
 #+end_src
 
 ** gnus
@@ -1573,6 +1652,61 @@ The difference between N and the number of articles ticked is returned."
 ;;                       (error "Reserved mark"))
                   mark)))
   (gnus-summary-mark-forward n (or mark gnus-ticked-mark)))
+#+end_src
+
+** message
+
+#+begin_src emacs-lisp
+(require 'message) ;;(load-library "message")
+
+;; (add-hook 'message-send-hook 'ispell-message)
+;; Bilingual spell-checking of the mail message.
+(add-hook 'message-send-hook
+          (lambda ()
+            ;; (ispell-change-dictionary "american")
+            (ispell-message)
+            ;; (ispell-change-dictionary "russian")
+            ;; (ispell-message)
+            ))
+
+(add-hook 'message-mode-hook
+          (lambda ()
+            (auto-fill-mode 1)
+            ;; Support search of `symbol'
+            (modify-syntax-entry ?` "'   " message-mode-syntax-table)
+            (modify-syntax-entry ?' "'   " message-mode-syntax-table)
+            ;; Prevent premature sending when `C-c C-s'
+            ;; is typed instead of `C-x C-s'
+            (define-key message-mode-map "\C-c\C-s" nil)))
+;; TODO: try to use (message-tab) in message mode
+#+end_src
+
+** mime
+
+#+begin_src emacs-lisp
+(when (require 'mm nil t)
+  (mm-parse-mailcaps)
+  (mm-parse-mimetypes))
+#+end_src
+
+** gnuserv
+
+#+begin_src emacs-lisp
+(require 'server)
+(unless (server-running-p)
+   (server-start))
+#+end_src
+
+** term
+
+#+begin_src emacs-lisp
+(add-hook 'term-mode-hook
+          (lambda ()
+            ;; (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
+            ;; (setq-local mouse-yank-at-point t)
+            ;; (make-local-variable 'transient-mark-mode)
+            (auto-fill-mode -1)
+            (setq tab-width 8)))
 #+end_src
 
 * Multi-language features
