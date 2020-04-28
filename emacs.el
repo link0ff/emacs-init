@@ -2264,13 +2264,6 @@ Cancel the clock if called with C-u."
                (internal-border-width . 0))))))
 
 
-(add-hook 'after-init-hook
-          (lambda ()
-            ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
-            ;; This needs to run with timer since ‘normal-top-level’ does
-            ;; (setenv "TERM" "dumb") at the end without running more hooks.
-            (run-at-time "15 seconds" nil 'setenv "TERM" "ansi")))
-
 ;; Display the time of the Emacs initialization.
 (when (fboundp 'emacs-init-time)
   (add-hook 'after-init-hook (lambda () (message "%s" (emacs-init-time))) t))

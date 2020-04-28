@@ -516,7 +516,7 @@ instead of knocking it 3 times:
   (define-key isearch-mode-map  [escape] 'isearch-cancel))
 #+end_src
 
-** Dedicated keymap C-z my-map
+** Dedicated keymap =C-z= my-map
 
 Make the prefix key =C-z= for my personal keymap.
 On qwerty-keyboards =C-z= is one of the most accessible keys
@@ -2418,6 +2418,36 @@ Modifies the grep-find template to add the option `-w' that matches whole words.
 (defadvice proced (after my-proced activate)
   (goto-char (point-max))
   (recenter -1))
+#+end_src
+
+** ansi
+
+One of the most useful settings is using =ansi= for terminal output
+that highlights escape sequences emitted by many programs:
+
+#+begin_src emacs-lisp
+(setq comint-terminfo-terminal "ansi")
+
+;; (setenv "TERM" "dumb")
+;; because it should be
+;; (setenv "TERM" "emacs")
+;; (setenv "TERM" "ansi")
+;; Actually above commented out has no effect here, see `setenv' in `after-init-hook' below:
+(add-hook 'after-init-hook
+          (lambda ()
+            ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
+            ;; This needs to be run with timer since ‘normal-top-level’ overrides
+            ;; (setenv "TERM" "dumb") at the end without running more hooks.
+            (run-at-time "15 seconds" nil 'setenv "TERM" "ansi")))
+#+end_src
+
+** comint
+
+#+begin_src emacs-lisp
+(setq comint-history-isearch 'dwim
+      comint-input-ignoredups t
+      comint-input-ring-size 65535
+      comint-move-point-for-output nil)
 #+end_src
 
 * Used packages

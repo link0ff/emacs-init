@@ -825,15 +825,6 @@ delete flagged files.\n\n"))))))
   "Mode for Apache error log files"))
 
 
-;;; startup.el
-
-;; (setenv "TERM" "dumb")
-;; because it should be
-;; (setenv "TERM" "emacs")
-;; (setenv "TERM" "ansi")
-;; Actually this has no effect here, see setenv in after-init-hook in emacs.el.
-
-
 ;; simple.el ?
 
 (defun identifier-at-point ()
