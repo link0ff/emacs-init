@@ -1,4 +1,4 @@
-;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
+;;; .emacs --- old init file  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>
 
@@ -7,30 +7,10 @@
 ;; URL: <http://www.linkov.net/emacs>
 ;; Version: 2020-04-28 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
-
-;;; Commentary:
-
-;;                                             "Show me your ~/.emacs
-;;                                    and I will tell you who you are."
-;;                                      -- old proverb modified by me
-
 
 ;; This file now contains semi-obsolete settings.
-;; For more up-to-date settings please see the file README.org in the same directory.
+;; For more up-to-date settings,
+;; please see the file README.org in the same directory.
 
 
 ;;; Display settings
@@ -2284,60 +2264,6 @@ Cancel the clock if called with C-u."
                (internal-border-width . 0))))))
 
 
-;;; save-place
-
-;; TRY:
-(setq save-place-skip-check-regexp
-      (concat
-       save-place-skip-check-regexp
-       "\\|\\.\\(7z\\|apk\\|arc\\|jar\\|lzh\\|zip\\|zoo\\)$"
-       "\\|\\.t\\(ar\\.\\)?gz$"
-       "\\|\\.t\\(ar\\.bz2\\|bz\\)$"))
-
-
-;;; desktop
-
-;; Save only such Dired buffers that are visible in windows or tabs
-(when (boundp 'desktop-buffers-not-to-save-function)
-  (setq desktop-buffers-not-to-save-function
-        (lambda (_filename bufname mode &rest _)
-          (or (not (memq mode '(dired-mode vc-dir-mode)))
-              (tab-bar-get-buffer-tab bufname t)))))
-
-;; Add more globals to save between sessions.
-(if (boundp 'desktop-globals-to-save)
-    (setq desktop-globals-to-save
-          (delete-dups
-           (append
-            '(;; buffer-name-history
-              coding-system-history
-              ;; command-history
-              compile-history
-              extended-command-history
-              find-tag-history
-              file-name-history
-              find-args-history
-              grep-history
-              grep-files-history
-              ;; grep-find-history
-              ;; Info-search-history
-              ;; locate-history-list
-              my-dict-history
-              minibuffer-history
-              minibuffer-history-search-history
-              query-replace-history
-              query-replace-defaults
-              read-expression-history
-              regexp-history
-              dired-shell-command-history ;; TODO: merge with shell-command-history
-              shell-command-history
-              search-ring
-              regexp-search-ring
-              vc-git-history
-              gud-gdb-history
-              )
-            (delq 'register-alist desktop-globals-to-save)))))
-
 (add-hook 'after-init-hook
           (lambda ()
             ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
