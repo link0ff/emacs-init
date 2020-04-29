@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-28 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-04-30 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -13,37 +13,10 @@
 ;; please see the file README.org in the same directory.
 
 
-;;; Display settings
-
-;; Create display table to modify some display elements
-(or standard-display-table (setq standard-display-table (make-display-table)))
-
-;; Display page delimiter ^L as a horizontal line
-(aset standard-display-table ?\^L (vconcat (make-vector 64 ?-) "^L"))
-
-;; Display triangle for outline of invisible lines.
-;; For information, see (info "(elisp) Display Table Format")
-;; (from old code in faces.el in Emacs repo modified for Emacs 23)
-(if (facep 'escape-glyph)
-    (let* ((face (lsh (face-id 'escape-glyph) 22)) ;; 22 was 19 in Emacs 22
-           ;; (backslash (+ face ?\\))
-           ;; TRIANGULAR BULLET keeps the default font height
-           (dot (+ face #x2023)))
-      ;; (aset standard-display-table 2208 (vector backslash ?\s)) ; no-break space
-      ;; (aset standard-display-table 2221 (vector backslash ?-))  ; soft hyphen
-      ;; (set-char-table-extra-slot standard-display-table 2 backslash) ; \364
-      ;; (set-char-table-extra-slot standard-display-table 3 (+ face ?^)) ; ^@
-      ;; (set-char-table-extra-slot standard-display-table 4 (vector dot dot dot))
-      (set-char-table-extra-slot standard-display-table 4 (vector dot))))
-
 ;; Non-customizable variables
 (setq gc-cons-percentage 0.3)
 (setq print-gensym t)
 (setq print-circle t)
-
-;; Tabify only initial whitespace
-(with-eval-after-load 'tabify
-  (setq tabify-regexp "^\t* [ \t]+"))
 
 
 ;;; mouse
@@ -583,45 +556,6 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; Make Isearch mode-line string shorter, just " /" instead of " Isearch"
 ;; (add-hook 'isearch-mode-hook
 ;;           (lambda () (setq isearch-mode " /") (force-mode-line-update)))
-
-;; Do not use customization to not corrupt .emacs with literal
-;; control characters.
-;; The next line is bad, because \n is bad for `C-M-s SPC $'
-;; (setq search-whitespace-regexp "[ \t\r\n]+")
-;; TRY to ignore punctuation, BAD because C-w (`isearch-yank-word-or-char')
-;; doesn't yank punctuation characters, so use word search instead of this:
-;; (setq search-whitespace-regexp "\\W+")
-;; TRY to match newlines like in `compare-windows-whitespace':
-(setq search-whitespace-regexp "\\(?:\\s-\\|\n\\)+") ; bug#35802
-;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
-(with-eval-after-load 'info
-  (setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+"))
-
-;; TRY:
-;; Like `word-search-regexp'
-(defun search-whitespace-regexp (string &optional _lax)
-  "Return a regexp which ignores whitespace.
-Uses the value of the variable `search-whitespace-regexp'."
-  (if (or (not (stringp search-whitespace-regexp))
-          (null (if isearch-regexp
-                    isearch-regexp-lax-whitespace
-                  isearch-lax-whitespace)))
-      string
-    ;; FIXME: this is not strictly correct implementation because it ignores
-    ;; `subregexp-context-p' and replaces spaces inside char set group like
-    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(?:\\s-\\|\n\\)+"] !
-    (replace-regexp-in-string
-     search-whitespace-regexp
-     search-whitespace-regexp ;; or replace by " " that is handled by search-spaces-regexp
-     (regexp-quote string) nil t)))
-;; (defun search-forward-lax-whitespace (string &optional bound noerror count)
-;;   (re-search-forward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
-;; (defun search-backward-lax-whitespace (string &optional bound noerror count)
-;;   (re-search-backward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
-;; (defun re-search-forward-lax-whitespace (regexp &optional bound noerror count)
-;;   (re-search-forward (search-whitespace-regexp regexp) bound noerror count))
-;; (defun re-search-backward-lax-whitespace (regexp &optional bound noerror count)
-;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
 
 
 ;;; minibuffer
@@ -1516,28 +1450,6 @@ With prefix arg, insert the current timestamp to the current buffer."
             ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
             ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
             (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
-
-(defun canonically-double-space-region (beg end)
-  (interactive "*r")
-  (canonically-space-region beg end)
-  (unless (markerp end) (setq end (copy-marker end t)))
-  (let* ((sentence-end-double-space nil) ; to get right regexp below
-         (end-spc-re (rx (>= 5 (not (in ".?!"))) (regexp (sentence-end)))))
-    (save-excursion
-      (goto-char beg)
-      (while (and (< (point) end)
-                  (re-search-forward end-spc-re end t))
-        (unless (or (>= (point) end)
-                    (looking-back "[[:space:]]\\{2\\}\\|\n" 3))
-          (insert " "))))))
-
-(advice-add 'fill-paragraph :before
-            (lambda (&rest _args)
-              (when (use-region-p)
-                (canonically-double-space-region
-                 (region-beginning)
-                 (region-end))))
-            '((name . fill-paragraph-double-space)))
 
 
 ;;; doc-view

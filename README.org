@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-04-28
+#+DATE: 2020-04-30
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -1795,6 +1795,120 @@ goes to the saved location."
             (goto-char (match-beginning 0)))))))))
 #+end_src
 
+* Useful settings
+
+** Display settings
+
+Create display table to modify some display elements:
+
+#+begin_src emacs-lisp
+(or standard-display-table (setq standard-display-table (make-display-table)))
+#+end_src
+
+Display page delimiter =^L= as a horizontal line to make it more noticeable:
+
+#+begin_src emacs-lisp
+(aset standard-display-table ?\^L (vconcat (make-vector 64 ?-) "^L"))
+#+end_src
+
+Display triangle for outline of invisible lines
+(for more information, see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Display-Tables.html][the ELisp manual]]):
+
+#+begin_src emacs-lisp
+(if (facep 'escape-glyph)
+    (let* ((face (lsh (face-id 'escape-glyph) 22)) ;; 22 was 19 in Emacs 22
+           ;; (backslash (+ face ?\\))
+           ;; TRIANGULAR BULLET keeps the default font height
+           (dot (+ face #x2023)))
+      ;; (aset standard-display-table 2208 (vector backslash ?\s)) ; no-break space
+      ;; (aset standard-display-table 2221 (vector backslash ?-))  ; soft hyphen
+      ;; (set-char-table-extra-slot standard-display-table 2 backslash) ; \364
+      ;; (set-char-table-extra-slot standard-display-table 3 (+ face ?^)) ; ^@
+      ;; (set-char-table-extra-slot standard-display-table 4 (vector dot dot dot))
+      (set-char-table-extra-slot standard-display-table 4 (vector dot))))
+#+end_src
+
+** Whitespace settings
+
+Tabify only initial whitespace
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'tabify
+  (setq tabify-regexp "^\t* [ \t]+"))
+#+end_src
+
+#+begin_src emacs-lisp
+;; Do not use customization to not corrupt .emacs with literal
+;; control characters.
+;; The next line is bad, because \n is bad for `C-M-s SPC $'
+;; (setq search-whitespace-regexp "[ \t\r\n]+")
+;; TRY to ignore punctuation, BAD because C-w (`isearch-yank-word-or-char')
+;; doesn't yank punctuation characters, so use word search instead of this:
+;; (setq search-whitespace-regexp "\\W+")
+;; TRY to match newlines like in `compare-windows-whitespace':
+(setq search-whitespace-regexp "\\(?:\\s-\\|\n\\)+") ; bug#35802
+;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
+(with-eval-after-load 'info
+  (setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+"))
+#+end_src
+
+#+begin_src emacs-lisp
+;; TRY:
+;; Like `word-search-regexp'
+(defun search-whitespace-regexp (string &optional _lax)
+  "Return a regexp which ignores whitespace.
+Uses the value of the variable `search-whitespace-regexp'."
+  (if (or (not (stringp search-whitespace-regexp))
+          (null (if isearch-regexp
+                    isearch-regexp-lax-whitespace
+                  isearch-lax-whitespace)))
+      string
+    ;; FIXME: this is not strictly correct implementation because it ignores
+    ;; `subregexp-context-p' and replaces spaces inside char set group like
+    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(?:\\s-\\|\n\\)+"] !
+    (replace-regexp-in-string
+     search-whitespace-regexp
+     search-whitespace-regexp ;; or replace by " " that is handled by search-spaces-regexp
+     (regexp-quote string) nil t)))
+;; (defun search-forward-lax-whitespace (string &optional bound noerror count)
+;;   (re-search-forward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
+;; (defun search-backward-lax-whitespace (string &optional bound noerror count)
+;;   (re-search-backward (search-whitespace-regexp (regexp-quote string)) bound noerror count))
+;; (defun re-search-forward-lax-whitespace (regexp &optional bound noerror count)
+;;   (re-search-forward (search-whitespace-regexp regexp) bound noerror count))
+;; (defun re-search-backward-lax-whitespace (regexp &optional bound noerror count)
+;;   (re-search-backward (search-whitespace-regexp regexp) bound noerror count))
+#+end_src
+
+While ~canonically-space-region~ removes extra spaces and leaves two spaces
+at end of sentences, a new function ~canonically-double-space-region~
+*adds* two spaces at end of sentences (then they end with just one space)
+when filling the paragraph with =M-q=:
+
+#+begin_src emacs-lisp
+(defun canonically-double-space-region (beg end)
+  (interactive "*r")
+  (canonically-space-region beg end)
+  (unless (markerp end) (setq end (copy-marker end t)))
+  (let* ((sentence-end-double-space nil) ; to get right regexp below
+         (end-spc-re (rx (>= 5 (not (in ".?!"))) (regexp (sentence-end)))))
+    (save-excursion
+      (goto-char beg)
+      (while (and (< (point) end)
+                  (re-search-forward end-spc-re end t))
+        (unless (or (>= (point) end)
+                    (looking-back "[[:space:]]\\{2\\}\\|\n" 3))
+          (insert " "))))))
+
+(advice-add 'fill-paragraph :before
+            (lambda (&rest _args)
+              (when (use-region-p)
+                (canonically-double-space-region
+                 (region-beginning)
+                 (region-end))))
+            '((name . fill-paragraph-double-space)))
+#+end_src
+
 * Major modes
 
 For a new non-file buffer set its major mode based on the buffer name.
@@ -2576,7 +2690,7 @@ Fix keys broken by org:
 
 ** gnus
 
-Make tab names as short as possible (from [[https://www.gnu.org/software/emacs/manual/html_node/gnus/#Tabbed-Interface][the Gnus manual]]):
+Make tab names as short as possible (from [[https://www.gnu.org/software/emacs/manual/html_mono/gnus.html#Tabbed-Interface][the Gnus manual]]):
 
 #+begin_src emacs-lisp
 (push '("\\`\\*Group\\*\\'" .
