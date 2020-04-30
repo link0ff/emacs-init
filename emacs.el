@@ -13,12 +13,6 @@
 ;; please see the file README.org in the same directory.
 
 
-;; Non-customizable variables
-(setq gc-cons-percentage 0.3)
-(setq print-gensym t)
-(setq print-circle t)
-
-
 ;;; mouse
 
 ;; Move the mouse to the screen corner on any keypress.
@@ -175,11 +169,6 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map [(control meta prior)] 'scroll-right)
 ;; (define-key global-map [(control meta next)]  'scroll-left)
 
-(define-key global-map [(control down)] 'scroll-up-line)
-(define-key global-map [(control up)] 'scroll-down-line)
-(define-key global-map [(control kp-down)] 'scroll-up-line)
-(define-key global-map [(control kp-up)] 'scroll-down-line)
-
 ;; (define-key global-map [(control return)]
 ;;   (lambda () (interactive) (let ((use-hard-newlines t)) (newline))))
 ;; (define-key global-map [(meta return)]
@@ -192,92 +181,19 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map [(meta backspace)] 'backward-kill-word)
 ;; (define-key global-map [(control backspace)] 'join-lines)
 
-(define-key global-map [(control kp-home)] 'beginning-of-buffer)
-(define-key global-map [(control kp-end)]  'end-of-buffer)
-(define-key global-map [(control shift kp-5)] 'goto-line)
-(define-key global-map [(control kp-begin)] 'goto-line)
-
-;; Use new dwim case commands
-(define-key esc-map "u" 'upcase-dwim)
-(define-key esc-map "l" 'downcase-dwim)
-(define-key esc-map "c" 'capitalize-dwim)
-
 ;; These following two keybindings are standard default:
 ;; (define-key global-map [(meta /)] 'dabbrev-expand)
 ;; (define-key global-map [(control meta /)] 'dabbrev-completion)
-(define-key global-map [(meta kp-divide)] 'hippie-expand)
 ;; The following key is not available:
 ;; (define-key global-map [(control meta kp-divide)] 'hippie-expand)
 
 ;; BAD key: (define-key global-map "\M-n" 'clone-buffer)
 (define-key global-map [(control x) (c) (b)] 'clone-buffer)
 
-(define-key global-map [f1] 'info)
-(define-key global-map [(control f1)] 'info-lookup-symbol)
-(define-key global-map [f2] 'save-buffer)
-;; (define-key global-map [f9] 'call-last-kbd-macro)
-(define-key global-map [(control f9)]
-  (lambda ()
-    (interactive)
-    (compile
-     ;; Use previous command from history
-     ;; instead of the default from compile-command
-     (compilation-read-command (car compile-history))
-     ;; Don't use compilation-shell-minor-mode
-     nil)))
-(define-key global-map [(meta f7)] 'grep) ; Commander-like
-(define-key global-map [(meta shift f7)] 'grep-find)
-
-(define-key goto-map "re" 'grep)
-(define-key goto-map "rr" 'rgrep)
-(define-key goto-map "rl" 'lgrep)
-(define-key goto-map "rv" 'vc-git-grep)
-(define-key goto-map "\M-r\M-e" 'grep)
-(define-key goto-map "\M-r\M-r" 'rgrep)
-(define-key goto-map "\M-r\M-l" 'lgrep)
-(define-key goto-map "\M-r\M-v" 'vc-git-grep)
-
 ;; (define-key global-map [(control escape)]
 ;;   (lambda () (interactive) (buffer-menu 1))) ; not needed
 ;; (define-key global-map [(control escape)] 'ibuffer)
 ;; (define-key global-map [(shift f10)] 'buffer-menu) ; not needed
-
-;; Like standard Emacs 22 commands (bound to C-x left/right)
-(define-key global-map [f11] 'previous-buffer) ;; my-buffer-prev
-(define-key global-map [f12] 'next-buffer)     ;; my-buffer-next
-
-;; Like standard Emacs 22 commands (bound to M-g n/p)
-(define-key global-map [(control f11)] 'previous-error)
-(define-key global-map [(control f12)] 'next-error)
-(define-key global-map [(control shift f11)] 'compilation-previous-file)
-(define-key global-map [(control shift f12)] 'compilation-next-file)
-
-(defvar my-next-error-prev-buffer nil)
-(defun my-next-error ()
-  ;; Get rid of file buffers visited during going through results.
-  (when (and my-next-error-prev-buffer
-             (not (eq my-next-error-prev-buffer (current-buffer)))
-             ;; buffer not edited
-             (memq buffer-undo-list '(nil t))
-             ;; only on consequent keystrokes
-             (memq this-command '(next-error previous-error))
-             (eq (with-current-buffer next-error-last-buffer major-mode)
-                 'grep-mode))
-    ;; TODO: preserve existing file buffers, and positions in all file buffers
-    ;; (goto-char (point-min)) ...
-    (kill-buffer my-next-error-prev-buffer))
-  (setq my-next-error-prev-buffer (current-buffer)))
-(add-hook 'next-error-hook 'my-next-error)
-
-;; See bug#20489: 25.0.50; next-error-find-buffer chooses non-current buffer without good reason
-;; See bug#28864: 25.3.50; next-error-no-select does select
-;; (setq next-error-find-buffer-function
-;;       (lambda (&optional avoid-current extra-test-inclusive extra-test-exclusive)
-;;      (window-parameter nil 'next-error-buffer)))
-;; (add-hook 'next-error-hook
-;;        (lambda ()
-;;          (set-window-parameter
-;;           nil 'next-error-buffer next-error-last-buffer)))
 
 ;; TODO: currently key (control escape) is free, bind it to something useful,
 ;; unless it is used by the window manager
@@ -322,21 +238,6 @@ i.e. in daylight or under bright electric lamps."
 ;; then convert region to other coding, this is very useful when the region
 ;; was typed with a wrong input method, when the user forgot to toggle it
 ;; (this is like venerable PuntoSwitcher)
-
-
-;;; variables
-
-;; Allow set-variable to set internal variables, not only customizable ones:
-(advice-add 'set-variable :around
-            (lambda (orig-fun &rest args)
-              (interactive (lambda (spec)
-                             (cl-letf (((symbol-function 'custom-variable-p)
-                                        (lambda (v)
-                                          (and (symbolp v) (boundp v)))))
-                               (advice-eval-interactive-spec spec))))
-              (cl-flet ((custom-variable-p (_v) t))
-                (apply orig-fun args)))
-            '((name . override-custom-variable)))
 
 
 ;;; functions
@@ -385,46 +286,8 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;       (set-cursor-color "red") ; "AntiqueWhite4"
 ;;     (set-cursor-color "black")))
 
-;; Use box cursor for overwrite-mode, and red cursor for quail active input.
-(defun my-change-cursor ()
-  "Change cursor color and type depending on insertion mode and input method."
-  (set-cursor-color
-   (cond (current-input-method "red3") ; "AntiqueWhite4"
-         ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
-                               "DarkGrey")
-         (t                    "black")))
-  (setq-default cursor-type
-   (cond (overwrite-mode       'box)
-         (t                    'bar))))
-(add-hook 'post-command-hook 'my-change-cursor)
-
 
 ;;; window
-
-(defun my-move-to-window-top ()
-  "Position point to the top line of the window."
-  (interactive)
-  (move-to-window-line 0))
-
-(define-key global-map [(control prior)] 'my-move-to-window-top)
-(define-key global-map [(control kp-prior)] 'my-move-to-window-top)
-
-(defun my-move-to-window-bottom ()
-  "Position point to the bottom line of the window."
-  (interactive)
-  (move-to-window-line -1))
-
-(define-key global-map [(control next)]  'my-move-to-window-bottom)
-(define-key global-map [(control kp-next)]  'my-move-to-window-bottom)
-
-(defun my-windows-balance ()
-  (interactive)
-  (other-window 1)
-  (balance-windows)
-  (shrink-window-if-larger-than-buffer)
-  (other-window -1))
-
-(define-key my-map "wb" 'my-windows-balance)
 
 ;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
 ;; (defadvice split-window-preferred-horizontally
@@ -470,46 +333,6 @@ With C-u, C-0 or M-0, cancel the timer."
 (define-key my-map "f4" 'follow-mode-4)
 
 
-;;; mark-active-window
-
-;; Make mark buffer-and-window-local
-;; Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
-
-(defvar-local mark-active-window nil)
-
-;; (add-hook 'activate-mark-hook (lambda () (setq mark-active-window (selected-window))))
-(advice-add 'activate-mark :after
-            (lambda (&rest _args)
-              (setq mark-active-window (selected-window)))
-            '((name . mark-active-window)))
-
-;; Can't use deactivate-mark-hook because when clicking mouse in another window
-;; with the same buffer it calls both activate-mark and deactivate-mark,
-;; but deactivate-mark checks if the region is active (region-active-p),
-;; and doesn't advance further because mark-active was set to nil in the redisplay
-;; hook below.  OTOH, the advice is used unconditionally.
-;; (add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
-(advice-add 'deactivate-mark :after
-            (lambda (&rest _args)
-              (setq mark-active-window nil))
-            '((name . mark-active-window)))
-
-(defun redisplay--update-mark-active-window (window)
-  (when mark-active-window
-    (setq mark-active (eq mark-active-window window))))
-
-;; Problem: when compiled without optimization CFLAGS='-O0'
-;; quick region selection experiences lags that results in wrong selection
-(add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
-
-
-;;; follow
-
-(with-eval-after-load 'follow
-  (define-key follow-mode-map [prior] 'follow-scroll-down)
-  (define-key follow-mode-map [next]  'follow-scroll-up))
-
-
 ;;; isearch
 
 ;; Wrap without failing, posted to
@@ -547,11 +370,11 @@ With C-u, C-0 or M-0, cancel the timer."
 ;; TODO: try to use `isearch-update-post-hook', e.g.
 ;; (add-hook 'isearch-update-post-hook 'recenter)
 ;; (add-hook 'replace-update-post-hook 'recenter)
-(defadvice isearch-update (before my-isearch-reposite activate)
-  (sit-for 0)
-  ;; While browsing patches, make the next hunk posited at the window's top:
-  (when (and (derived-mode-p 'diff-mode) isearch-regexp (equal "^revno:" isearch-string))
-    (recenter 1)))
+;; (defadvice isearch-update (before my-isearch-reposite activate)
+;;   (sit-for 0)
+;;   ;; While browsing patches, make the next hunk posited at the window's top:
+;;   (when (and (derived-mode-p 'diff-mode) isearch-regexp (equal "^revno:" isearch-string))
+;;     (recenter 1)))
 
 ;; Make Isearch mode-line string shorter, just " /" instead of " Isearch"
 ;; (add-hook 'isearch-mode-hook
@@ -1356,14 +1179,7 @@ With prefix arg, insert the current timestamp to the current buffer."
  (lambda ()
    ;; (outline-hide-sublevels 1) ; alternative
    ;; (outline-hide-body)
-   ;; Workaround a bug in NEWS files where Symbol search fails.
-   ;; Use solution like in change-log-mode-syntax-table.
-   ;; See more at https://debbugs.gnu.org/31231
-   (when (string-match-p "^NEWS" (buffer-name))
-     (let ((table (make-syntax-table)))
-       (modify-syntax-entry ?` "'   " table)
-       (modify-syntax-entry ?' "'   " table)
-       (set-syntax-table table)))))
+   ))
 
 ;; Start outline minor mode with hidden sublevels or hidden body
 (add-hook
@@ -1418,82 +1234,6 @@ With prefix arg, insert the current timestamp to the current buffer."
 ;;    (if (save-excursion (outline-end-of-heading) (outline-visible))
 ;;        (outline-hide-subtree)
 ;;      (outline-up-heading 1)))
-
-
-;;; text
-
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
-(add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
-
-(add-hook 'text-mode-hook       'flyspell-mode)
-(add-hook 'change-log-mode-hook 'flyspell-mode)
-(add-hook 'prog-mode-hook       'flyspell-prog-mode)
-
-;; Flyspell only on typing, not on moving point
-;; (add-hook 'flyspell-mode-hook
-;;           (lambda ()
-;;             (remove-hook 'post-command-hook (function flyspell-post-command-hook) t)
-;;             (add-hook 'after-change-functions
-;;                       (lambda (start stop len)
-;;                         (flyspell-post-command-hook)) t t)))
-
-;; Alternative solution for Flyspell only on typing, not on moving point
-(add-hook 'flyspell-mode-hook
-          (lambda ()
-            (advice-add 'flyspell-check-pre-word-p :override (lambda () nil))
-            ;; After evaluating the next, flyspell doesn't check the last word
-            ;; in `auto-fill-mode' when typing SPC moves to the next line,
-            ;; because the order of calls in `internal_self_insert' is:
-            ;; 1. insert_and_inherit ();
-            ;; 2. Frun_hook_with_args (Qafter_change_functions);
-            ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
-            ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
-            (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
-
-
-;;; doc-view
-
-(with-eval-after-load 'doc-view
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
-  (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer)
-  ;; Get back original keybindings overridden below in ‘image-mode-map’.
-  ;; Left/right arrows are needed in PDF to scroll horizontally
-  ;; PDF images that often are wider than window dimensions,
-  ;; but in image-mode non-PDF images are scaled automatically
-  ;; to fit to the window dimensions.
-  (define-key doc-view-mode-map [(left)] 'image-backward-hscroll)
-  (define-key doc-view-mode-map [(right)] 'image-forward-hscroll))
-
-
-;;; image-mode
-
-(defun my-image-prev-dired ()
-  (interactive)
-  (kill-current-buffer-and-dired-jump)
-  (clear-image-cache)
-  (dired-previous-line 1)
-  (dired-view-file))
-
-(defun my-image-next-dired ()
-  (interactive)
-  (kill-current-buffer-and-dired-jump)
-  (clear-image-cache)
-  (dired-next-line 1)
-  (dired-view-file))
-
-(with-eval-after-load 'image-mode
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
-  (define-key image-mode-map "q" 'quit-window-kill-buffer)
-  (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
-  ;; Browse prev/next images according to their order in Dired
-  ;; ALSO in Emacs 27 ‘n’ (image-next-file) and ‘p’ are available
-  (define-key image-mode-map [(left)] 'my-image-prev-dired)
-  (define-key image-mode-map [(right)] 'my-image-next-dired)
-  (define-key image-mode-map [(control left)] 'image-backward-hscroll)
-  (define-key image-mode-map [(control right)] 'image-forward-hscroll))
 
 
 ;;; image
@@ -1619,51 +1359,6 @@ Example:
               " "))))
 
 
-;;; xref
-
-;; This supposes display-buffer-alist to be customized to contain:
-;; '((display-buffer-to-xref-p display-buffer-maybe-below-selected) ...)
-(defun display-buffer-to-xref-p (buffer-name _action)
-  (and (stringp buffer-name)
-       (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
-                       buffer-name)
-       (memq this-command '(xref-find-definitions))))
-
-(push '(display-buffer-to-xref-p
-        ;; TODO:
-        ;; display-buffer-maybe-below-selected
-        display-buffer-in-direction
-        (direction . below)
-        (window-height . fit-window-to-buffer))
-      display-buffer-alist)
-
-;; UNUSED
-(defun display-buffer-from-xref-p (_buffer-name _action)
-  ;; TODO: check xref--original-window xref--original-window-intent?
-  (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
-                  (buffer-name (window-buffer))))
-
-;; Use this keybinding only in buffers created by xref-find-definitions,
-;; but not by e.g. project-find-regexp
-(with-eval-after-load 'xref
-  (defvar xref--original-command nil)
-  (advice-add 'xref-find-definitions :after
-              (lambda (&rest _args)
-                (with-current-buffer (window-buffer)
-                  (setq-local xref--original-command 'xref-find-definitions)))
-              '((name . from-xref-find-definitions)))
-  (define-key xref--button-map [(control ?m)]
-    (lambda ()
-      (interactive)
-      (if (memq xref--original-command '(xref-find-definitions))
-          ;; (call-interactively 'xref-quit-and-goto-xref)
-          (call-interactively 'xref-goto-xref)
-        (setq xref--original-window nil)
-        (call-interactively 'xref-goto-xref)))))
-
-(add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely)
-
-
 ;;; help
 
 ;; TODO: same-window-buffer-names and same-window-regexps are obsolete.
@@ -1701,23 +1396,6 @@ Example:
     ;; (setq-local outline-regexp "^.*:$")
     ;; (outline-minor-mode 1)
     ))
-
-;; Clicking a link from the *Help* buffer opens source code in the same window.
-;; This supposes display-buffer-alist to be customized to contain:
-;; '((display-buffer-from-help-p display-buffer-same-window) ...)
-(defun display-buffer-from-help-p (_buffer-name _action)
-  (unless current-prefix-arg
-    (with-current-buffer (window-buffer)
-      (eq major-mode 'help-mode))))
-
-(push '(display-buffer-from-help-p display-buffer-same-window)
-      display-buffer-alist)
-
-
-;;; info
-
-;; It's easier to type `C-5 C-h C-i' with control key pressed for all keys:
-(define-key global-map "\C-h\C-i" 'info)
 
 
 ;;; dictionary
@@ -2046,14 +1724,6 @@ then output is inserted in the current buffer."
 ;; (add-hook 'change-log-mode-hook 'bug-reference-mode)
 
 
-;;; messages
-
-(add-hook 'messages-buffer-mode-hook
-          (lambda ()
-            (setq buffer-read-only nil)
-            (fundamental-mode)))
-
-
 ;;; wget
 
 (require 'wget nil t)
@@ -2174,11 +1844,6 @@ Cancel the clock if called with C-u."
                (auto-raise . t)
                (border-width . 0)
                (internal-border-width . 0))))))
-
-
-;; Display the time of the Emacs initialization.
-(when (fboundp 'emacs-init-time)
-  (add-hook 'after-init-hook (lambda () (message "%s" (emacs-init-time))) t))
 
 
 ;;; Local Variables:
