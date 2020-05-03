@@ -241,8 +241,6 @@
  '(w3m-view-this-url-new-session-in-background t)
  '(wget-debug t)
  '(what-cursor-show-names t)
- '(windmove-create-window t)
- '(windmove-wrap-around t)
  '(woman-use-own-frame nil)
  '(yank-excluded-properties t))
 (custom-set-faces

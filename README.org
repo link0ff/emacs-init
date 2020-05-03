@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-04-30
+#+DATE: 2020-05-03
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -32,15 +32,22 @@
   - [[#shorter-answers][Shorter answers]]
   - [[#dont-spend-time-answering-useless-questions][Don't spend time answering useless questions]]
   - [[#using-the-esc-key-as-a-cancel-key][Using the =ESC= key as a cancel key]]
-  - [[#dedicated-keymap-c-z-my-map][Dedicated keymap C-z my-map]]
+  - [[#dedicated-keymap-c-z-my-map][Dedicated keymap =C-z= my-map]]
   - [[#insert-pair-keys][Insert-pair keys]]
   - [[#list-structural-editing][List structural editing]]
   - [[#efficient-navigation-in-different-modes][Efficient navigation in different modes]]
+  - [[#better-keybindings][Better keybindings]]
 - [[#useful-features][Useful features]]
   - [[#copypaste][Copy/Paste]]
   - [[#searchreplace][Search/Replace]]
   - [[#minibuffer-features][Minibuffer features]]
   - [[#evaluable-bookmarks][Evaluable bookmarks]]
+- [[#useful-settings][Useful settings]]
+  - [[#cursor-settings][Cursor settings]]
+  - [[#display-settings][Display settings]]
+  - [[#whitespace-settings][Whitespace settings]]
+  - [[#spelling-features][Spelling features]]
+  - [[#other-settings][Other settings]]
 - [[#major-modes][Major modes]]
   - [[#diff][diff]]
   - [[#ediff][ediff]]
@@ -52,6 +59,8 @@
   - [[#shell-log][shell-log]]
   - [[#compilegrep][compile/grep]]
   - [[#proced][proced]]
+  - [[#ansi][ansi]]
+  - [[#comint][comint]]
 - [[#used-packages][Used packages]]
   - [[#ee][ee]]
   - [[#org][org]]
@@ -60,6 +69,8 @@
   - [[#mime][mime]]
   - [[#gnuserv][gnuserv]]
   - [[#term][term]]
+  - [[#save-place][save-place]]
+  - [[#desktop][desktop]]
 - [[#multi-language-features][Multi-language features]]
   - [[#quail][quail]]
   - [[#mule][mule]]
@@ -67,8 +78,18 @@
   - [[#fix-timer-in-battery][Fix timer in battery]]
   - [[#fix-inconsistency-in-motion-keys][Fix inconsistency in motion keys]]
   - [[#fix-isearch][Fix isearch]]
+  - [[#fix-next-error][Fix next-error]]
+  - [[#fix-xref][Fix xref]]
+  - [[#fix-info][Fix info]]
+  - [[#fix-set-variable][Fix set-variable]]
+  - [[#fix-follow-mode][Fix follow-mode]]
+  - [[#fix-messages-buffer][Fix =*Messages*= buffer]]
+  - [[#fix-mark-in-two-windows-with-same-buffer][Fix mark in two windows with same buffer]]
+  - [[#fix-outline-mode-in-news-files][Fix outline-mode in NEWS files]]
 - [[#other][Other]]
   - [[#no-blinking][No blinking]]
+  - [[#initialization-stats][Initialization stats]]
+- [[#copyright][Copyright]]
 
 * Literate programming
 
@@ -460,7 +481,24 @@ like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 (windmove-swap-states-default-keybindings '(shift super))
 #+end_src
 
-Also by default most buffers pop up in the same window,
+Another important setting ~windmove-create-window~ is to automatically
+create a new window when trying to move to another window.  This means that
+the same key =s-right= that switches to the right window, also creates
+a new window on the right, when there is no window yet in that direction.
+Also when trying to display a buffer in another window, and there is no
+window yet in that direction, it creates a new window.  Another useful
+option is ~windmove-wrap-around~, so typing =s-right= in the rightmost
+window moves to the leftmost window.  When these both options are
+enabled at the same time, they maintain a configuration with two windows
+horizontally, and two windows vertically, since I don't need more than two
+windows in a row:
+
+#+begin_src emacs-lisp
+(setq windmove-create-window t
+      windmove-wrap-around t)
+#+end_src
+
+Also it's better when most buffers pop up in the same window,
 so there is no need to switch windows back and forth:
 
 #+begin_src emacs-lisp
@@ -477,7 +515,6 @@ so there is no need to switch windows back and forth:
         display-buffer-same-window)
       display-buffer-alist)
 #+end_src
-
 
 Clicking a link from the =*Help*= buffer opens source code in the same window.
 This supposes display-buffer-alist to be customized to contain:
