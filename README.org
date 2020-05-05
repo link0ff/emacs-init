@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-05-05
+#+DATE: 2020-05-06
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -158,7 +158,7 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (if (memq major-mode '(fundamental-mode dired-mode))
+  (if (memq major-mode '(fundamental-mode dired-mode Man-mode))
       (recenter-top)
     (reposition-window)))
 
@@ -1462,7 +1462,7 @@ the same screen state that was before.
         ;; Recenter new search hits outside of window boundaries
         (when (and isearch-success (not (pos-visible-in-window-p)))
           ;; reposition-window takes too much time in large buffers
-          (if (or (memq major-mode '(fundamental-mode dired-mode))
+          (if (or (memq major-mode '(fundamental-mode dired-mode Man-mode))
                   (> (buffer-size) 1000000))
               (recenter-top)
             (condition-case nil
