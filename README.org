@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-05-03
+#+DATE: 2020-05-05
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -222,9 +222,10 @@ add customization that recenter to the middle of the top half of the screen
 to reduce time spent for scrolling and adjusting the position of edited text:
 
 #+begin_src emacs-lisp
-(setq recenter-positions '(0.15 top)
-      next-error-recenter 15
-      compare-windows-recenter '(15 15))
+(custom-set-variables
+ '(recenter-positions '(0.15 top))
+ '(next-error-recenter 15)
+ '(compare-windows-recenter '(15 15)))
 
 (defvar my-recenter-position nil
   "Default recenter position.")
@@ -287,15 +288,17 @@ to be able to select a tab by its ordinal number by typing e.g.
 =s-1= to select the first tab, etc.
 
 #+begin_src emacs-lisp
-(setq tab-bar-tab-hints t
-      tab-bar-select-tab-modifiers '(super))
+(custom-set-variables
+ '(tab-bar-tab-hints t)
+ '(tab-bar-select-tab-modifiers '(super)))
 #+end_src
 
 By default, the tab shows the name of the current buffer, but I prefer
 to show all buffer names in the tab name:
 
 #+begin_src emacs-lisp
-(setq tab-bar-tab-name-function 'tab-bar-tab-name-all)
+(custom-set-variables
+ '(tab-bar-tab-name-function 'tab-bar-tab-name-all))
 #+end_src
 
 Whereas tab-bar and tab-lines still take screen space, they are sometimes
@@ -494,8 +497,9 @@ horizontally, and two windows vertically, since I don't need more than two
 windows in a row:
 
 #+begin_src emacs-lisp
-(setq windmove-create-window t
-      windmove-wrap-around t)
+(custom-set-variables
+ '(windmove-create-window t)
+ '(windmove-wrap-around t))
 #+end_src
 
 Also it's better when most buffers pop up in the same window,
@@ -1436,9 +1440,10 @@ The following features are new in Emacs 27:
 3. Scroll off the screen while Isearch is still active:
 
 #+begin_src emacs-lisp
-(setq isearch-lazy-count t
-      isearch-yank-on-move 'shift
-      isearch-allow-scroll 'unlimited)
+(custom-set-variables
+ '(isearch-lazy-count t)
+ '(isearch-yank-on-move 'shift)
+ '(isearch-allow-scroll 'unlimited))
 #+end_src
 
 *** Smoother isearch navigation
@@ -1716,9 +1721,10 @@ visible on the screen, then after exiting all matches in the buffer
 remain highlighted:
 
 #+begin_src emacs-lisp
-(setq lazy-highlight-buffer t
-      lazy-highlight-initial-delay 0
-      lazy-highlight-max-at-a-time nil)
+(custom-set-variables
+ '(lazy-highlight-buffer t)
+ '(lazy-highlight-initial-delay 0)
+ '(lazy-highlight-max-at-a-time nil))
 #+end_src
 
 *** char-fold settings
@@ -1726,7 +1732,8 @@ remain highlighted:
 Enable char-folding in isearch:
 
 #+begin_src emacs-lisp
-(setq search-default-mode #'char-fold-to-regexp)
+(custom-set-variables
+ '(search-default-mode 'char-fold-to-regexp))
 #+end_src
 
 and customize it:
@@ -2177,7 +2184,7 @@ Flyspell only on typing, not on moving point:
 Non-customizable variables:
 
 #+begin_src emacs-lisp
-(setq gc-cons-percentage 0.3)
+(setq gc-cons-percentage 0.3) ; seems now it's customizable
 (setq print-gensym t)
 (setq print-circle t)
 #+end_src
@@ -2813,7 +2820,8 @@ One of the most useful settings is using =ansi= for terminal output
 that highlights escape sequences emitted by many programs:
 
 #+begin_src emacs-lisp
-(setq comint-terminfo-terminal "ansi")
+(custom-set-variables
+ '(comint-terminfo-terminal "ansi"))
 
 ;; (setenv "TERM" "dumb")
 ;; because it should be
@@ -2831,10 +2839,11 @@ that highlights escape sequences emitted by many programs:
 ** comint
 
 #+begin_src emacs-lisp
-(setq comint-history-isearch 'dwim
-      comint-input-ignoredups t
-      comint-input-ring-size 65535
-      comint-move-point-for-output nil)
+(custom-set-variables
+ '(comint-history-isearch 'dwim)
+ '(comint-input-ignoredups t)
+ '(comint-input-ring-size 65535)
+ '(comint-move-point-for-output nil))
 #+end_src
 
 * Used packages
@@ -2914,17 +2923,19 @@ Pre-load some useful packages:
 ** org
 
 #+begin_src emacs-lisp
-(setq org-confirm-babel-evaluate nil
-      org-replace-disputed-keys t
-      org-special-ctrl-o nil
-      org-startup-folded nil
-      org-support-shift-select t)
+(custom-set-variables
+ '(org-confirm-babel-evaluate nil)
+ '(org-replace-disputed-keys t)
+ '(org-special-ctrl-o nil)
+ '(org-startup-folded nil)
+ '(org-support-shift-select t))
 
-(setq org-src-ask-before-returning-to-edit-buffer nil
-      org-src-fontify-natively t
-      org-src-preserve-indentation t
-      org-src-tab-acts-natively t
-      org-src-window-setup 'split-window-below)
+(custom-set-variables
+ '(org-src-ask-before-returning-to-edit-buffer nil)
+ '(org-src-fontify-natively t)
+ '(org-src-preserve-indentation t)
+ '(org-src-tab-acts-natively t)
+ '(org-src-window-setup 'split-window-below))
 
 ;; Unfortunately, this has no effect because
 ;; `display-buffer-alist' is ignored in `org-no-popups'
