@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-06-02
+#+DATE: 2020-06-03
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -407,7 +407,7 @@ that removes any remaining window decorations including the title bar:
             ;; For some OS window managers that don't put focus to new frames:
             (select-frame-set-input-focus frame)))
 
-;; Apply `undecorated' to new frames created by these commands:
+;; Apply ‘undecorated’ to new frames created by these commands:
 (advice-add 'make-frame-on-monitor :around
             (lambda (orig-fun monitor &optional display parameters)
               (funcall orig-fun monitor display
@@ -602,8 +602,8 @@ Various useful commands are bound on this keymap:
 #+begin_src emacs-lisp
 (when window-system
   ;; Set ESC-modifier to C-z escape
-  ;; This is useful to invoke `M-TAB' or `M-|' on keyboards with AltGr key,
-  ;; as `C-z ESC TAB' or `C-z ESC |'
+  ;; This is useful to invoke ‘M-TAB’ or ‘M-|’ on keyboards with AltGr key,
+  ;; as ‘C-z ESC TAB’ or ‘C-z ESC |’
   (define-key my-map [escape] esc-map)
 
   (define-key my-map "t" 'toggle-truncate-lines)
@@ -613,10 +613,10 @@ Various useful commands are bound on this keymap:
   (define-key my-map "vtw2" (lambda () (interactive) (setq-local tab-width 2) (force-mode-line-update)))
   (define-key my-map "r" 'revert-buffer)
   (define-key my-map "\C-q" 'quoted-insert) ; because global C-q is rebound above
-  ;; `C-z -' and `C-z C--' inserts a vertical line.
+  ;; ‘C-z -’ and ‘C-z C--’ inserts a vertical line.
   (define-key my-map [(control ?-)] (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
   (define-key my-map "-" (lambda () (interactive) (insert "\f\n"))) ; because global C-q C-l is rebound above
-  ;; TEST: try `C-z C-x C-x C-x C-x ...', try `C-x z C-z C-z C-z' (repeat.el)
+  ;; TEST: try ‘C-z C-x C-x C-x C-x ...’, try ‘C-x z C-z C-z C-z’ (repeat.el)
   )
 #+end_src
 
@@ -650,7 +650,7 @@ Here's a short table of mappings:
               (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
                        (or (and comment-start (nth 4 (syntax-ppss)))
                            (and (derived-mode-p 'text-mode)
-                                (not (derived-mode-p 'org-mode))
+                                ;; (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
                                 (not (derived-mode-p 'yaml-mode))
@@ -671,7 +671,7 @@ Here's a short table of mappings:
               (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
                        (or (and comment-start (nth 4 (syntax-ppss)))
                            (and (derived-mode-p 'text-mode)
-                                (not (derived-mode-p 'org-mode))
+                                ;; (not (derived-mode-p 'org-mode))
                                 (not (derived-mode-p 'sgml-mode))
                                 (not (derived-mode-p 'vc-git-log-edit-mode))
                                 (not (derived-mode-p 'yaml-mode))
@@ -706,8 +706,8 @@ Here's a short table of mappings:
 And two keybindings to accompany the above:
 
 #+begin_src emacs-lisp
-(define-key ctl-x-map "\M-("    'delete-pair) ;; the reverse of `M-('
-(define-key ctl-x-map "\C-\M-u" 'raise-sexp)  ;; like `C-M-u'
+(define-key ctl-x-map "\M-("    'delete-pair) ;; the reverse of ‘M-(’
+(define-key ctl-x-map "\C-\M-u" 'raise-sexp)  ;; like ‘C-M-u’
 #+end_src
 
 ** List structural editing
@@ -782,8 +782,8 @@ A smart version if completion is bound to =TAB= in Lisp modes:
 (defun my-lisp-indent-or-complete (&optional arg)
   "Complete Lisp symbol, or indent line or region.
 If the character preceding point is symbol-constituent, then perform
-completion on Lisp symbol preceding point using `lisp-complete-symbol'.
-Otherwise, call `indent-for-tab-command' that indents line or region."
+completion on Lisp symbol preceding point using ‘lisp-complete-symbol’.
+Otherwise, call ‘indent-for-tab-command’ that indents line or region."
   (interactive "P")
   (if (and (not (and transient-mark-mode mark-active
                      (not (eq (region-beginning) (region-end)))))
@@ -799,7 +799,7 @@ A smarter jumping to the beginning of the line:
 
 #+begin_src emacs-lisp
 (defun my-beginning-of-line-or-indentation (arg)
-  "Jump to the beginning of the line or to the indentation (like `M-m')."
+  "Jump to the beginning of the line or to the indentation (like ‘M-m’)."
   (interactive "^p")
   (if (bolp)
       (beginning-of-line-text arg) ; (back-to-indentation) ?
@@ -889,7 +889,7 @@ files one by one in a Dired buffer, or from a menu of links to Info nodes, etc.
 #+begin_src emacs-lisp
 (defun my-next-link-or-scroll-page-forward (next-point)
   "Scroll one screen forward when no more next links are visible on the screen.
-The argument `next-point' is the point's position of the next link."
+The argument ‘next-point’ is the point's position of the next link."
   (if (and (> (window-end) next-point) (> next-point (point)))
       (goto-char next-point)
     (if (>= (window-end) (point-max))
@@ -898,7 +898,7 @@ The argument `next-point' is the point's position of the next link."
 
 (defun my-prev-link-or-scroll-page-backward (prev-point)
   "Scroll one screen backward when no more previous links are visible on the screen.
-The argument `prev-point' is the point's position of the previous link."
+The argument ‘prev-point’ is the point's position of the previous link."
   (if (and (< (window-start) prev-point) (< prev-point (point)))
       (goto-char prev-point)
     (if (<= (window-start) (point-min))
@@ -997,7 +997,7 @@ Below is customization of different modes to support convenient navigation:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'man
-  ;; Don't use `man-mode-syntax-table' that sets word syntax to `.', `_', `:'.
+  ;; Don't use ‘man-mode-syntax-table’ that sets word syntax to ‘.’, ‘_’, ‘:’.
   (add-hook 'Man-mode-hook
             (lambda ()
               (set-syntax-table text-mode-syntax-table)))
@@ -1489,7 +1489,7 @@ the same screen state that was before.
 (defun isearch-refresh-state ()
   "Refresh the last search state.
 This might be necessary when e.g. the window was manually recentered with
-`C-l C-l', so new window-start should be updated in push-state-function above
+‘C-l C-l’, so new window-start should be updated in push-state-function above
 before searching for the next hit."
   ;; Pop and discard the previous state
   (pop isearch-cmds)
@@ -1662,9 +1662,9 @@ Goes backward if ARG is negative; error if CHAR not found."
 and it can be used in Isearch:
 
 #+begin_src emacs-lisp
-;; Allow `C-SPC C-M-z $ M-s M-.'
+;; Allow ‘C-SPC C-M-z $ M-s M-.’
 (define-key esc-map "\C-z" 'skip-to-char)
-;; Allow `C-s C-M-z $' when `isearch-yank-on-move' is `t'
+;; Allow ‘C-s C-M-z $’ when ‘isearch-yank-on-move’ is ‘t’
 ;; (put 'skip-to-char 'isearch-move t)
 #+end_src
 
@@ -1678,7 +1678,7 @@ moved to another part of the file:
 
 #+begin_src emacs-lisp
 (isearch-define-mode-toggle diff-hunk "+" diff-hunk-to-regexp "\
-Ignore diff-mode hunk indicators such as `+' or `-' at bol.")
+Ignore diff-mode hunk indicators such as ‘+’ or ‘-’ at bol.")
 
 (defun diff-hunk-to-regexp (string &optional _lax _from)
   (replace-regexp-in-string
@@ -1818,13 +1818,13 @@ Better interactive arguments for ~text-property-search-forward~ (see [[bug:36486
 
 #+begin_src emacs-lisp
 (defun search-text-property (property &optional value predicate not-current)
-  "Same as `text-property-search-forward', but better interactive arguments.
+  "Same as ‘text-property-search-forward’, but better interactive arguments.
 Added support for reading the second argument VALUE that allows reading
-symbols as well as strings.  Unlike `text-property-search-forward', this
+symbols as well as strings.  Unlike ‘text-property-search-forward’, this
 command can find combined text properties, e.g. can find the property
-`face' and the value `hi-yellow' in the buffer with the text property
-containing the list of values `(hi-yellow font-lock-keyword-face)'.
-Also ensure the whole buffer is fontified by `font-lock' to be able
+‘face’ and the value ‘hi-yellow’ in the buffer with the text property
+containing the list of values ‘(hi-yellow font-lock-keyword-face)’.
+Also ensure the whole buffer is fontified by ‘font-lock’ to be able
 to find all text properties with font-lock face."
   (interactive
    (let* ((property (completing-read "Search for property: " obarray
@@ -1856,7 +1856,7 @@ Make the =*Occur*= buffer names unique and writable
             (occur-rename-buffer t)
             (setq buffer-read-only nil)))
 
-;; Based on `occur-mode-goto-occurrence-other-window'
+;; Based on ‘occur-mode-goto-occurrence-other-window’
 (defun occur-mode-goto-occurrence-kill-buffer ()
   "Go to the occurrence the current line describes, and kill the Occur buffer."
   (interactive)
@@ -1867,7 +1867,7 @@ Make the =*Occur*= buffer names unique and writable
     (kill-buffer buf)
     (run-hooks 'occur-mode-find-occurrence-hook)))
 
-;; Bind to "o" in place of `occur-mode-goto-occurrence'.
+;; Bind to "o" in place of ‘occur-mode-goto-occurrence’.
 (define-key occur-mode-map [(control return)] 'occur-mode-goto-occurrence-kill-buffer)
 #+end_src
 
@@ -1875,7 +1875,7 @@ Make the =*Occur*= buffer names unique and writable
 
 #+begin_src emacs-lisp
 (defun substitute-regexp (substitution)
-  "Use s/old/new/g regexp syntax for `query-replace'."
+  "Use s/old/new/g regexp syntax for ‘query-replace’."
   (interactive
    (list
     (read-from-minibuffer "Substitute regexp: " '("s///g" . 3) nil nil
@@ -1943,7 +1943,7 @@ but still no option that would corresponds to ~ignorespace~.
 #+end_src
 
 This is not needed when isearch C-s/C-r in the minibuffer is available
-(but `C-M-r ^command' doesn't match at the beginning of the input area):
+(but =C-M-r ^command= doesn't match at the beginning of the input area):
 
 #+begin_src emacs-lisp
 (define-key minibuffer-local-map "\eN" 'next-complete-history-element)
@@ -1983,9 +1983,9 @@ if the deleted element was the last in the history list."
 (defun qv (&optional url anchor)
   "Add or activate live bookmarks.
 When called interactively, put the address of the current location
-inside a function call to `qv' into the clipboard that can be
+inside a function call to ‘qv’ into the clipboard that can be
 pasted in another buffer that stores bookmarks.
-Otherwise, after typing `C-x C-e' on the bookmark funcall
+Otherwise, after typing ‘C-x C-e’ on the bookmark funcall
 goes to the saved location."
   (interactive)
   (if (called-interactively-p 'any)
@@ -2087,32 +2087,32 @@ Tabify only initial whitespace
 #+begin_src emacs-lisp
 ;; Do not use customization to not corrupt .emacs with literal
 ;; control characters.
-;; The next line is bad, because \n is bad for `C-M-s SPC $'
+;; The next line is bad, because \n is bad for ‘C-M-s SPC $’
 ;; (setq search-whitespace-regexp "[ \t\r\n]+")
-;; TRY to ignore punctuation, BAD because C-w (`isearch-yank-word-or-char')
+;; TRY to ignore punctuation, BAD because C-w (‘isearch-yank-word-or-char’)
 ;; doesn't yank punctuation characters, so use word search instead of this:
 ;; (setq search-whitespace-regexp "\\W+")
-;; TRY to match newlines like in `compare-windows-whitespace':
+;; TRY to match newlines like in ‘compare-windows-whitespace’:
 (setq search-whitespace-regexp "\\(?:\\s-\\|\n\\)+") ; bug#35802
-;; Actually this line doesn't affect `search-whitespace-regexp' defined below.
+;; Actually this line doesn't affect ‘search-whitespace-regexp’ defined below.
 (with-eval-after-load 'info
   (setq Info-search-whitespace-regexp "\\(?:\\s-\\|\n\\)+"))
 #+end_src
 
 #+begin_src emacs-lisp
 ;; TRY:
-;; Like `word-search-regexp'
+;; Like ‘word-search-regexp’
 (defun search-whitespace-regexp (string &optional _lax)
   "Return a regexp which ignores whitespace.
-Uses the value of the variable `search-whitespace-regexp'."
+Uses the value of the variable ‘search-whitespace-regexp’."
   (if (or (not (stringp search-whitespace-regexp))
           (null (if isearch-regexp
                     isearch-regexp-lax-whitespace
                   isearch-lax-whitespace)))
       string
     ;; FIXME: this is not strictly correct implementation because it ignores
-    ;; `subregexp-context-p' and replaces spaces inside char set group like
-    ;; in `C-M-s M-s SPC [ ]', it converts it to ["\\(?:\\s-\\|\n\\)+"] !
+    ;; ‘subregexp-context-p’ and replaces spaces inside char set group like
+    ;; in ‘C-M-s M-s SPC [ ]’, it converts it to ["\\(?:\\s-\\|\n\\)+"] !
     (replace-regexp-in-string
      search-whitespace-regexp
      search-whitespace-regexp ;; or replace by " " that is handled by search-spaces-regexp
@@ -2183,8 +2183,8 @@ Flyspell only on typing, not on moving point:
           (lambda ()
             (advice-add 'flyspell-check-pre-word-p :override (lambda () nil))
             ;; After evaluating the next, flyspell doesn't check the last word
-            ;; in `auto-fill-mode' when typing SPC moves to the next line,
-            ;; because the order of calls in `internal_self_insert' is:
+            ;; in ‘auto-fill-mode’ when typing SPC moves to the next line,
+            ;; because the order of calls in ‘internal_self_insert’ is:
             ;; 1. insert_and_inherit ();
             ;; 2. Frun_hook_with_args (Qafter_change_functions);
             ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
@@ -2312,10 +2312,10 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 ** dired
 
 #+begin_src emacs-lisp
-(require 'dired-aux) ;; For `dired-shell-stuff-it'
+(require 'dired-aux) ;; For ‘dired-shell-stuff-it’
 (require 'dired-x)
 
-;; HINT: the following expression is useful for `M-(' `dired-mark-sexp'
+;; HINT: the following expression is useful for ‘M-(’ ‘dired-mark-sexp’
 ;; to mark files by their type:
 ;; (string-match "perl" (shell-command-to-string (concat "file " name)))
 
@@ -2330,7 +2330,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
                    (mm-mime-info
                     (mm-extension-to-mime (file-name-extension file))))))
         (if (and command (stringp command))
-            ;; always return `t' for `cond'
+            ;; always return ‘t’ for ‘cond’
             (or (ignore (async-shell-command (concat (format command file) "&")))
                 t))))
      ;; ((string-match "\\.html?$" file) (w3-open-local file))
@@ -2414,7 +2414,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (define-key dired-mode-map [(control meta ?=)] 'dired-compare-directories)
 
 (defun dired-in-project-root ()
-  "Run `dired' in project root directory."
+  "Run ‘dired’ in project root directory."
   (interactive)
   (let* ((project (project-current))
          (root (and project (car (project-roots project)))))
@@ -2487,17 +2487,17 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (add-hook 'dired-after-readin-hook
           (lambda ()
             ;; Set name of dired buffers to absolute directory name.
-            ;; Use non-nil arg `unique' for `rename-buffer'
+            ;; Use non-nil arg ‘unique’ for ‘rename-buffer’
             ;; because vc-dir that creates duplicate buffers.
             ;; SEE ALSO https://emacs.stackexchange.com/q/2123
             ;; (when (stringp dired-directory)
             ;;   ;; cf with (add-hook 'dired-after-readin-hook 'rename-uniquely)
             ;;   (rename-buffer dired-directory t))
 
-            ;; TODO: Maybe better to change `dired-internal-noselect'
-            ;; from `(create-file-buffer (directory-file-name dirname))'
-            ;; to just `(create-file-buffer dirname) that leaves the final slash,
-            ;; but the problem is that `uniquify--create-file-buffer-advice'
+            ;; TODO: Maybe better to change ‘dired-internal-noselect’
+            ;; from ‘(create-file-buffer (directory-file-name dirname))’
+            ;; to just ‘(create-file-buffer dirname)’ that leaves the final slash,
+            ;; but the problem is that ‘uniquify--create-file-buffer-advice’
             ;; changes absolute directory name with slash to short name dir.
 
             ;; The current solution still relies on uniquify, but adds
@@ -2530,8 +2530,8 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 ;; http://mail.gnu.org/archive/html/emacs-devel/2004-04/msg01247.html
 ;; (define-key dired-mode-map "r"        'wdired-change-to-wdired-mode)
 
-;; (OLD) This is a bad keybinding because I sometimes type `C-x C-q'
-;; in *Locate* buffer (which is in dired-mode) and do `flush-lines'
+;; (OLD) This is a bad keybinding because I sometimes type ‘C-x C-q’
+;; in *Locate* buffer (which is in dired-mode) and do ‘flush-lines’
 ;; (define-key dired-mode-map "\C-x\C-q" 'wdired-change-to-wdired-mode)
 ;; UPDATE: http://thread.gmane.org/gmane.emacs.devel/118678/focus=118684
 
@@ -2539,7 +2539,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (with-eval-after-load 'wdired
   (define-key wdired-mode-map [return] 'wdired-finish-edit)
   (define-key wdired-mode-map [kp-enter] 'wdired-finish-edit)
-  ;; BAD, better to add a new rule at the end of `keyboard-escape-quit':
+  ;; BAD, better to add a new rule at the end of ‘keyboard-escape-quit’:
   ;; (define-key wdired-mode-map [escape] 'wdired-abort-changes)
   )
 #+end_src
@@ -2548,7 +2548,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'locate
-  ;; Redefine `locate-default-make-command-line'.
+  ;; Redefine ‘locate-default-make-command-line’.
   (defun locate-make-command-line-ignore-case (search-string)
     (list locate-command "-i" search-string))
   (setq locate-make-command-line 'locate-make-command-line-ignore-case))
@@ -2615,7 +2615,7 @@ Use alternative shell history file:
 ;; S-RET switches to the *Shell Command Output* buffer
 ;; instead of displaying output in the echo area.
 ;; TODO: Another idea from http://thread.gmane.org/gmane.emacs.bugs/4533
-;;       Use M-RETURN to run `async-shell-command'.
+;;       Use M-RETURN to run ‘async-shell-command’.
 (defadvice shell-command (around my-shell-command-around act)
   (let ((messages-buffer-max-lines
          ;; Don't add output to the *Messages* buffer
@@ -2652,7 +2652,7 @@ Use alternative shell history file:
 
 ;; This command has so many bindings because it's difficult to type with AltGr.
 (define-key esc-map "|"    'shell-command-on-region-or-buffer)
-(define-key esc-map "\M-|" 'shell-command-on-region-or-buffer) ; `M-ESC |'
+(define-key esc-map "\M-|" 'shell-command-on-region-or-buffer) ; ‘M-ESC |’
 (define-key global-map [(control ?|)] 'shell-command-on-region-or-buffer)
 (define-key my-map "|" 'shell-command-on-region-or-buffer)
 #+end_src
@@ -2665,7 +2665,7 @@ old log files:
 
 #+begin_src emacs-lisp
 (defvar shell-log-font-lock-keywords
-  ;; `shell-prompt-pattern' can't be used: it finds too many false matches
+  ;; ‘shell-prompt-pattern’ can't be used: it finds too many false matches
   `((,(rx-let ((c (* (not (any "#$%>\12"))))) ; any non-prompt char
         (rx bol
             (group-n 1 c (or
@@ -2686,7 +2686,7 @@ old log files:
   (setq-local font-lock-defaults '(shell-log-font-lock-keywords t)))
 
 (defun shell-log-or-compilation-mode ()
-  "Enable either `shell-log-mode' or `compilation-mode' based on log contents."
+  "Enable either ‘shell-log-mode’ or ‘compilation-mode’ based on log contents."
   (let ((mode (if (save-excursion
                     (goto-char (point-min))
                     (re-search-forward
@@ -2744,7 +2744,7 @@ old log files:
               ;; (rename-uniquely)
               (setq buffer-read-only nil))))
 
-;; Create unique buffer name for `compile' and `grep'.
+;; Create unique buffer name for ‘compile’ and ‘grep’.
 (setq compilation-buffer-name-function
       (lambda (name-of-mode)
         (generate-new-buffer-name
@@ -2781,15 +2781,15 @@ old log files:
   (push '("clj" . "*.clj*") grep-files-aliases))
 
 (defun wrgrep ()
-  "Word-based version of `rgrep'.
-Modifies the grep-find template to add the option `-w' that matches whole words."
+  "Word-based version of ‘rgrep’.
+Modifies the grep-find template to add the option ‘-w’ that matches whole words."
   (interactive)
   (let ((grep-host-defaults-alist nil)
         (grep-find-template
          (replace-regexp-in-string "<C>" "-w \\&" grep-find-template)))
     (call-interactively 'rgrep)))
 
-;; Don't pollute manually added entries in `grep-history' with constructed commands
+;; Don't pollute manually added entries in ‘grep-history’ with constructed commands
 (advice-add 'lgrep :around
             (lambda (orig-fun &rest args)
               (let ((grep-history '()))
@@ -2823,7 +2823,7 @@ that highlights escape sequences emitted by many programs:
 ;; because it should be
 ;; (setenv "TERM" "emacs")
 ;; (setenv "TERM" "ansi")
-;; Actually above commented out has no effect here, see `setenv' in `after-init-hook' below:
+;; Actually above commented out has no effect here, see ‘setenv’ in ‘after-init-hook’ below:
 (add-hook 'after-init-hook
           (lambda ()
             ;; https://lists.gnu.org/archive/html/emacs-devel/2019-12/msg00043.html
@@ -2872,7 +2872,7 @@ Pre-load some useful packages:
                               auto-mode-alist))
 
 ;; (and (require 'ffap) (ffap-bindings))
-;; Don't bind ffap keybindings anymore, because now `C-x C-f M-n'
+;; Don't bind ffap keybindings anymore, because now ‘C-x C-f M-n’
 ;; gets the filename at point when ffap.el is loaded
 (require 'ffap)
 #+end_src
@@ -2934,7 +2934,7 @@ Pre-load some useful packages:
  '(org-src-window-setup 'split-window-below))
 
 ;; Unfortunately, this has no effect because
-;; `display-buffer-alist' is ignored in `org-no-popups'
+;; ‘display-buffer-alist’ is ignored in ‘org-no-popups’
 (push `("\\`\\*Org Select\\*\\'"
         display-buffer-below-selected)
       display-buffer-alist)
@@ -3062,7 +3062,7 @@ Gnus Summary buffers:
   (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
   (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
 
-  ;; Use standard keybinding instead of stupid `gnus-summary-show-thread'
+  ;; Use standard keybinding instead of stupid ‘gnus-summary-show-thread’
   (define-key gnus-summary-mode-map "\M-\C-s" 'isearch-forward-regexp)
 
 ;; Commented out to test multi-article Isearch
@@ -3166,7 +3166,7 @@ Gnus Article buffers:
         (shr-browse-url)
       (gnus-article-press-button))))
 
-;; TODO: move this command to gnus/gnus-ml.el and bind to `C-c C-n w'
+;; TODO: move this command to gnus/gnus-ml.el and bind to ‘C-c C-n w’
 (defun my-gnus-copy-link-gnu-lists (&optional _arg)
   "Put the link to the article in the GNU archives into the kill ring.
 Example:
@@ -3253,11 +3253,11 @@ The difference between N and the number of articles ticked is returned."
 (add-hook 'message-mode-hook
           (lambda ()
             (auto-fill-mode 1)
-            ;; Support search of `symbol'
+            ;; Support search of ‘symbol’
             (modify-syntax-entry ?` "'   " message-mode-syntax-table)
             (modify-syntax-entry ?' "'   " message-mode-syntax-table)
-            ;; Prevent premature sending when `C-c C-s'
-            ;; is typed instead of `C-x C-s'
+            ;; Prevent premature sending when ‘C-c C-s’
+            ;; is typed instead of ‘C-x C-s’
             (define-key message-mode-map "\C-c\C-s" nil)))
 ;; TODO: try to use (message-tab) in message mode
 #+end_src
@@ -3399,7 +3399,7 @@ or with =C-x RET c utf-8 RET C-x C-f=.
               auto-coding-regexp-alist))))
 #+end_src
 
-Use Unicode ellipsis in `C-x C-b' (list-buffers):
+Use Unicode ellipsis in ‘C-x C-b’ (list-buffers):
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'mule-util
@@ -3459,7 +3459,7 @@ and =right-word= / =left-word= ([[bug:36923]])
 (defun right-sexp (&optional arg)
   "Move across one balanced expression (sexp) to the right.
 Depending on the bidirectional context, this may move either forward
-or backward in the buffer.  See more at `forward-sexp'."
+or backward in the buffer.  See more at ‘forward-sexp’."
   (interactive "^p")
   (if (eq (current-bidi-paragraph-direction) 'left-to-right)
       (forward-sexp arg)
@@ -3468,7 +3468,7 @@ or backward in the buffer.  See more at `forward-sexp'."
 (defun left-sexp (&optional arg)
   "Move across one balanced expression (sexp) to the left.
 Depending on the bidirectional context, this may move either backward
-or forward in the buffer.  See more at `backward-sexp'."
+or forward in the buffer.  See more at ‘backward-sexp’."
   (interactive "^p")
   (if (eq (current-bidi-paragraph-direction) 'left-to-right)
       (backward-sexp arg)
@@ -3499,7 +3499,7 @@ Fix ~compare-windows~:
 (define-key global-map [(control ?=)] 'compare-windows)
 ;; alternative: (lambda () (interactive) (compare-windows t))
 
-;; I often mistype `compare-windows' as `comapre-windows', allow both:
+;; I often mistype ‘compare-windows’ as ‘comapre-windows’, allow both:
 (defalias 'comapre-windows 'compare-windows)
 #+end_src
 
@@ -3511,9 +3511,9 @@ Set ~isearch-scroll~ on some commands:
 (put 'narrow-to-defun 'isearch-scroll t)
 (put 'widen 'isearch-scroll t)
 (put 'toggle-truncate-lines 'isearch-scroll t)
-(put 'comint-show-output 'isearch-scroll t) ;; bound to `C-M-l'
+(put 'comint-show-output 'isearch-scroll t) ;; bound to ‘C-M-l’
 
-;; Mostly for `C-s M-s o'
+;; Mostly for ‘C-s M-s o’
 (put 'windmove-display-up    'isearch-scroll t)
 (put 'windmove-display-down  'isearch-scroll t)
 (put 'windmove-display-left  'isearch-scroll t)
