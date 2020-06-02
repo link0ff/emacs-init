@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-05-17
+#+DATE: 2020-06-02
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -1301,6 +1301,15 @@ Functional keys:
      (compilation-read-command (car compile-history))
      ;; Don't use compilation-shell-minor-mode
      nil)))
+(define-key my-map "m" ;; mnemonics "make"
+  (lambda ()
+    (interactive)
+    (project-compile
+     ;; Use previous command from history
+     ;; instead of the default from compile-command
+     (compilation-read-command (car compile-history))
+     ;; Don't use compilation-shell-minor-mode
+     nil)))
 (define-key global-map [(meta f7)] 'grep) ; Commander-like
 (define-key global-map [(meta shift f7)] 'grep-find)
 #+end_src
@@ -2011,7 +2020,7 @@ goes to the saved location."
        ;; Line string
        ((stringp anchor)
         (goto-char (point-min))
-        (if (re-search-forward (format "^\\s-*%s$" (regexp-quote anchor)))
+        (if (re-search-forward (format "\\s-*%s" (regexp-quote anchor)))
             (goto-char (match-beginning 0)))))))))
 #+end_src
 
@@ -2270,14 +2279,7 @@ Fix keybindings and run ~vc-dir~ in project root:
   (define-key vc-dir-mode-map "v" 'vc-dir-view-file)
   (define-key vc-dir-mode-map "." 'vc-next-action))
 
-(defun vc-dir-in-project-root ()
-  "Run `vc-dir' in project root directory."
-  (interactive)
-  (let* ((project (project-current))
-         (root (and project (car (project-roots project)))))
-    (vc-dir (or (and root (file-directory-p root) root) default-directory))))
-
-(define-key my-map "d" 'vc-dir-in-project-root)
+(define-key my-map "d" 'project-vc-dir)
 #+end_src
 
 Highlight found occurrences in =*vc-search-log*= output buffer of ~vc-log-search~.
@@ -2569,17 +2571,7 @@ Highlight all matches in the =*Locate*= buffer like in the =*Occur*= buffer
 ** shell
 
 #+begin_src emacs-lisp
-(defun shell-in-project-root ()
-  "Run shell in project root directory."
-  (interactive)
-  (let* ((project (project-current))
-         (root (and project (car (project-roots project))))
-         (default-directory (or (and root (file-directory-p root) root)
-                                default-directory)))
-    ;; Use ‘create-file-buffer’ to uniquify shell buffer names.
-    (shell (create-file-buffer "*shell*"))))
-
-(define-key my-map "s" 'shell-in-project-root)
+(define-key my-map "s" 'project-shell)
 #+end_src
 
 Use alternative shell history file:
