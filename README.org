@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-06-03
+#+DATE: 2020-06-04
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3452,6 +3452,31 @@ display battery status on the mode line.
 
 ** Fix inconsistency in motion keys
 
+Implementation of =right-word= / =left-word= is broken - it doesn't take
+into account mixed content when words of one script are intermingled with
+words of another script.  This advice fixes this:
+
+#+begin_src emacs-lisp
+(defun right-script-p ()
+  (or (eq (current-bidi-paragraph-direction) 'right-to-left)
+      (unless (bobp) (memq (get-char-code-property (char-before) 'bidi-class) '(R NSM)))
+      (unless (eobp) (memq (get-char-code-property (char-after)  'bidi-class) '(R NSM)))))
+
+(advice-add 'right-word :around
+            (lambda (orig-fun &rest args)
+              (if (right-script-p)
+                  (apply #'backward-word args)
+                (apply orig-fun args)))
+            '((name . mixed-content)))
+
+(advice-add 'left-word :around
+            (lambda (orig-fun &rest args)
+              (if (right-script-p)
+                  (apply #'forward-word args)
+                (apply orig-fun args)))
+            '((name . mixed-content)))
+#+end_src
+
 There was no symmetry for sexp like in =right-char= / =left-char=
 and =right-word= / =left-word= ([[bug:36923]])
 
@@ -3461,18 +3486,18 @@ and =right-word= / =left-word= ([[bug:36923]])
 Depending on the bidirectional context, this may move either forward
 or backward in the buffer.  See more at ‘forward-sexp’."
   (interactive "^p")
-  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
-      (forward-sexp arg)
-    (backward-sexp arg)))
+  (if (right-script-p)
+      (backward-sexp arg)
+    (forward-sexp arg)))
 
 (defun left-sexp (&optional arg)
   "Move across one balanced expression (sexp) to the left.
 Depending on the bidirectional context, this may move either backward
 or forward in the buffer.  See more at ‘backward-sexp’."
   (interactive "^p")
-  (if (eq (current-bidi-paragraph-direction) 'left-to-right)
-      (backward-sexp arg)
-    (forward-sexp arg)))
+  (if (right-script-p)
+      (forward-sexp arg)
+    (backward-sexp arg)))
 
 (define-key global-map [(control left)]       'left-sexp)
 (define-key global-map [(control right)]      'right-sexp)
