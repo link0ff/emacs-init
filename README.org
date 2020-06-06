@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-06-04
+#+DATE: 2020-06-07
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -1086,7 +1086,13 @@ Below is customization of different modes to support convenient navigation:
   (define-key diff-mode-map [(meta up)]   'diff-hunk-prev)
   (define-key diff-mode-map [(control meta down)] 'diff-file-next)
   (define-key diff-mode-map [(control meta up)]   'diff-file-prev)
-  (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer))
+  (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
+
+  (add-hook 'diff-mode-hook
+            (lambda ()
+              ;; Disable line truncation because need to
+              ;; see everything while looking at diffs:
+              (setq-local truncate-lines nil))))
 #+end_src
 
 *** dired
@@ -2966,6 +2972,17 @@ Fix keys broken by org:
   (when delete-selection-mode
     (put 'org-self-insert-commandorg-return 'delete-selection t)
     (put 'org-return 'delete-selection t)))
+#+end_src
+
+** markdown-mode
+
+Fix keys broken by markdown-mode:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'markdown-mode
+  ;; Revert hijacked keys to their original bindings
+  (define-key markdown-mode-map (kbd "C-c <left>") nil)
+  (define-key markdown-mode-map (kbd "C-c <right>") nil))
 #+end_src
 
 ** gnus
