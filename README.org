@@ -3598,6 +3598,12 @@ Set ~isearch-scroll~ on some commands:
 ;;        (lambda ()
 ;;          (set-window-parameter
 ;;           nil 'next-error-buffer next-error-last-buffer)))
+
+(add-function :override next-error-find-buffer-function
+              #'next-error-buffer-on-selected-frame)
+
+(add-function :after-until next-error-find-buffer-function
+              #'next-error-buffer-unnavigated-current)
 #+end_src
 
 ** Fix xref

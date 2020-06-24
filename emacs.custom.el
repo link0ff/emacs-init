@@ -174,7 +174,6 @@
  '(mouse-wheel-progressive-speed nil)
  '(mouse-wheel-scroll-amount '(2 ((shift) . 5) ((control) . text-scale)))
  '(multi-isearch-pause nil)
- '(next-error-find-buffer-function 'next-error-buffer-on-selected-frame)
  '(nnmail-crosspost-link-function 'copy-file)
  '(nnmail-extra-headers '(To Cc))
  '(nnmail-treat-duplicates 'delete)
