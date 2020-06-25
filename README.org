@@ -643,6 +643,18 @@ Here's a short table of mappings:
 | M-' | '' or ‘’    |
 
 #+begin_src emacs-lisp
+(defun use-fancy-quotes-p ()
+  (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+       (or (and comment-start (nth 4 (syntax-ppss)))
+           (and (derived-mode-p 'text-mode)
+                ;; (not (derived-mode-p 'org-mode))
+                (not (derived-mode-p 'sgml-mode))
+                (not (derived-mode-p 'vc-git-log-edit-mode))
+                (not (derived-mode-p 'yaml-mode))
+                )
+           ;; (derived-mode-p 'fundamental-mode)
+           )))
+
 ;; Modify esc-map when not on a tty:
 (when window-system
   ;; Insert paired characters (either ''/"" or ‘’/“” depending on mode)
@@ -651,17 +663,10 @@ Here's a short table of mappings:
       (interactive)
       (let ((insert-pair-alist
              (cons
-              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
-                       (or (and comment-start (nth 4 (syntax-ppss)))
-                           (and (derived-mode-p 'text-mode)
-                                ;; (not (derived-mode-p 'org-mode))
-                                (not (derived-mode-p 'sgml-mode))
-                                (not (derived-mode-p 'vc-git-log-edit-mode))
-                                (not (derived-mode-p 'yaml-mode))
-                                )
-                           ;; (derived-mode-p 'fundamental-mode)
-                           ))
-                  '(?\" ?\“ ?\”)
+              (if (use-fancy-quotes-p)
+                  (if (eq (aref char-script-table (char-after)) 'cyrillic)
+                      '(?\" ?\« ?\»)
+                    '(?\" ?\“ ?\”))
                 '(?\" ?\" ?\"))
               insert-pair-alist)))
         (call-interactively 'insert-pair))))
@@ -672,16 +677,7 @@ Here's a short table of mappings:
       (interactive)
       (let ((insert-pair-alist
              (cons
-              (if (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
-                       (or (and comment-start (nth 4 (syntax-ppss)))
-                           (and (derived-mode-p 'text-mode)
-                                ;; (not (derived-mode-p 'org-mode))
-                                (not (derived-mode-p 'sgml-mode))
-                                (not (derived-mode-p 'vc-git-log-edit-mode))
-                                (not (derived-mode-p 'yaml-mode))
-                                )
-                           ;; (derived-mode-p 'fundamental-mode)
-                           ))
+              (if (use-fancy-quotes-p)
                   '(?\' ?\‘ ?\’)
                 '(?\' ?\' ?\'))
               insert-pair-alist)))
