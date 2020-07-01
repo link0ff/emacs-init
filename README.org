@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-06-25
+#+DATE: 2020-07-02
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3797,6 +3797,44 @@ then fall back to ~diff-backup~.
                                buffer-file-name)
                              vc-diff-switches)))
             '((name . vc-diff-fallback-to-diff-backup)))
+#+end_src
+
+** Use project directories everywhere
+
+When a prompt of some commands such as ~rgrep~ or ~vc-print-log~ asks for
+a directory name, allow ~M-n~ to access the most recently used project
+directories saved in ~~/.emacs.d/projects~.
+
+#+begin_src emacs-lisp
+(advice-add 'read-directory-name :around
+            (lambda (orig-fun prompt &optional dir default-dirname
+			      mustmatch initial)
+              (when (featurep 'project)
+                (setq default-dirname
+                      (append (cond
+                               ((null default-dirname)
+                                (list (or dir default-directory)))
+                               ((consp default-dirname)
+                                default-dirname)
+                               (t
+                                (list default-dirname)))
+                              (project-known-project-roots))))
+              (let ((ret (funcall orig-fun prompt dir default-dirname
+		                  mustmatch initial)))
+                (when (featurep 'project)
+                  ;; Update project list with selected project dir
+                  (let ((default-directory ret))
+                    (project-current t)))
+                ret))
+            '((name . read-directory-name-project-defaults)))
+
+(advice-add 'vc-dir :after
+            (lambda (dir &optional _backend)
+              (when (featurep 'project)
+                ;; Add current vc project dir to project list
+                (let ((default-directory dir))
+                  (project-current t))))
+            '((name . vc-dir-add-project)))
 #+end_src
 
 * Other
