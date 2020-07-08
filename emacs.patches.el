@@ -686,12 +686,12 @@ delete flagged files.\n\n"))))))
 (defun my-set-insert-directory-program ()
   (when (file-remote-p default-directory)
     (setq dired-actual-switches
-          (replace-regexp-in-string "--block-size='1\\|--group-directories-first" ""
+          (replace-regexp-in-string "--block-size='1\\|--group-directories-first\\|--time-style=long-iso" ""
                                     dired-actual-switches))))
 (add-hook 'dired-before-readin-hook 'my-set-insert-directory-program)
 
 ;; qv http://thread.gmane.org/gmane.emacs.devel/118789
-;; (setq dired-listing-switches "-Alv --group-directories-first --block-size='1")
+;; (setq dired-listing-switches "-Alv --group-directories-first --time-style=long-iso --block-size='1")
 ;; (setenv "LS_BLOCK_SIZE" "'1")
 
 
