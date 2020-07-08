@@ -2520,7 +2520,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
             ;; Omit file extensions only in well-known directories, because
             ;; I don't want to miss omitted files in unknown directories!
             ;; Omit only in some large directories that I use often.
-            (when (string-match-p "emacs/\\(git\\|bzr\\|cvs\\)" default-directory)
+            (when (string-match-p "emacs/\\(sv\\|git\\|bzr\\|cvs\\)" default-directory)
               (setq dired-omit-mode t)
               ;; Set variable above because the next calls dired-omit-expunge twice:
               ;; (dired-omit-mode 1)
@@ -3824,7 +3824,7 @@ directories saved in ~~/.emacs.d/projects~.
                 (when (featurep 'project)
                   ;; Update project list with selected project dir
                   (let ((default-directory ret))
-                    (project-current t)))
+                    (project-current)))
                 ret))
             '((name . read-directory-name-project-defaults)))
 
@@ -3833,7 +3833,7 @@ directories saved in ~~/.emacs.d/projects~.
               (when (featurep 'project)
                 ;; Add current vc project dir to project list
                 (let ((default-directory dir))
-                  (project-current t))))
+                  (project-current))))
             '((name . vc-dir-add-project)))
 #+end_src
 
