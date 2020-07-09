@@ -67,7 +67,8 @@
  '(dired-dwim-target 'dired-dwim-target-recent)
  '(dired-isearch-filenames 'dwim)
  '(dired-keep-marker-rename 82)
- '(dired-listing-switches "-Alv --group-directories-first --time-style=long-iso --block-size='1")
+ '(dired-listing-switches
+   "-Alv --group-directories-first --time-style=long-iso --block-size='1")
  '(dired-omit-size-limit 65535)
  '(dired-recursive-copies 'always)
  '(dired-recursive-deletes 'top)
@@ -136,7 +137,7 @@
  '(inhibit-startup-echo-area-message "juri")
  '(inhibit-startup-screen nil)
  '(initial-buffer-choice nil)
- '(js-indent-level 2)
+ '(js-indent-level 2 t)
  '(kill-do-not-save-duplicates t)
  '(kill-ring-max 1024)
  '(kill-whole-line t)
