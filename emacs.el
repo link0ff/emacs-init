@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-04-30 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-07-14 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1512,15 +1512,22 @@ then output is inserted in the current buffer."
     (goto-char (point-max))
     (recenter-top-bottom -1))
 
+  (define-key my-map "wd" 'my-dictem-run-search)
+
   (defun my-dictem-run-search-from-clipboard-or-word-at-point ()
     (interactive)
     (my-dictem-run-search
-     (or (and kill-ring
+     (or (and (use-region-p)
+              (buffer-substring-no-properties
+               (region-beginning) (region-end)))
+         (thing-at-point 'word)
+         (and kill-ring
               (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
               (current-kill 0))
-         (thing-at-point 'word)
          (dictem-read-query)))
     (goto-char (point-max)))
+
+  (define-key my-map "ww" 'my-dictem-run-search-from-clipboard-or-word-at-point)
 
   (add-hook 'dictem-postprocess-match-hook
             'dictem-postprocess-match)
