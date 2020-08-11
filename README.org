@@ -9,7 +9,6 @@
 #+HTML_head: <script type="text/javascript" src="load.js"></script>
 #+InfoJS_opt: view:info toc:t
 #+PROPERTY: header-args:emacs-lisp :lexical yes
-#+LINK: bug https://debbugs.gnu.org/%s
 #+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t toc:t
 
 #+begin_quote
@@ -64,6 +63,7 @@
 - [[#used-packages][Used packages]]
   - [[#ee][ee]]
   - [[#org][org]]
+  - [[#markdown-mode][markdown-mode]]
   - [[#gnus][gnus]]
   - [[#message][message]]
   - [[#mime][mime]]
@@ -86,6 +86,10 @@
   - [[#fix-messages-buffer][Fix =*Messages*= buffer]]
   - [[#fix-mark-in-two-windows-with-same-buffer][Fix mark in two windows with same buffer]]
   - [[#fix-outline-mode-in-news-files][Fix outline-mode in NEWS files]]
+  - [[#fix-mode-line-faces][Fix mode-line faces]]
+  - [[#fix-dired][Fix dired]]
+  - [[#fall-back-between-vc-diff-and-diff-backup][Fall back between vc-diff and diff-backup]]
+  - [[#use-project-directories-everywhere][Use project directories everywhere]]
 - [[#other][Other]]
   - [[#no-blinking][No blinking]]
   - [[#initialization-stats][Initialization stats]]
@@ -1803,7 +1807,7 @@ and customize it:
 
 *** text-property-search
 
-Better interactive arguments for ~text-property-search-forward~ (see [[bug:36486]])
+Better interactive arguments for ~text-property-search-forward~ (see [[https://debbugs.gnu.org/36486][bug#36486]])
 
 #+begin_src emacs-lisp
 (defun search-text-property (property &optional value predicate not-current)
@@ -3366,7 +3370,7 @@ Add more globals to save between sessions:
 
 ** quail
 
-Alternative Keyboard Feature implemented in [[bug:9751]]
+Alternative Keyboard Feature implemented in [[https://debbugs.gnu.org/9751][bug#9751]]
 and posted to http://ru-emacs.livejournal.com/82428.html
 This is now available from https://github.com/a13/reverse-im.el
 #+begin_src emacs-lisp
@@ -3417,7 +3421,7 @@ Use Unicode ellipsis in ‘C-x C-b’ (list-buffers):
   (setq truncate-string-ellipsis "…"))
 #+end_src
 
-Use buffer's coding for the output of ~base64-decode~ ([[bug:38587]])
+Use buffer's coding for the output of ~base64-decode~ ([[https://debbugs.gnu.org/38587][bug#38587]])
 (can be overridden by =C-x RET c=):
 
 #+begin_src emacs-lisp
@@ -3489,7 +3493,7 @@ words of another script.  This advice fixes this:
 #+end_src
 
 There was no symmetry for sexp like in =right-char= / =left-char=
-and =right-word= / =left-word= ([[bug:36923]])
+and =right-word= / =left-word= ([[https://debbugs.gnu.org/36923][bug#36923]])
 
 #+begin_src emacs-lisp
 (defun right-sexp (&optional arg)
@@ -3719,7 +3723,7 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 
 Workaround a bug in NEWS files where Symbol search fails.
 Use solution like in change-log-mode-syntax-table.
-See more at [[bug:31231]]
+See more at [[https://debbugs.gnu.org/31231][bug#31231]].
 
 #+begin_src emacs-lisp
 (add-hook
@@ -3756,12 +3760,12 @@ For dir-local repository settings:
 (put 'dired-vc-rename-file 'safe-local-variable 'booleanp)
 #+end_src
 
-** Fall back between vc-diff and diff-backup (bug#41779)
+** Fall back between vc-diff and diff-backup
 
 When ~diff-backup~ is accidentally used on a file registered in
-a version-control system then fall back to the ~vc-diff~ command.  And vice
-versa: when =C-x v == (~vc-diff~) is accidentally typed on a non-vc file
-then fall back to ~diff-backup~.
+a version-control system then fall back to the ~vc-diff~ command.
+And vice versa: when =C-x v == (~vc-diff~) is accidentally typed on
+a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779][Bug#41779]])
 
 #+begin_src emacs-lisp
 (advice-add 'diff-backup :around
