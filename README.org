@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-07-14
+#+DATE: 2020-08-12
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -128,7 +128,7 @@ There are many different definitions what Emacs really is - some call it
 Integrated Development Environment (IDE), some call it a Lisp machine, etc.
 and all of them are right.  What definition would be more relevant in the
 context of this configuration file is that Emacs not just an editor, but
-the *Editor Construction Kit* - that means an editor creation system whose
+the *Editor Construction Kit* - that means an editor creation toolkit whose
 blocks could be combined in infinitely many ways to build a completely new editor -
 and not just an editor but anything possible: web browser, mail client, [[https://xkcd.com/378/][butterfly]]...
 So Emacs is more like a UI framework.
@@ -1185,29 +1185,12 @@ Below is customization of different modes to support convenient navigation:
 *** image-mode
 
 #+begin_src emacs-lisp
-(defun my-image-prev-dired ()
-  (interactive)
-  (kill-current-buffer-and-dired-jump)
-  (clear-image-cache)
-  (dired-previous-line 1)
-  (dired-view-file))
-
-(defun my-image-next-dired ()
-  (interactive)
-  (kill-current-buffer-and-dired-jump)
-  (clear-image-cache)
-  (dired-next-line 1)
-  (dired-view-file))
-
 (with-eval-after-load 'image-mode
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key image-mode-map [?\S-\ ] 'image-scroll-down)
   (define-key image-mode-map "q" 'quit-window-kill-buffer)
   (define-key image-mode-map [(meta left)] 'quit-window-kill-buffer)
   ;; Browse prev/next images according to their order in Dired
-  ;; ALSO in Emacs 27 ‘n’ (image-next-file) and ‘p’ are available
-  (define-key image-mode-map [(left)] 'my-image-prev-dired)
-  (define-key image-mode-map [(right)] 'my-image-next-dired)
+  (define-key image-mode-map [(left)] 'image-previous-file)
+  (define-key image-mode-map [(right)] 'image-next-file)
   (define-key image-mode-map [(control left)] 'image-backward-hscroll)
   (define-key image-mode-map [(control right)] 'image-forward-hscroll))
 #+end_src
@@ -2968,6 +2951,7 @@ Fix keys broken by org:
   (define-key org-mode-map (kbd "C-<tab>") 'tab-next)
   (define-key org-mode-map (kbd "M-<left>") 'my-go-back)
   (define-key org-mode-map (kbd "M-<right>") 'my-find-thing-at-point)
+  (define-key org-mode-map (kbd "C-M-t") 'transpose-sexps)
 
   ;; Undefine hijacked remappings
   (define-key org-mode-map (vector 'remap 'backward-paragraph) nil)
