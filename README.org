@@ -3793,8 +3793,8 @@ then fall back to ~diff-backup~.
 ** Use project directories everywhere
 
 When a prompt of some commands such as ~rgrep~ or ~vc-print-log~ asks for
-a directory name, allow ~M-n~ to access the most recently used project
-directories saved in ~~/.emacs.d/projects~.
+a directory name, allow =M-n= to access the most recently used project
+directories saved in =~/.emacs.d/projects=.
 
 #+begin_src emacs-lisp
 (require 'project)
@@ -3828,6 +3828,12 @@ directories saved in ~~/.emacs.d/projects~.
                 (let ((default-directory dir))
                   (project-current))))
             '((name . vc-dir-add-project)))
+#+end_src
+
+Add the default project command bound to the =RET= key:
+
+#+begin_src emacs-lisp
+(push '(return "Default" project-dired) project-switch-commands)
 #+end_src
 
 * Other
