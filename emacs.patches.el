@@ -961,8 +961,6 @@ delete flagged files.\n\n"))))))
 ;; ?x
 ;; ?z
 ;; ?Z
-;; BTW, ALSO BOM is not displayed
-;; (but "ZERO WIDTH NO-BREAK SPACE" is displayed)
 
 ;; This fix uses mnemonics only for familiar codings that are frequently used.
 ;; Otherwise, it displays the full name of the encodings.
