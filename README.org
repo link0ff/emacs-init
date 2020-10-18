@@ -135,7 +135,7 @@ context of this configuration file is that Emacs not just an editor, but
 the *Editor Construction Kit* - that means an editor creation toolkit whose
 blocks could be combined in infinitely many ways to build a completely new editor -
 and not just an editor but anything possible: web browser, mail client, [[https://xkcd.com/378/][butterfly]]...
-So Emacs is more like a UI framework.
+So Emacs is more like a UI framework, and a platform for apps.
 
 And indeed, looking at different customizations, it's easy to notice that
 none of them are like other editors based on the same Emacs core.
@@ -668,7 +668,7 @@ Here's a short table of mappings:
       (let ((insert-pair-alist
              (cons
               (if (use-fancy-quotes-p)
-                  (if (eq (aref char-script-table (char-after)) 'cyrillic)
+                  (if (and (not (eobp)) (eq (aref char-script-table (char-after)) 'cyrillic))
                       '(?\" ?\« ?\»)
                     '(?\" ?\“ ?\”))
                 '(?\" ?\" ?\"))
@@ -2837,7 +2837,10 @@ that highlights escape sequences emitted by many programs:
 
 #+begin_src emacs-lisp
 (setq-default
- comint-history-isearch 'dwim
+ ;; FIXME: `comint-history-isearch' can't by customized by `setq-default'
+ ;; because `custom-reevaluate-setting' in `comint-history-isearch-end'
+ ;; reverts this customized value:
+ ;; comint-history-isearch 'dwim
  comint-input-ignoredups t
  comint-input-ring-size 65535
  comint-move-point-for-output nil)
