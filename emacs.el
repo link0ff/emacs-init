@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-07-14 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-10-18 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -948,7 +948,12 @@ With prefix arg, insert the current timestamp to the current buffer."
     "HTML level 2 headline tags."
     nil
     "<h2><a name=\"" (setq str (read-string "Name: "))
-    "\" id=\"" str "\">" _ "</a></h2>"))
+    "\" id=\"" str "\">" _ "</a></h2>")
+
+  (add-hook 'sgml-mode-hook
+          (lambda ()
+            ;; Don't insert newlines after <span></span>
+            (setq-local skeleton-end-newline nil))))
 
 (add-hook 'html-mode-hook 'turn-off-auto-fill)
 (add-hook 'html-mode-hook
@@ -1528,6 +1533,7 @@ then output is inserted in the current buffer."
     (goto-char (point-max)))
 
   (define-key my-map "ww" 'my-dictem-run-search-from-clipboard-or-word-at-point)
+  (global-set-key "\M-s\M-d" 'my-dictem-run-search-from-clipboard-or-word-at-point)
 
   (add-hook 'dictem-postprocess-match-hook
             'dictem-postprocess-match)

@@ -1102,6 +1102,8 @@ Below is customization of different modes to support convenient navigation:
 *** dired
 
 #+begin_src emacs-lisp
+(require 'dired)
+
 (define-key dired-mode-map [(meta left)]
   ;; Mozilla-like navigation
   (lambda (_arg)
