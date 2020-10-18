@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-08-19
+#+DATE: 2020-10-18
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3420,13 +3420,6 @@ or with =C-x RET c utf-8 RET C-x C-f=.
       (delete (rassoc 'utf-16le-with-signature auto-coding-regexp-alist)
       (delete (rassoc 'utf-8-with-signature auto-coding-regexp-alist)
               auto-coding-regexp-alist))))
-#+end_src
-
-Use Unicode ellipsis in ‘C-x C-b’ (list-buffers):
-
-#+begin_src emacs-lisp
-(with-eval-after-load 'mule-util
-  (setq truncate-string-ellipsis "…"))
 #+end_src
 
 Use buffer's coding for the output of ~base64-decode~ ([[https://debbugs.gnu.org/38587][bug#38587]])
