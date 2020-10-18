@@ -1859,6 +1859,21 @@ Cancel the clock if called with C-u."
                (internal-border-width . 0))))))
 
 
+;;; New settings added in Emacs 28
+
+(lossage-size 3000)
+
+(setq frame-title-format '(multiple-frames "%b" ("" invocation-name "@" system-name)))
+
+;; (setq mode-line-position-column-format "%c"
+;;       mode-line-position-line-format "%l")
+
+;; (setq mode-line-position-column-line-format '(-10 " (%l,%c)"))
+
+;; causes jumpiness
+;; (set-face-attribute 'mode-line nil :inherit 'variable-pitch)
+
+
 ;;; Local Variables:
 ;;; mode: emacs-lisp
 ;;; outline-regexp: ";;;;* "
