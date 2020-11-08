@@ -3731,6 +3731,16 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 (add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 #+end_src
 
+** Fix org-mode
+
+Why wouldn't org-mode always redisplay inserted inline images automatically
+after executing SRC block?
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images))
+#+end_src
+
 ** Fix outline-mode in NEWS files
 
 Workaround a bug in NEWS files where Symbol search fails.
