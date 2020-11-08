@@ -3772,6 +3772,20 @@ For dir-local repository settings:
 (put 'dired-vc-rename-file 'safe-local-variable 'booleanp)
 #+end_src
 
+Fix ~nobreak-char-display~ in Dired file sizes (see [[https://debbugs.gnu.org/44236][bug#44236]]):
+
+#+begin_src emacs-lisp
+(when (fboundp 'markchars-mode)
+  (add-hook 'dired-mode-hook
+            (lambda ()
+              (setq-local nobreak-char-display nil)
+              (setq-local markchars-what
+                          (append (default-value 'markchars-what)
+                                  '(markchars-nobreak-space
+                                    markchars-nobreak-hyphen)))
+              (markchars-mode 1))))
+#+end_src
+
 ** Fall back between vc-diff and diff-backup
 
 When ~diff-backup~ is accidentally used on a file registered in
