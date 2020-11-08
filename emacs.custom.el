@@ -179,6 +179,7 @@
  '(nnmail-crosspost-link-function 'copy-file)
  '(nnmail-extra-headers '(To Cc))
  '(nnmail-treat-duplicates 'delete)
+ '(org-fontify-whole-heading-line t)
  '(parens-require-spaces nil)
  '(perl-indent-level 2)
  '(perl-prettify-symbols nil)
