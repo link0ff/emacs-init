@@ -54,6 +54,7 @@
  '(cursor-in-non-selected-windows nil)
  '(custom-buffer-done-function 'kill-buffer)
  '(debug-on-error t)
+ '(default-transient-input-method "compose")
  '(delete-selection-mode t)
  '(describe-char-unidata-list t)
  '(desktop-auto-save-timeout 60)
