@@ -137,6 +137,8 @@
  '(image-use-external-converter t)
  '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries '((up . right) (down . right)))
+ '(inf-ruby-console-environment "development")
+ '(inf-ruby-prompt-read-only nil)
  '(inhibit-startup-echo-area-message "juri")
  '(inhibit-startup-screen nil)
  '(initial-buffer-choice nil)

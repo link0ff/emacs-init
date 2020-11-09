@@ -50,11 +50,6 @@
 		"translations.js"
 		)))
 
-(when (>= emacs-major-version 24)
-  (require 'package)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
-  (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t))
-
 (require 'erlang-start nil t)
 
 ;; (add-to-list 'auto-mode-alist '("\\.sass\\'" . scss-mode))
@@ -65,6 +60,9 @@
 ;;   (define-key enh-ruby-mode-map [(control right)] 'enh-ruby-forward-sexp))
 
 (defvar ruby-use-smie nil)
+
+(eval-after-load 'inf-ruby
+  '(define-key inf-ruby-minor-mode-map (kbd "C-c C-s") 'inf-ruby-console-auto))
 
 (when (fboundp 'global-diff-hl-mode)
   (global-diff-hl-mode))
