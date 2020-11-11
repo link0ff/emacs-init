@@ -306,6 +306,7 @@
  '(isearch ((((class color) (background light)) (:background "magenta4" :foreground "lightskyblue1")) (((class color) (background dark)) (:background "palevioletred2" :foreground "brown4"))))
  '(isearch-group-2 ((t (:background "magenta3" :foreground "lightskyblue1"))))
  '(link ((t (:foreground "medium blue"))))
+ '(log-view-commit-body ((t (:extend t :background "gray98"))))
  '(markdown-code-face ((t (:inherit italic))))
  '(match ((t (:background "#ffff88"))))
  '(message-cited-text-1 ((((class color) (background light)) (:foreground "DarkGreen"))))
