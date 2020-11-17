@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-11-11
+#+DATE: 2020-11-17
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -86,6 +86,10 @@
   - [[#fix-messages-buffer][Fix =*Messages*= buffer]]
   - [[#fix-mark-in-two-windows-with-same-buffer][Fix mark in two windows with same buffer]]
   - [[#fix-outline-mode-in-news-files][Fix outline-mode in NEWS files]]
+  - [[#fix-outline-faces][Fix outline faces]]
+  - [[#fix-org-mode-faces][Fix org-mode faces]]
+  - [[#fix-org-mode-keys][Fix org-mode keys]]
+  - [[#fix-org-mode-code-blocks][Fix org-mode code blocks]]
   - [[#fix-mode-line-faces][Fix mode-line faces]]
   - [[#fix-dired][Fix dired]]
   - [[#fall-back-between-vc-diff-and-diff-backup][Fall back between vc-diff and diff-backup]]
@@ -2956,11 +2960,6 @@ Pre-load some useful packages:
             ;; For (info "(org) Structure Templates")
             (require 'org-tempo)))
 
-(with-eval-after-load 'org-faces
-  (mapc (lambda (f) (set-face-background f "#ddeeff")) org-level-faces)
-  ;; TODO: :extend should be fixed in next version of Org, so remove later:
-  (mapc (lambda (f) (set-face-extend f t)) org-level-faces))
-
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
@@ -3731,16 +3730,6 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 (add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 #+end_src
 
-** Fix org-mode
-
-Why wouldn't org-mode always redisplay inserted inline images automatically
-after executing SRC block?
-
-#+begin_src emacs-lisp
-(with-eval-after-load 'org
-  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images))
-#+end_src
-
 ** Fix outline-mode in NEWS files
 
 Workaround a bug in NEWS files where Symbol search fails.
@@ -3756,6 +3745,73 @@ See more at [[https://debbugs.gnu.org/31231][bug#31231]].
        (modify-syntax-entry ?` "'   " table)
        (modify-syntax-entry ?' "'   " table)
        (set-syntax-table table)))))
+#+end_src
+
+** Fix outline faces
+
+Outline faces inherit from font-lock faces that is a bad thing to do
+because often it's needed to customize font-lock faces to better
+highlight syntactic constructs in programming languages.  But such
+face customization also changes outline faces that breaks distinguishability
+of outline faces.  So need to restore original distinctive colors in outline faces:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'outline
+  (set-face-foreground 'outline-1 "Blue1")
+  (set-face-foreground 'outline-2 "VioletRed4") ;; "sienna"
+  (set-face-foreground 'outline-3 "Purple")
+  (set-face-foreground 'outline-4 "Firebrick")
+  (set-face-foreground 'outline-5 "ForestGreen")
+  (set-face-foreground 'outline-6 "dark cyan")
+  (set-face-foreground 'outline-7 "dark slate blue")
+  (set-face-foreground 'outline-8 "sienna") ;; "VioletRed4"
+  )
+#+end_src
+
+** Fix org-mode faces
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org-faces
+  ;; Header color like in Wikipedia
+  (mapc (lambda (f) (set-face-background f "#ddeeff")) org-level-faces)
+  ;; TODO: :extend should be fixed in next version of Org, so remove later:
+  (mapc (lambda (f) (set-face-extend f t)) org-level-faces))
+#+end_src
+
+** Fix org-mode keys
+
+Allow using shifted keys in org with isearch when ~isearch-yank-on-move~
+is customized to the value =shift=:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org-keys
+  (dolist (org-shiftcommand
+           '(org-shiftmetaleft org-shiftmetaright
+             org-shiftmetaup org-shiftmetadown
+             org-shiftup org-shiftdown
+             org-shiftright org-shiftleft
+             org-shiftcontrolright org-shiftcontrolleft
+             org-shiftcontrolup org-shiftcontroldown))
+    (put org-shiftcommand 'isearch-move 'enabled)))
+#+end_src
+
+** Fix org-mode code blocks
+
+Try to emulate the =S-RET= key in code blocks in org-mode.  See more at
+https://lists.gnu.org/archive/html/emacs-orgmode/2020-11/msg00247.html
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org-keys
+  ;; But this breaks ‘S-RET’ in tables.
+  (define-key org-mode-map (kbd "S-<return>") 'org-babel-demarcate-block))
+#+end_src
+
+Why wouldn't org-mode always redisplay inserted inline images automatically
+after executing SRC block?
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images))
 #+end_src
 
 ** Fix mode-line faces
