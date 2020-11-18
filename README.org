@@ -1946,6 +1946,18 @@ See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
 (define-key minibuffer-local-map [S-return] 'newline)
 #+end_src
 
+=C-RET= in the =*Completions*= buffer inserts the selected completion
+to the minibuffer without exiting it.
+
+#+begin_src emacs-lisp
+(defun choose-completion-no-auto-exit ()
+  (interactive)
+  (let ((completion-no-auto-exit t))
+    (call-interactively 'choose-completion)))
+
+(define-key completion-list-mode-map [C-return] 'choose-completion-no-auto-exit)
+#+end_src
+
 Remove potentially dangerous commands from the history immediately.
 Also like in Bash HISTCONTROL: "A colon-separated list of values controlling
 how commands are saved on the history list.  If the list of values includes
