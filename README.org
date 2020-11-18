@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-11-17
+#+DATE: 2020-11-18
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -1352,28 +1352,51 @@ Easier-to-type grep invocations:
 Please read the docstring, it describes the command pretty well:
 
 #+begin_src emacs-lisp
-(defvar yank-from-kill-ring-history nil)
+(defvar yank-from-kill-ring-history)
 (defun yank-from-kill-ring (string)
   "Insert the kill-ring item selected from the minibuffer history.
 Use minibuffer navigation and search commands to browse the kill-ring
-in the minibuffer history before typing RET to insert the item."
+in the minibuffer history before typing RET to insert the item,
+or use completion on the elements of the kill-ring."
   (interactive
-   (list (let ((history-add-new-input nil)
-               ;; Remove keymaps from text properties of copied string,
-               ;; because typing RET in the minibuffer might call
-               ;; an irrelevant command from the map of copied string.
-               (yank-from-kill-ring-history
-                (mapcar (lambda (h)
-                          ;; TODO: remove all props except face/font-lock-face
-                          (remove-list-of-text-properties
-                           0 (length h)
-                           '(
-                             keymap local-map action mouse-action
-                             button category help-args)
-                           h)
-                          h)
-                        kill-ring)))
-           (read-string "Yank from kill-ring: " nil 'yank-from-kill-ring-history))))
+   (list (let* ((history-add-new-input nil)
+                ;; Remove keymaps from text properties of copied string,
+                ;; because typing RET in the minibuffer might call
+                ;; an irrelevant command from the map of copied string.
+                (yank-from-kill-ring-history
+                 (mapcar (lambda (s)
+                           ;; TODO: remove all props except face/font-lock-face
+                           (remove-list-of-text-properties
+                            0 (length s)
+                            '(
+                              keymap local-map action mouse-action
+                              button category help-args)
+                            s)
+                           s)
+                         kill-ring))
+                (completions
+                 ;; query-replace-descr is also useful for icomplete-mode
+                 (mapcar (lambda (s)
+                           (let* ((s (query-replace-descr s))
+                                  (b 0))
+                             ;; Add ellipsis on leading whitespace
+                             (when (string-match "\\`[[:space:]]+" s)
+                               (setq b (match-end 0))
+                               (add-text-properties 0 b `(display "…") s))
+                             (when (> (length s) (- 40 b))
+                               (add-text-properties
+                                (min (+ b 40) (length s)) (length s)
+                                `(display "…") s))
+                             s))
+                         yank-from-kill-ring-history)))
+           (completing-read "Yank from kill-ring: "
+                            (lambda (string pred action)
+                              (if (eq action 'metadata)
+                                  ;; Keep sorted by recency
+	                          '(metadata (display-sort-function . identity))
+                                (complete-with-action action completions string pred)))
+                            nil nil nil
+                            'yank-from-kill-ring-history))))
   (setq yank-window-start (window-start))
   (push-mark)
   (insert-for-yank string))
