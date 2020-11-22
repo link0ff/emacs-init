@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-11-18
+#+DATE: 2020-11-20
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3914,10 +3914,12 @@ a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779
               (if (vc-deduce-backend)
                   (apply orig-fun args)
                 ;; Fall back to non-vc diff-backup
-                (diff-backup (if (derived-mode-p 'dired-mode)
-                                 (dired-get-filename)
-                               buffer-file-name)
-                             vc-diff-switches)))
+                (let ((file (if (derived-mode-p 'dired-mode)
+                                (dired-get-filename)
+                              buffer-file-name)))
+                  (if file
+                      (diff-backup file vc-diff-switches)
+                    (error "File is not under version control")))))
             '((name . vc-diff-fallback-to-diff-backup)))
 #+end_src
 
