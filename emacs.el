@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-10-30 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-11-25 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1548,6 +1548,7 @@ then output is inserted in the current buffer."
             (lambda ()
               (define-key dictem-mode-map [tab] 'dictem-next-link)
               (define-key dictem-mode-map [(backtab)] 'dictem-previous-link)
+              (define-key dictem-mode-map [?\S-\ ] 'scroll-down)
               (setq-local outline-regexp "From")
               (outline-minor-mode 1)
               ;; (define-key dictem-mode-map [(meta left)]  'my-dictem-prev-word?)
