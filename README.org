@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-11-29
+#+DATE: 2020-12-02
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3534,7 +3534,7 @@ Fix ~compare-windows~:
 
 ** Fix isearch
 
-Set ~isearch-scroll~ on some commands:
+Set ~isearch-scroll~ on some commands to be able to use them without exiting ~isearch-mode~:
 
 #+begin_src emacs-lisp
 (put 'narrow-to-defun 'isearch-scroll t)
@@ -3547,6 +3547,22 @@ Set ~isearch-scroll~ on some commands:
 (put 'windmove-display-down  'isearch-scroll t)
 (put 'windmove-display-left  'isearch-scroll t)
 (put 'windmove-display-right 'isearch-scroll t)
+#+end_src
+
+Often after =C-M-left= (~left-word~) that puts point at the beginning of
+the current word, I want to start searching with yanking this word to the
+search string by typing =C-s C-w=, but sometimes I don't release the =Ctrl= key
+before typing =C-s=, so actually =C-M-s= is typed that inadvertently activates
+the regexp search and adds the search string into the wrong history ring
+~regexp-search-ring~.  So here is a fix for such a situation:
+
+#+begin_src emacs-lisp
+(advice-add 'isearch-mode :around
+            (lambda (orig-fun forward &optional regexp &rest args)
+              (when (and regexp (eq last-command 'left-word))
+                (setq regexp nil))
+              (apply orig-fun forward regexp args))
+            '((name . isearch-mode-regexp-after-left-word)))
 #+end_src
 
 ** Fix next-error
@@ -3772,6 +3788,11 @@ is customized to the value =shift=:
              org-shiftcontrolright org-shiftcontrolleft
              org-shiftcontrolup org-shiftcontroldown))
     (put org-shiftcommand 'isearch-move 'enabled)))
+
+(with-eval-after-load 'org
+  (defun org-call-for-shift-select (cmd)
+    (let ((this-command-keys-shift-translated (not isearch-mode)))
+      (call-interactively cmd))))
 #+end_src
 
 ** Fix org-mode code blocks
