@@ -56,6 +56,7 @@
  '(custom-buffer-done-function 'kill-buffer)
  '(debug-on-error t)
  '(default-transient-input-method "compose")
+ '(delete-old-versions 'other)
  '(delete-pair-blink-delay 0.3)
  '(delete-selection-mode t)
  '(describe-char-unidata-list t)

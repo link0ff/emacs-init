@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-11-25 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-12-02 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -303,7 +303,8 @@ With C-u, C-0 or M-0, cancel the timer."
   (split-window-horizontally)
   (split-window-horizontally)
   (balance-windows)
-  (other-window -1))
+  (other-window -1)
+  (follow-mode 1))
 
 (defun follow-mode-3 ()
   (interactive)
