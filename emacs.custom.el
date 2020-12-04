@@ -68,6 +68,7 @@
  '(diff-font-lock-syntax 'hunk-also)
  '(diff-switches '("-u"))
  '(dired-auto-revert-buffer t)
+ '(dired-clean-confirm-killing-deleted-buffers nil)
  '(dired-create-destination-dirs 'ask)
  '(dired-dwim-target 'dired-dwim-target-recent)
  '(dired-isearch-filenames 'dwim)
@@ -124,7 +125,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color -inH -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color=always -inH -e <R> | cut -c -200")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
