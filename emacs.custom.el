@@ -125,7 +125,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e grep <C> --color=always -inH -e <R> | cut -c -200")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg -inH --color always --no-heading -M 200 --max-columns-preview -e <R>")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
@@ -184,6 +184,7 @@
  '(multi-isearch-pause nil)
  '(next-error-message-highlight 'keep)
  '(nnmail-crosspost-link-function 'copy-file)
+ '(nnmail-expiry-wait 30)
  '(nnmail-extra-headers '(To Cc))
  '(nnmail-treat-duplicates 'delete)
  '(org-babel-results-keyword "results")
@@ -256,6 +257,7 @@
  '(wget-debug t)
  '(what-cursor-show-names t)
  '(woman-use-own-frame nil)
+ '(xref-show-definitions-function 'xref--show-defs-minibuffer)
  '(yank-excluded-properties t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
