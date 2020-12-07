@@ -257,6 +257,7 @@
  '(wget-debug t)
  '(what-cursor-show-names t)
  '(woman-use-own-frame nil)
+ '(xref-search-program 'ripgrep)
  '(xref-show-definitions-function 'xref--show-defs-minibuffer)
  '(yank-excluded-properties t))
 (custom-set-faces
