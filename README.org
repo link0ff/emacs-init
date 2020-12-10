@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-12-02
+#+DATE: 2020-12-10
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -841,6 +841,15 @@ This is a more general version that also handles numbered lists:
 (define-key global-map [(control shift return)] 'my-reindent-then-newline-and-indent)
 
 (define-key global-map [S-return] 'electric-newline-and-maybe-indent)
+#+end_src
+
+** Use org-like (S-)TAB header cycle in all modes
+
+#+begin_src emacs-lisp
+(defun my-outline-minor-mode ()
+  (setq-local outline-minor-mode-cycle t)
+  (outline-minor-mode 1))
+(add-hook 'find-file-hooks 'my-outline-minor-mode)
 #+end_src
 
 ** Efficient navigation in different modes

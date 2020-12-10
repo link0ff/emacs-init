@@ -349,6 +349,6 @@
  '(w3m-arrived-anchor-face ((((class color) (background light)) (:foreground "DarkMagenta"))) t)
  '(w3m-current-anchor-face ((t (:foreground "red"))) t)
  '(widget-button ((t nil)))
- '(xref-file-header ((t (:inherit success :background "grey95" :extend t))))
+ '(xref-file-header ((t (:extend t :background "grey95"))))
  '(xref-line-number ((t (:inherit shadow))))
  '(xref-match ((t (:inherit match)))))
