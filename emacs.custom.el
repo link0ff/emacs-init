@@ -125,7 +125,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg -inH --color always --no-heading -M 200 --max-columns-preview -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg -inH --color always --no-heading -j8 --sort path -M 200 --max-columns-preview -e <R>")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
