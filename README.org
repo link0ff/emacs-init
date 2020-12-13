@@ -2947,7 +2947,7 @@ Pre-load some useful packages:
 
 ;; Unfortunately, this has no effect because
 ;; ‘display-buffer-alist’ is ignored in ‘org-no-popups’
-(push `("\\`\\*Org Select\\*\\'"
+(push '("\\`\\*Org Select\\*\\'"
         display-buffer-below-selected)
       display-buffer-alist)
 

@@ -66,3 +66,6 @@
 
 (when (fboundp 'global-diff-hl-mode)
   (global-diff-hl-mode))
+
+(when (fboundp 'global-robe-mode)
+  (global-robe-mode))
