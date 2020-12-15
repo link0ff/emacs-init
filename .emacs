@@ -65,7 +65,8 @@
   '(define-key inf-ruby-minor-mode-map (kbd "C-c C-s") 'inf-ruby-console-auto))
 
 (when (fboundp 'global-diff-hl-mode)
-  (global-diff-hl-mode))
+  (global-diff-hl-mode +1))
 
 (when (fboundp 'global-robe-mode)
-  (global-robe-mode))
+  (global-robe-mode +1)
+  (add-to-list 'debug-ignored-errors "Method not found"))
