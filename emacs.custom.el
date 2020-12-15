@@ -283,6 +283,8 @@
  '(cvs-marked ((t (:foreground "DarkRed"))))
  '(cvs-need-action ((((class color) (background light)) (:foreground "DarkGreen"))))
  '(diary ((((class color)) (:foreground "blue"))))
+ '(dictionary-word-definition-face ((t nil)))
+ '(dictionary-word-entry-face ((t (:foreground "darkblue" :weight bold))))
  '(diff-hl-change ((t (:inherit diff-refine-changed))))
  '(diff-refine-added ((t (:inherit diff-refine-changed :background "#d4ffd4"))))
  '(diff-refine-removed ((t (:inherit diff-refine-changed :background "#ffd4d4"))))

@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-12-02 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-12-15 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1402,173 +1402,6 @@ Example:
     ;; (setq-local outline-regexp "^.*:$")
     ;; (outline-minor-mode 1)
     ))
-
-
-;;; dictionary
-
-(defvar my-dict-history nil
-  "History list for previous word definitions.")
-
-(defun my-dict-search-word (word &optional output-buffer)
-  "Search the word under point (by default) or entered from minibuffer,
-if prefix argument is not null. Search is preformed using
-external program `dict2'. The output appears in the buffer `*Dictionary*'.
-If the output is one line, it is displayed in the echo area.
-If OUTPUT-BUFFER is not nil, or prefix argument is not nil or 0,
-then output is inserted in the current buffer."
-  (interactive
-   (let* ((default (if (and transient-mark-mode mark-active)
-                       (buffer-substring-no-properties
-                        (region-beginning) (region-end))
-                     (current-word)))
-          (value (if t;; (not (null current-prefix-arg))
-                     (read-from-minibuffer
-                      "Search word: " default nil nil 'my-dict-history)
-                   default)))
-     (list (if (equal value "") default value)
-           (if (not (equal current-prefix-arg 0)) current-prefix-arg))))
-  (let* ((new-buffer-name (or output-buffer "*Dictionary*")))
-    ;; (concat "*Dictionary " word "*")
-    (shell-command (concat "dict2 \"" word "\"") new-buffer-name)
-    (if (member new-buffer-name (mapcar (function buffer-name) (buffer-list)))
-        (with-current-buffer new-buffer-name
-          ;; (my-windows-balance)
-          (goto-char (point-min))
-          (while (re-search-forward "{+\\([^}]+\\)}+" nil t)
-            (let* ((link-text (match-string 1))
-                   (link-value link-text))
-              (replace-match "")        ; create widget in place of text
-              (while (string-match "\n\\s-*" link-value) ; multi-line links
-                (setq link-value (replace-match " " t t link-value)))
-              (widget-create 'link
-                             :format (concat "%[" link-text "%]")
-                             :button-face 'info-xref
-                             :notify (lambda (widget &rest _ignore)
-                                       (push (widget-value widget) my-dict-history)
-                                       (my-dict-search-word (widget-value widget)))
-                             :button-prefix ""
-                             :button-suffix ""
-                             link-value)))
-          (goto-char (point-min))
-          (setq buffer-read-only nil)
-          ;; (toggle-read-only 1) ;; don't use view mode, but instead use its keymap
-          ;; Is it right? (another solution is in help-mode-hook)
-          (select-window (get-buffer-window new-buffer-name))
-          ;; Make major or minor mode for *Dictionary <word>* buffers
-          ;; TODO: use (local-set-key) instead
-          ;; (use-local-map widget-keymap)
-          (use-local-map (copy-keymap view-mode-map))
-          (set-keymap-parent (current-local-map) widget-keymap)
-          ;; Mozilla-like navigation:
-          (define-key (current-local-map) [(meta right)] 'widget-button-press)
-          ;; Lynx-like navigation:
-          (define-key (current-local-map) [(meta left)]
-            (lambda () (interactive)
-               (pop my-dict-history)
-               (my-dict-search-word (car my-dict-history))))
-          (define-key (current-local-map) [(meta up)]
-            (lambda ()
-               (interactive)
-               (my-prev-link-or-scroll-page-backward
-                (save-excursion
-                  (ignore-errors
-                    (widget-backward 1))
-                  (point)))))
-          (define-key (current-local-map) [(meta down)]
-            (lambda ()
-               (interactive)
-               (my-next-link-or-scroll-page-forward
-                (save-excursion
-                  (ignore-errors
-                    (widget-forward 1))
-                  (point)))))
-          (define-key (current-local-map) "q"
-            ;; Works only in view-mode
-            (lambda () (interactive) (view-mode) (View-quit)))
-          )
-      (delete-other-windows))))
-;; (push "*Dictionary*" pop-up-frames)
-
-
-;;; dictem
-
-(when (require 'dictem nil t)
-  (setq dictem-server "dict.org")
-  (setq dictem-server "mova.org")
-  (setq dictem-server "localhost")
-  (setq dictem-port   "2628")
-  (dictem-initialize)
-  ;; (global-set-key "\C-cs" 'dictem-run-search)
-  ;; (global-set-key "\C-cm" 'dictem-run-match)
-  ;; (define-key my-map "dm" 'my-dictem-run-search)
-  ;; (global-set-key "\C-cd" 'dictem-run-define)
-  ;; (global-set-key "\C-c\M-r" 'dictem-run-show-server)
-  ;; (global-set-key "\C-c\M-i" 'dictem-run-show-info)
-  ;; (global-set-key "\C-c\M-b" 'dictem-run-show-databases)
-
-  (defun my-dictem-run-search (query)
-    (interactive
-     (list (dictem-read-query
-            (let ((word (assq 'word (plist-get (text-properties-at (point))
-                                               'link-data))))
-              (or (cdr word) (thing-at-point 'word))))))
-    (switch-to-buffer (get-buffer-create dictem-buffer-name))
-    (dictem-mode)
-    (dictem-run 'dictem-base-search "*" query ".")
-    (goto-char (point-max))
-    (recenter-top-bottom -1))
-
-  (define-key my-map "wd" 'my-dictem-run-search)
-
-  (defun my-dictem-run-search-from-clipboard-or-word-at-point ()
-    (interactive)
-    (my-dictem-run-search
-     (or (and (use-region-p)
-              (buffer-substring-no-properties
-               (region-beginning) (region-end)))
-         (thing-at-point 'word)
-         (and kill-ring
-              (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
-              (current-kill 0))
-         (dictem-read-query)))
-    (goto-char (point-max)))
-
-  (define-key my-map "ww" 'my-dictem-run-search-from-clipboard-or-word-at-point)
-  (global-set-key "\M-s\M-d" 'my-dictem-run-search-from-clipboard-or-word-at-point)
-
-  (add-hook 'dictem-postprocess-match-hook
-            'dictem-postprocess-match)
-  (add-hook 'dictem-postprocess-definition-hook
-            'dictem-postprocess-definition-separator)
-  (add-hook 'dictem-postprocess-definition-hook
-            'dictem-postprocess-definition-hyperlinks)
-  (add-hook 'dictem-postprocess-show-info-hook
-            'dictem-postprocess-definition-hyperlinks)
-
-  (add-hook 'dictem-mode-hook
-            (lambda ()
-              (define-key dictem-mode-map [tab] 'dictem-next-link)
-              (define-key dictem-mode-map [(backtab)] 'dictem-previous-link)
-              (define-key dictem-mode-map [?\S-\ ] 'scroll-down)
-              (setq-local outline-regexp "From")
-              (outline-minor-mode 1)
-              ;; (define-key dictem-mode-map [(meta left)]  'my-dictem-prev-word?)
-              (define-key dictem-mode-map [(meta right)] 'my-dictem-run-search)))
-
-  (push '("\\`\\*dictem.*" display-buffer-same-window)
-        display-buffer-alist)
-
-  ;; Stupid bug pushes an empty string to kill-ring
-  (advice-add 'dictem-base-do-default-server :around
-              (lambda (orig-fun &rest args)
-                (let (kill-ring kill-ring-yank-pointer)
-                  (apply orig-fun args)))
-              '((name . dictem-base-do-default-server-no-kill-ring)))
-
-  (setq dictem-use-existing-buffer t)
-  (setq dictem-empty-initial-input t))
-
-;; TODO: get default words from selected region
 
 
 ;;; calendar
