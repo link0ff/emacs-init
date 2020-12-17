@@ -287,52 +287,6 @@ With C-u, C-0 or M-0, cancel the timer."
 ;;     (set-cursor-color "black")))
 
 
-;;; window
-
-;; OLD: (setq split-window-preferred-function 'split-window-preferred-horizontally)
-;; (defadvice split-window-preferred-horizontally
-;;            (around my-split-window-preferred-horizontally act)
-;;   (let ((window ad-do-it))
-;;     (if (string-match "\\*Help\\*\\(\\|<[0-9]+>\\)" (buffer-name (car (buffer-list))))
-;;         (selected-window)
-;;       window)))
-
-(defun split-window-horizontally-3 ()
-  (interactive)
-  (delete-other-windows)
-  (split-window-horizontally)
-  (split-window-horizontally)
-  (balance-windows)
-  (other-window -1))
-
-(defun follow-mode-3 ()
-  (interactive)
-  (split-window-horizontally-3)
-  (follow-mode 1)
-  (goto-char (point-min)))
-
-(define-key my-map "3" 'split-window-horizontally-3)
-(define-key my-map "f3" 'follow-mode-3)
-
-(defun split-window-horizontally-4 ()
-  (interactive)
-  (delete-other-windows)
-  (split-window-horizontally)
-  (split-window-horizontally)
-  (other-window 2)
-  (split-window-horizontally)
-  (other-window 2))
-
-(defun follow-mode-4 ()
-  (interactive)
-  (split-window-horizontally-4)
-  (follow-mode 1)
-  (goto-char (point-min)))
-
-(define-key my-map "4" 'split-window-horizontally-4)
-(define-key my-map "f4" 'follow-mode-4)
-
-
 ;;; isearch
 
 ;; Wrap without failing, posted to

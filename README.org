@@ -468,6 +468,82 @@ Below is the only way that works reliably on GNU/Linux:
           t)
 #+end_src
 
+** Show the current buffer in 3 or 4 columns
+
+Splitting the windows horizontally to 3 or 4 columns, and enabling ~follow-mode~
+allows fitting as much as possible of the buffer contents on the screen:
+
+#+begin_src emacs-lisp
+(defun split-window-horizontally-3 ()
+  (interactive)
+  (delete-other-windows)
+  (split-window-horizontally)
+  (split-window-horizontally)
+  (balance-windows)
+  (other-window -1))
+
+(defun follow-mode-3 ()
+  (interactive)
+  (split-window-horizontally-3)
+  (follow-mode 1)
+  (goto-char (point-min)))
+
+(define-key my-map "3" 'split-window-horizontally-3)
+(define-key my-map "f3" 'follow-mode-3)
+
+(defun split-window-horizontally-4 ()
+  (interactive)
+  (delete-other-windows)
+  (split-window-horizontally)
+  (split-window-horizontally)
+  (other-window 2)
+  (split-window-horizontally)
+  (other-window 2))
+
+(defun follow-mode-4 ()
+  (interactive)
+  (split-window-horizontally-4)
+  (follow-mode 1)
+  (goto-char (point-min)))
+
+(define-key my-map "4" 'split-window-horizontally-4)
+(define-key my-map "f4" 'follow-mode-4)
+#+end_src
+
+** Org-like (S-)TAB heading cycle in all file buffers
+
+To get a better overview of the functions implemented in a prog-mode buffer,
+or the document sections available in a text-mode buffer, it's easy to enable
+~outline-minor-mode~ and use =TAB= keys with modifiers to cycle visibility.
+
+Typing =TAB= on a heading line cycles visibility of the current outline.
+Typing =S-TAB= on a heading line cycles visibility globally of the whole buffer.
+This works in all modes including derived from prog-mode and text-mode.
+
+Some modes might require setting a suitable value of ~outline-regexp~.
+In some modes that use not too much highlighting, it's possible also
+to enable ~outline-minor-mode-highlight~ to highlight outline headings.
+An example of the mode where heading highlighting could be enabled is
+~dictionary-mode~ customized at the bottom of this file.
+
+#+begin_src emacs-lisp
+(defun my-outline-minor-mode ()
+  (unless (derived-mode-p 'outline-mode)
+    (setq-local outline-minor-mode-cycle t)
+    (outline-minor-mode 1)))
+(add-hook 'find-file-hooks 'my-outline-minor-mode)
+#+end_src
+
+Also enable cycling on filename headings in *xref* buffers:
+
+#+begin_src emacs-lisp
+(add-hook 'xref--xref-buffer-mode-hook
+          (lambda ()
+            (setq-local outline-regexp "/")
+            (setq-local outline-minor-mode-cycle t)
+            (outline-minor-mode +1)))
+#+end_src
+
 * Time optimization
 
 Time optimization mostly means less clanking on keyboard to save time
@@ -1348,31 +1424,6 @@ Easier-to-type grep invocations:
 #+end_src
 
 * Useful features
-
-** Org-like (S-)TAB heading cycle in all file buffers
-
-Typing =TAB= on a heading line cycles visibility of the current outline.
-Typing =S-TAB= on a heading line cycles visibility globally of the whole buffer.
-This works in all modes including derived from prog-mode and text-mode.
-Some modes might require setting a suitable value of ~outline-regexp~.
-
-#+begin_src emacs-lisp
-(defun my-outline-minor-mode ()
-  (unless (derived-mode-p 'outline-mode)
-    (setq-local outline-minor-mode-cycle t)
-    (outline-minor-mode 1)))
-(add-hook 'find-file-hooks 'my-outline-minor-mode)
-#+end_src
-
-Also enable cycling on filename headings in *xref* buffers:
-
-#+begin_src emacs-lisp
-(add-hook 'xref--xref-buffer-mode-hook
-          (lambda ()
-            (setq-local outline-regexp "/")
-            (setq-local outline-minor-mode-cycle t)
-            (outline-minor-mode +1)))
-#+end_src
 
 ** Copy/Paste
 
