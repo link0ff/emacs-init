@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-12-15 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-12-17 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -303,8 +303,7 @@ With C-u, C-0 or M-0, cancel the timer."
   (split-window-horizontally)
   (split-window-horizontally)
   (balance-windows)
-  (other-window -1)
-  (follow-mode 1))
+  (other-window -1))
 
 (defun follow-mode-3 ()
   (interactive)
@@ -646,9 +645,6 @@ With prefix arg, insert the current timestamp to the current buffer."
   ;;   (ANY 2)
   ;;   (context 2))
   )
-
-;; qv http://stackoverflow.com/questions/3528705/clojure-inferior-lisp-window-in-emacs-being-displayed-over-code-when-doing-c-c-c
-;; (setq same-window-buffer-names (delete "*inferior-lisp*" same-window-buffer-names))
 
 
 ;;; snd
@@ -1363,45 +1359,6 @@ Example:
                 (setq b (get-next-valid-buffer (cdr bl) t))
                 (get-next-valid-buffer (cdr (memq b bl)) t)))
               " "))))
-
-
-;;; help
-
-;; TODO: same-window-buffer-names and same-window-regexps are obsolete.
-(defun describe-function-other-window ()
-  (interactive)
-  (let (same-window-buffer-names same-window-regexps)
-    (call-interactively 'describe-function)))
-
-(defun describe-variable-other-window ()
-  (interactive)
-  (let (same-window-buffer-names same-window-regexps)
-    (call-interactively 'describe-variable)))
-
-(define-key help-map "4f" 'describe-function-other-window)
-(define-key help-map "4v" 'describe-variable-other-window)
-
-(define-key help-map "A" 'apropos)
-(define-key help-map "\M-f" 'find-function)
-
-;; Separate Help sections with a line of dashes.
-(defadvice describe-bindings (after my-describe-bindings activate)
-  (with-current-buffer "*Help*"
-    (save-excursion
-      (let ((inhibit-read-only t))
-        (goto-char (point-min))
-        (while (re-search-forward "^\^L$" nil t)
-          (put-text-property (match-beginning 0) (match-end 0)
-                             'display (concat "^L" (make-string 64 ?-)))
-          ;; (overlay-put (make-overlay (match-beginning 0) (match-end 0) nil t)
-          ;;              'display (concat (make-string 64 ?-) "^L"))
-          ;; (overlay-put (make-overlay (match-beginning 0) (match-end 0) nil t)
-          ;;              'before-string (make-string 64 ?-))
-          )))
-    ;; Comment out to remove startup warnings:
-    ;; (setq-local outline-regexp "^.*:$")
-    ;; (outline-minor-mode 1)
-    ))
 
 
 ;;; calendar

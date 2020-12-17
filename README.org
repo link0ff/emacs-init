@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-12-15
+#+DATE: 2020-12-17
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -845,16 +845,6 @@ This is a more general version that also handles numbered lists:
 (define-key global-map [S-return] 'electric-newline-and-maybe-indent)
 #+end_src
 
-** Use org-like (S-)TAB header cycle in all modes
-
-#+begin_src emacs-lisp
-(defun my-outline-minor-mode ()
-  (unless (derived-mode-p 'outline-mode)
-    (setq-local outline-minor-mode-cycle t)
-    (outline-minor-mode 1)))
-(add-hook 'find-file-hooks 'my-outline-minor-mode)
-#+end_src
-
 ** Efficient navigation in different modes
 
 The most efficient way of navigation in Emacs is like those used in
@@ -1358,6 +1348,31 @@ Easier-to-type grep invocations:
 #+end_src
 
 * Useful features
+
+** Org-like (S-)TAB heading cycle in all file buffers
+
+Typing =TAB= on a heading line cycles visibility of the current outline.
+Typing =S-TAB= on a heading line cycles visibility globally of the whole buffer.
+This works in all modes including derived from prog-mode and text-mode.
+Some modes might require setting a suitable value of ~outline-regexp~.
+
+#+begin_src emacs-lisp
+(defun my-outline-minor-mode ()
+  (unless (derived-mode-p 'outline-mode)
+    (setq-local outline-minor-mode-cycle t)
+    (outline-minor-mode 1)))
+(add-hook 'find-file-hooks 'my-outline-minor-mode)
+#+end_src
+
+Also enable cycling on filename headings in *xref* buffers:
+
+#+begin_src emacs-lisp
+(add-hook 'xref--xref-buffer-mode-hook
+          (lambda ()
+            (setq-local outline-regexp "/")
+            (setq-local outline-minor-mode-cycle t)
+            (outline-minor-mode +1)))
+#+end_src
 
 ** Copy/Paste
 
@@ -3386,7 +3401,7 @@ Add more globals to save between sessions:
 
 ** dictionary
 
-Emacs 28 provides the built-in package ~dictionary~:
+Emacs 28 provides the built-in package ~dictionary~, here is its customization:
 
 #+begin_src emacs-lisp
 (defun dictionary-search-no-prompt ()
@@ -3406,14 +3421,15 @@ Emacs 28 provides the built-in package ~dictionary~:
 (add-hook 'dictionary-mode-hook
           (lambda ()
             (setq-local outline-regexp "From")
-            ;; (setq-local outline-minor-mode-cycle t)
-            ;; (setq-local outline-minor-mode-font-lock t)
+            (setq-local outline-level (lambda () 1))
+            (setq-local outline-minor-mode-cycle t)
+            (setq-local outline-minor-mode-highlight t)
             (outline-minor-mode +1)
             (define-key dictionary-mode-map [(meta left)]  'dictionary-previous)
             (define-key dictionary-mode-map [(meta right)] 'dictionary-search-no-prompt)))
 
 ;; Align screen to the bottom of the output buffer
-;; Maybe better to add a hook dictionary-search-post-hook
+;; TODO: Maybe better to add a hook dictionary-search-post-hook?
 (with-eval-after-load 'dictionary
   (advice-add 'dictionary-post-buffer :after
               (lambda ()
