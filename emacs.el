@@ -1108,7 +1108,7 @@ With prefix arg, insert the current timestamp to the current buffer."
 ;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
   (define-key outline-mode-map [(control ?*)]
     (lambda () (interactive) (outline-show-branches)))
-  (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
+;;   (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
 ;;   (define-key outline-minor-mode-map [(control meta left)]
 ;;               'my-outline-hide-entry-or-subtree)
 ;;   (define-key outline-minor-mode-map [(control meta right)]

@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2020-12-17
+#+DATE: 2020-12-20
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -492,8 +492,10 @@ allows fitting as much as possible of the buffer contents on the screen:
   (follow-mode 1)
   (goto-char (point-min)))
 
-(define-key my-map "3" 'split-window-horizontally-3)
-(define-key my-map "f3" 'follow-mode-3)
+(add-hook 'my-map-defined-hook
+          (lambda ()
+            (define-key my-map "3" 'split-window-horizontally-3)
+            (define-key my-map "f3" 'follow-mode-3)))
 
 (defun split-window-horizontally-4 ()
   (interactive)
@@ -510,8 +512,10 @@ allows fitting as much as possible of the buffer contents on the screen:
   (follow-mode 1)
   (goto-char (point-min)))
 
-(define-key my-map "4" 'split-window-horizontally-4)
-(define-key my-map "f4" 'follow-mode-4)
+(add-hook 'my-map-defined-hook
+          (lambda ()
+            (define-key my-map "4" 'split-window-horizontally-4)
+            (define-key my-map "f4" 'follow-mode-4)))
 #+end_src
 
 ** Org-like (S-)TAB heading cycle in all file buffers
@@ -519,6 +523,8 @@ allows fitting as much as possible of the buffer contents on the screen:
 To get a better overview of the functions implemented in a prog-mode buffer,
 or the document sections available in a text-mode buffer, it's easy to enable
 ~outline-minor-mode~ and use =TAB= keys with modifiers to cycle visibility.
+Also this allows hiding uninteresting parts of the buffer, while showing the
+currently relevant parts of the buffer.
 
 Typing =TAB= on a heading line cycles visibility of the current outline.
 Typing =S-TAB= on a heading line cycles visibility globally of the whole buffer.
@@ -683,6 +689,7 @@ is reassigned here to double key sequence =C-z C-z=.
     (define-key global-map "\C-z" map)
     (define-key map "\C-z" c-z)
     map))
+(run-hooks 'my-map-defined-hook)
 #+end_src
 
 My map can be used from isearch:
