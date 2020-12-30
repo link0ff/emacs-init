@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-12-17 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2020-12-25 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -988,6 +988,10 @@ With prefix arg, insert the current timestamp to the current buffer."
     (put 'ruby-end-return 'delete-selection t))
   (add-hook 'ruby-mode-hook
             (lambda ()
+              ;; Copied some keywords from ‘ruby-block-beg-keywords’ and
+              ;; ‘ruby-imenu-create-index-in-block’
+              (setq-local outline-regexp (concat "^\\s *" (regexp-opt '("class" "module" "def")) "\\s +"))
+              (setq-local outline-level (lambda () (1+ (/ (current-indentation) ruby-indent-level))))
               (setq-local require-final-newline nil)
               ;; Don't enable flymake-mode in read-only buffers
               (flymake-mode 1)
