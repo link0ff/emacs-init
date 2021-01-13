@@ -3042,8 +3042,10 @@ Pre-load some useful packages:
 
 #+begin_src emacs-lisp
 (setq-default
+ org-catch-invisible-edits 'smart
  org-confirm-babel-evaluate nil
  org-replace-disputed-keys t
+ org-return-follows-link t
  org-special-ctrl-o nil
  org-startup-folded nil
  org-support-shift-select t)
@@ -3093,6 +3095,23 @@ Fix keys broken by org:
   (when delete-selection-mode
     (put 'org-self-insert-commandorg-return 'delete-selection t)
     (put 'org-return 'delete-selection t)))
+#+end_src
+
+Show the link under point immediately (from bug#42484):
+
+#+begin_src emacs-lisp
+(defun my-org-mode-post-command-hook ()
+  "Show POINT's \"help-echo\" information in the echo area.
+This could be information about an org-link at POINT, or some other data."
+  (let ((message-log-max) ; suppress output to *Messages* buffer
+        (msg (get-text-property (point) 'help-echo)))
+    (when msg
+      (ignore-errors
+        (message "%s" (decode-coding-string (url-unhex-string msg) 'utf-8))))))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'post-command-hook 'my-org-mode-post-command-hook nil t)))
 #+end_src
 
 ** markdown-mode
