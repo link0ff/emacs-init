@@ -1419,12 +1419,13 @@ Functional keys:
 (define-key my-map "m" ;; mnemonics "make"
   (lambda ()
     (interactive)
-    (project-compile
-     ;; Use previous command from history
-     ;; instead of the default from compile-command
-     (compilation-read-command (car compile-history))
-     ;; Don't use compilation-shell-minor-mode
-     nil)))
+    (let ((default-directory (project-root (project-current t))))
+      (compile
+       ;; Use previous command from history
+       ;; instead of the default from compile-command
+       (compilation-read-command (car compile-history))
+       ;; Don't use compilation-shell-minor-mode
+       nil))))
 (define-key global-map [(meta f7)] 'grep) ; Commander-like
 (define-key global-map [(meta shift f7)] 'grep-find)
 #+end_src
