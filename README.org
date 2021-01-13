@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-01-11
+#+DATE: 2021-01-13
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -596,7 +596,9 @@ windows in a row:
  windmove-wrap-around t)
 #+end_src
 
-Also it's better when most buffers pop up in the same window,
+** Display buffers in the most suitable window
+
+It's better when most buffers pop up in the same window,
 so there is no need to switch windows back and forth:
 
 #+begin_src emacs-lisp
@@ -621,9 +623,8 @@ so there is no need to switch windows back and forth:
       display-buffer-alist)
 #+end_src
 
-Clicking a link from the =*Help*= buffer opens source code in the same window.
-This supposes display-buffer-alist to be customized to contain:
-~'((display-buffer-from-help-p display-buffer-same-window) ...)~
+Clicking a link from the =*Help*= buffer opens source code in the same window:
+
 #+begin_src emacs-lisp
 (defun display-buffer-from-help-p (_buffer-name _action)
   (unless current-prefix-arg
@@ -632,6 +633,29 @@ This supposes display-buffer-alist to be customized to contain:
 
 (push '(display-buffer-from-help-p display-buffer-same-window)
       display-buffer-alist)
+#+end_src
+
+Visit grep/xref hits in the window where all previous hits were visited:
+
+#+begin_src emacs-lisp
+(defun display-buffer-from-grep-p (_buffer-name _action)
+  (with-current-buffer (window-buffer)
+    (derived-mode-p 'compilation-mode)))
+
+(push '(display-buffer-from-grep-p display-buffer-reuse-previous-window)
+      display-buffer-alist)
+
+(defvar-local display-buffer-previous-window nil)
+
+(defun display-buffer-reuse-previous-window (buffer alist)
+  "Display BUFFER in the same window that was already used as destination."
+  (let ((window display-buffer-previous-window))
+    (if (window-live-p window)
+        (window--display-buffer buffer window 'reuse alist)
+      (setq window (display-buffer-use-some-window
+                    buffer (cons (cons 'inhibit-same-window t) alist)))
+      (setq-local display-buffer-previous-window window)
+      window)))
 #+end_src
 
 ** Shorter answers
