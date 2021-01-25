@@ -352,29 +352,6 @@ by doing (clear-string STRING)."
   (define-key ctl-x-map "wr" 'window-resize-command))
 
 
-;; Given the recent discussion in `set-transient-map',
-;; this should be as simple as:
-
-(defun ctl-x-7-prefix-command ()
-  (interactive)
-  (let* ((clearfunsym (make-symbol "clear-temporary-post-command-hook"))
-         (clearfun
-          `(lambda ()
-             (unless (eq this-command 'ctl-x-7-prefix-command)
-               (remove-hook 'post-command-hook ',clearfunsym)
-               (setq-default display-buffer-overriding-action
-                            ,display-buffer-overriding-action)))))
-    (fset clearfunsym clearfun)
-    (add-hook 'post-command-hook clearfunsym)
-    (setq-default display-buffer-overriding-action
-                '(display-buffer-pop-up-frame))
-    (set-transient-map ctl-x-map)))
-
-(define-key ctl-x-map "7" 'ctl-x-7-prefix-command)
-
-(define-key ctl-x-map "\M-x" 'execute-extended-command)
-
-
 ;;; misc.el
 
 (defun copy-line (&optional arg)

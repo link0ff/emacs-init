@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-01-13
+#+DATE: 2021-01-25
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -489,8 +489,7 @@ allows fitting as much as possible of the buffer contents on the screen:
 (defun follow-mode-3 ()
   (interactive)
   (split-window-horizontally-3)
-  (follow-mode 1)
-  (goto-char (point-min)))
+  (follow-mode 1))
 
 (add-hook 'my-map-defined-hook
           (lambda ()
@@ -509,8 +508,7 @@ allows fitting as much as possible of the buffer contents on the screen:
 (defun follow-mode-4 ()
   (interactive)
   (split-window-horizontally-4)
-  (follow-mode 1)
-  (goto-char (point-min)))
+  (follow-mode 1))
 
 (add-hook 'my-map-defined-hook
           (lambda ()
@@ -642,20 +640,22 @@ Visit grep/xref hits in the window where all previous hits were visited:
   (with-current-buffer (window-buffer)
     (derived-mode-p 'compilation-mode)))
 
-(push '(display-buffer-from-grep-p display-buffer-reuse-previous-window)
-      display-buffer-alist)
-
 (defvar-local display-buffer-previous-window nil)
 
-(defun display-buffer-reuse-previous-window (buffer alist)
-  "Display BUFFER in the same window that was already used as destination."
-  (let ((window display-buffer-previous-window))
-    (if (window-live-p window)
-        (window--display-buffer buffer window 'reuse alist)
-      (setq window (display-buffer-use-some-window
-                    buffer (cons (cons 'inhibit-same-window t) alist)))
-      (setq-local display-buffer-previous-window window)
-      window)))
+(add-to-list 'display-buffer-alist
+             '(display-buffer-from-grep-p
+               nil (previous-window . display-buffer-previous-window))
+             ;; Append to not override display-buffer-same-window
+             'append)
+
+(advice-add 'window--display-buffer :around
+            (lambda (orig-fun &rest args)
+              (let ((buffer (current-buffer))
+                    (window (apply orig-fun args)))
+                (with-current-buffer buffer
+                  (setq-local display-buffer-previous-window window))
+                window))
+            '((name . window--display-buffer-set-previous-window)))
 #+end_src
 
 ** Shorter answers
@@ -3046,7 +3046,6 @@ Pre-load some useful packages:
  org-catch-invisible-edits 'smart
  org-confirm-babel-evaluate nil
  org-replace-disputed-keys t
- org-return-follows-link t
  org-special-ctrl-o nil
  org-startup-folded nil
  org-support-shift-select t)
