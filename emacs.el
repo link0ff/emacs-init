@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2020-12-25 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-01-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -220,6 +220,11 @@ i.e. in daylight or under bright electric lamps."
 ;; (define-key global-map [?\x8e4] 'next-line)
 ;; (define-key global-map [?\x8f6] 'backward-char)
 ;; (define-key global-map [?'] 'forward-char)
+
+;; On some keyboards, '<' and '>' are on the same key near 'z',
+;; so when switching keyboards, I often mistype 'M-z' for 'M-<' and 'M->':
+(define-key esc-map "z" 'beginning-of-buffer)
+(define-key esc-map "Z" 'end-of-buffer)
 
 
 ;;; quail
