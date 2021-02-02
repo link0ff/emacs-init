@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-02-01
+#+DATE: 2021-02-02
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -175,9 +175,10 @@ use it where possible in hooks that display a new location:
     (reposition-window)))
 
 (add-hook 'next-error-hook 'my-reposition-window)
-(add-hook 'xref-after-jump-hook 'my-reposition-window)
-(add-hook 'xref-after-return-hook 'my-reposition-window)
 (add-hook 'find-function-after-hook 'my-reposition-window)
+(add-hook 'xref-after-return-hook 'my-reposition-window)
+(add-hook 'xref-after-jump-hook 'my-reposition-window)
+(remove-hook 'xref-after-jump-hook 'recenter)
 #+end_src
 
 And fix packages to support better reposition, i.e. define rules
@@ -638,7 +639,8 @@ Visit grep/xref hits in the window where all previous hits were visited:
 #+begin_src emacs-lisp
 (defun display-buffer-from-grep-p (_buffer-name _action)
   (with-current-buffer (window-buffer)
-    (derived-mode-p 'compilation-mode)))
+    (or (derived-mode-p 'compilation-mode)
+        (derived-mode-p 'xref--xref-buffer-mode))))
 
 (defvar-local display-buffer-previous-window nil)
 
@@ -3834,6 +3836,13 @@ the regexp search and adds the search string into the wrong history ring
           (call-interactively 'xref-goto-xref)
         (setq xref--original-window nil)
         (call-interactively 'xref-goto-xref)))))
+
+(define-key xref--xref-buffer-mode-map (kbd "C-j")  'xref-quit-and-goto-xref)
+;; Don't quit the xref window by TAB
+(define-key xref--xref-buffer-mode-map (kbd "TAB") nil)
+;; Like compilation-next-error and compilation-previous-error:
+(define-key xref--xref-buffer-mode-map "\t" 'xref-next-line-no-display)
+(define-key xref--xref-buffer-mode-map [backtab] 'xref-prev-line-no-display)
 
 (add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely)
 #+end_src
