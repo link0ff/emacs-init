@@ -1083,8 +1083,6 @@ Below is customization of different modes to support convenient navigation:
 (with-eval-after-load 'info
   (define-key Info-mode-map [(control shift insert)]
     (lambda () (interactive) (Info-copy-current-node-name 0)))
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key Info-mode-map [?\S-\ ] 'Info-scroll-down)
   ;; Mozilla-like navigation:
   (define-key Info-mode-map [(meta right)] 'my-Info-forward)
   (define-key Info-mode-map [(meta left)]  'Info-last)
@@ -1156,8 +1154,6 @@ Below is customization of different modes to support convenient navigation:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'view
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key view-mode-map [?\S-\ ] 'View-scroll-page-backward)
   (define-key view-mode-map " " 'View-scroll-page-forward-set-page-size)
   (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
   (define-key view-mode-map "l" 'View-goto-line)
@@ -1327,8 +1323,6 @@ Below is customization of different modes to support convenient navigation:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'doc-view
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key doc-view-mode-map [?\S-\ ] 'doc-view-scroll-down-or-previous-page)
   (define-key doc-view-mode-map [(meta left)] 'quit-window-kill-buffer)
   ;; Get back original keybindings overridden below in ‘image-mode-map’.
   ;; Left/right arrows are needed in PDF to scroll horizontally
@@ -3098,7 +3092,7 @@ Fix keys broken by org:
     (put 'org-return 'delete-selection t)))
 #+end_src
 
-Show the link under point immediately (from bug#42484):
+Show the link under point immediately (from [[https://debbugs.gnu.org/42484][bug#42484]]):
 
 #+begin_src emacs-lisp
 (defun my-org-mode-post-command-hook ()
@@ -3210,8 +3204,6 @@ Gnus Summary buffers:
   ;; Add 2-digit year:
   (setq gnus-summary-line-format
         "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key gnus-summary-mode-map [?\S-\ ] 'gnus-summary-prev-page)
   (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
   (define-key gnus-summary-mode-map [(shift iso-lefttab)]
     'gnus-summary-prev-unread-article)
@@ -3306,8 +3298,6 @@ Gnus Article buffers:
                     ;; (forward-paragraph)
                     (set-window-point window (point))))))
             t)
-  ;; Shift-Space to scroll back (already added in bug#2145).
-  ;; (define-key gnus-article-mode-map [?\S-\ ] 'gnus-article-goto-prev-page)
   (define-key gnus-article-mode-map "R" 'gnus-summary-wide-reply-with-original)
   ;; RET scrolls the article one line at a time.
   (define-key gnus-article-mode-map [return] 'my-gnus-article-press-or-scroll)
@@ -3561,6 +3551,7 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
 Alternative Keyboard Feature implemented in [[https://debbugs.gnu.org/9751][bug#9751]]
 and posted to http://ru-emacs.livejournal.com/82428.html
 This is now available from https://github.com/a13/reverse-im.el
+
 #+begin_src emacs-lisp
 (defun reverse-input-method (input-method)
   "Build the reverse mapping of single letters from INPUT-METHOD."
