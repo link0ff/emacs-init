@@ -65,6 +65,7 @@
  '(desktop-save-mode t)
  '(diary-date-forms '((year "-" month "-" day "[^0-9]") (dayname "\\W")))
  '(diary-list-include-blanks t)
+ '(dictionary-create-buttons nil)
  '(diff-font-lock-syntax 'hunk-also)
  '(diff-switches '("-u"))
  '(dired-auto-revert-buffer t)
