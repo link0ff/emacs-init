@@ -130,7 +130,7 @@ to killed buffer."
 (defun my-delete-blank-lines ()
   "Delete blank lines on region."
   (interactive "*")
-  (if (and transient-mark-mode mark-active)
+  (if (use-region-p)
       (let ((beg (min (point) (mark)))
             (end (max (point) (mark))))
         (save-excursion
@@ -144,16 +144,21 @@ to killed buffer."
   "Execute string COMMAND in inferior shell with region or whole buffer as input."
   (interactive (let ((string
                       (read-shell-command "Shell command on region or buffer: ")))
-                 (list (if (and transient-mark-mode mark-active) (region-beginning) (point-min))
-                       (if (and transient-mark-mode mark-active) (region-end) (point-max))
+                 (list (if (use-region-p) (region-beginning) (point-min))
+                       (if (use-region-p) (region-end) (point-max))
                        string current-prefix-arg)))
   (shell-command-on-region start end command arg arg))
 
 (defun write-file-or-region ()
-  "Write region or file."
+  "Write region or file.
+With a prefix arg, append the region to the file."
   (interactive)
-  (if (and transient-mark-mode mark-active)
-      (call-interactively 'write-region)
+  (if (use-region-p)
+      (write-region (region-beginning) (region-end)
+                    (read-file-name
+                     (format "%s region to file: "
+                             (if current-prefix-arg "Append" "Write")))
+                    current-prefix-arg)
     (call-interactively 'write-file)))
 (define-key ctl-x-map "\C-w" 'write-file-or-region)
 
