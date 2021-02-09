@@ -764,12 +764,6 @@ delete flagged files.\n\n"))))))
 
 ;; renamed from `apache-log-generic-mode' (because not suitable for error_log)
 ;; and improved
-
-(add-to-list 'generic-extras-enable-list 'apache-access-log-generic-mode)
-
-(and
- (memq 'apache-access-log-generic-mode generic-extras-enable-list)
-
 (define-generic-mode 'apache-access-log-generic-mode
   nil
   nil
@@ -780,15 +774,9 @@ delete flagged files.\n\n"))))))
     )
   (list "access[_.]log\\'")
   nil
-  "Mode for Apache access log files"))
+  "Mode for Apache access log files")
 
 ;; added new
-
-(add-to-list 'generic-extras-enable-list 'apache-error-log-generic-mode)
-
-(and
- (memq 'apache-error-log-generic-mode generic-extras-enable-list)
-
 (define-generic-mode 'apache-error-log-generic-mode
   nil
   nil
@@ -804,7 +792,7 @@ delete flagged files.\n\n"))))))
    (function
     (lambda ()
       (setq outline-regexp "\\["))))
-  "Mode for Apache error log files"))
+  "Mode for Apache error log files")
 
 
 ;; simple.el ?
