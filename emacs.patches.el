@@ -768,7 +768,7 @@ delete flagged files.\n\n"))))))
   nil
   nil
   ;; remote-host remote-logname remote-user time request status bytes-sent referer user-agent
-  '(("^\\([-a-zA-z0-9.]+\\) - [-A-Za-z]+ \\(\\[.*?\\]\\)"
+  '(("^\\([-a-zA-Z0-9.]+\\) - [-A-Za-z]+ \\(\\[.*?\\]\\)"
      (1 font-lock-constant-face)
      (2 font-lock-variable-name-face))
     )
