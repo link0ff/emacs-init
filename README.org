@@ -1467,6 +1467,36 @@ Easier-to-type grep invocations:
 (define-key goto-map "\M-r\M-v" 'vc-git-grep)
 #+end_src
 
+** Repeat mode
+
+#+begin_src emacs-lisp
+(setq-default repeat-exit-key [return])
+(repeat-mode +1)
+
+(define-key resize-window-repeat-map [up]    'enlarge-window)
+(define-key resize-window-repeat-map [right] 'enlarge-window-horizontally)
+(define-key resize-window-repeat-map [left]  'shrink-window-horizontally)
+(define-key resize-window-repeat-map [down]  'shrink-window)
+
+(define-key goto-map [M-down] 'next-error)
+(define-key goto-map [M-up] 'previous-error)
+(define-key next-error-repeat-map [M-down] 'next-error)
+(define-key next-error-repeat-map [M-up] 'previous-error)
+
+;; Can't add this to bindings.el because `C-right' as `right-sexp'
+;; is often used after `C-x C-right' (`next-buffer'):
+(defvar next-buffer-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [right]   'next-buffer)
+    (define-key map [C-right] 'next-buffer)
+    (define-key map [left]    'previous-buffer)
+    (define-key map [C-left]  'previous-buffer)
+    map)
+  "Keymap to repeat next-buffer key sequences.  Used in `repeat-mode'.")
+(put 'next-buffer 'repeat-map 'next-buffer-repeat-map)
+(put 'previous-buffer 'repeat-map 'next-buffer-repeat-map)
+#+end_src
+
 * Useful features
 
 ** Copy/Paste
