@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-01-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-02-19 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1091,114 +1091,6 @@ With prefix arg, insert the current timestamp to the current buffer."
 (add-hook 'perldb-mode-hook
           (lambda ()
             (setq gud-find-file 'my-gud-perldb-find-file)))
-
-
-;;; outline
-
-(define-key global-map [(shift f5)] 'outline-minor-mode)
-
-(with-eval-after-load 'outline
-;;   (define-key outline-mode-map [(control ?o)] outline-mode-prefix-map)
-;;   (define-key outline-mode-map [(control meta left)]
-;;               'my-outline-hide-entry-or-subtree)
-;;   (define-key outline-mode-map [(control meta right)]
-;;               'my-outline-show-entry-or-subtree)
-;;   (define-key outline-mode-map [(meta down)] 'outline-next-visible-heading)
-;;   (define-key outline-mode-map [(meta up)]   'outline-previous-visible-heading)
-;;   (define-key outline-mode-map [(control meta down)] 'outline-forward-same-level)
-;;   (define-key outline-mode-map [(control meta up)]   'outline-up-heading)
-;;     (define-key outline-mode-map [(meta up)]    'my-outline-prev-or-up)
-;;     (define-key outline-mode-map [(meta left)]
-;;       (lambda () (interactive) (outline-hide-subtree))) ;; (outline-hide-entry)
-;;     (define-key outline-mode-map [(meta right)]
-;;       (lambda () (interactive) (outline-show-children) (outline-show-entry)))
-;; Use `C-M-l' or `C-l' instead of `f5'
-;;     (define-key outline-mode-map [f5]
-;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
-  (define-key outline-mode-map [(control ?*)]
-    (lambda () (interactive) (outline-show-branches)))
-;;   (define-key outline-minor-mode-map [f5] outline-mode-prefix-map)
-;;   (define-key outline-minor-mode-map [(control meta left)]
-;;               'my-outline-hide-entry-or-subtree)
-;;   (define-key outline-minor-mode-map [(control meta right)]
-;;               'my-outline-show-entry-or-subtree)
-;;   (define-key outline-minor-mode-map [(meta down)] 'outline-next-visible-heading)
-;;   (define-key outline-minor-mode-map [(meta up)]   'outline-previous-visible-heading)
-;;   (define-key outline-minor-mode-map [(control meta down)] 'outline-forward-same-level)
-;;   (define-key outline-minor-mode-map [(control meta up)]   'outline-up-heading)
-;;     (define-key outline-minor-mode-map [(meta up)]    'my-outline-prev-or-up)
-;;     (define-key outline-minor-mode-map [(meta left)]
-;;       (lambda () (interactive) (outline-hide-subtree))) ;; (outline-hide-entry)
-;;     (define-key outline-minor-mode-map [(meta right)]
-;;       (lambda () (interactive) (outline-show-children) (outline-show-entry)))
-;; Use `C-M-l' or `C-l' instead of `f5'
-;;     (define-key outline-minor-mode-map [f5]
-;;       (lambda () (interactive) (recenter 0) (outline-show-entry) (beginning-of-line)))
-  (define-key outline-minor-mode-map [(control ?*)]
-    (lambda () (interactive) (outline-show-branches)))
-  (require 'foldout))
-
-;; Start outline mode with hidden sublevels or hidden body
-(add-hook
- 'outline-mode-hook
- (lambda ()
-   ;; (outline-hide-sublevels 1) ; alternative
-   ;; (outline-hide-body)
-   ))
-
-;; Start outline minor mode with hidden sublevels or hidden body
-(add-hook
- 'outline-minor-mode-hook
- (lambda ()
-   ;; (outline-hide-sublevels 1) ; alternative
-   ;; (outline-hide-body)
-   ))
-
-;; this is old and bad
-;; (defun my-outline-hide-entry-or-subtree ()
-;;   (interactive)
-;;   (if (save-excursion (forward-line 1) (looking-at outline-regexp))
-;;       ;; (save-excursion (outline-end-of-heading) (outline-visible))
-;;       (outline-hide-subtree)
-;;     (progn (outline-hide-entry) (beginning-of-line))))
-
-(defun my-outline-hide-entry-or-subtree ()
-  (interactive)
-  (if (save-excursion (forward-line 1) (or (looking-at outline-regexp) (eobp)))
-      (if (>= (funcall outline-level)
-              (save-excursion (forward-line 1)
-                              (or (and (eobp) 0) (funcall outline-level))))
-          (if (= (funcall outline-level) 1)
-              (goto-char (point-min))
-            (outline-up-heading 1))
-        (outline-hide-subtree))
-    (progn (outline-hide-entry) (beginning-of-line))))
-
-(defun my-outline-show-entry-or-subtree ()
-  (interactive)
-  (if (save-excursion
-        (re-search-forward (concat "\n\\(" outline-regexp "\\)")
-                           (save-excursion
-                             (outline-next-visible-heading 1) ; (forward-line 1)
-                             (point))
-                           t))
-      (outline-show-children)
-    (outline-show-entry)))
-
-;;  (defun my-outline-prev-or-up ()
-;;    (interactive)
-;;    (if (and (looking-at outline-regexp)
-;;            (= (funcall outline-level)
-;;               (save-excursion (outline-previous-visible-heading 1)
-;;                               (funcall outline-level))))
-;;        (outline-up-heading 1)
-;;      (outline-previous-visible-heading 1)))
-
-;;  (defun my-outline-hide-or-up ()
-;;    (interactive)
-;;    (if (save-excursion (outline-end-of-heading) (outline-visible))
-;;        (outline-hide-subtree)
-;;      (outline-up-heading 1)))
 
 
 ;;; image
