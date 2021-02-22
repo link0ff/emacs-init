@@ -359,17 +359,16 @@ by doing (clear-string STRING)."
 
 ;;; misc.el
 
-(defun copy-line (&optional arg)
-  "Copy current line `arg' times."
+(defun duplicate-line (&optional arg)
+  "Duplicate the whole current line ARG times or 1 by default."
   (interactive "p")
-  (dotimes (_ arg)
-    (beginning-of-line)
-    (forward-line 1)
-    (insert "\n") ;; (open-line 1) because doesn't work on ChangeLog headers
-    (forward-line -1)
-    (copy-from-above-command)))
-(define-key my-map "c" 'copy-line)
-;; qv also http://www.emacswiki.org/cgi-bin/wiki/LineCopyChar
+  (save-excursion
+    (let ((line (buffer-substring (line-beginning-position)
+                                  (line-end-position))))
+      (forward-line 0)
+      (insert-before-markers
+       (apply #'concat (make-list (or arg 1) (concat line "\n")))))))
+(define-key my-map "c" 'duplicate-line)
 
 
 ;;; cperl-mode
