@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-02-18
+#+DATE: 2021-03-06
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -680,7 +680,9 @@ have serious consequences, but in reality with short answers you decide
 how long a pause you need in order to realize what the question is about.
 
 #+begin_src emacs-lisp
-(fset 'yes-or-no-p 'y-or-n-p)
+;; (fset 'yes-or-no-p 'y-or-n-p)
+;; New option in Emacs 28 instead of previous line:
+(setq-default use-short-answers t)
 #+end_src
 
 ** Don't spend time answering useless questions
@@ -3159,11 +3161,17 @@ Fix keys broken by markdown-mode:
 #+begin_src emacs-lisp
 (use-package markdown-mode
   :custom-face
-  (markdown-code-face ((t (:inherit italic))))
+  (markdown-table-face ((t (:inherit italic))))
+  (markdown-blockquote-face ((t (:inherit italic))))
+  (markdown-code-face ((t (:background "grey95"))))
   :config
   ;; Revert hijacked keys to their original bindings
   (unbind-key "C-c <left>" markdown-mode-map)
   (unbind-key "C-c <right>" markdown-mode-map)
+  ;; Revert disabling spell-check in comments
+  (add-hook 'markdown-mode-hook
+            (lambda ()
+              (kill-local-variable 'flyspell-generic-check-word-predicate)))
   (when delete-selection-mode
     (put 'markdown-enter-key 'delete-selection t)))
 #+end_src
@@ -3175,7 +3183,8 @@ Make tab names as short as possible (from [[https://www.gnu.org/software/emacs/m
 #+begin_src emacs-lisp
 (push '("\\`\\*Group\\*\\'" .
         (display-buffer-in-tab
-         (tab-name . "G")))
+         (tab-name . "G")
+         (tab-group . "[E]")))
       display-buffer-alist)
 (push '("\\`\\*Summary .*\\*\\'" .
         (display-buffer-in-tab
@@ -3184,9 +3193,11 @@ Make tab names as short as possible (from [[https://www.gnu.org/software/emacs/m
                                      (rx (or (and bos "*Summary "
                                                   (or (and "nnml:" (? (or "mail" "list") "."))
                                                       "nndoc+ephemeral:bug#"))
-                                             (and "*" eos))) ""
+                                             (and "*" eos)))
+                                     ""
                                      (buffer-name buffer)))
-                       (format "G %s" buffer)))))
+                       (format "G %s" buffer)))
+         (tab-group . "[E]")))
       display-buffer-alist)
 #+end_src
 

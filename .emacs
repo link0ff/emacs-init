@@ -61,8 +61,8 @@
 
 (defvar ruby-use-smie nil)
 
-(eval-after-load 'inf-ruby
-  '(define-key inf-ruby-minor-mode-map (kbd "C-c C-s") 'inf-ruby-console-auto))
+(with-eval-after-load 'inf-ruby
+  (define-key inf-ruby-minor-mode-map (kbd "C-c C-s") 'inf-ruby-console-auto))
 
 (when (fboundp 'global-diff-hl-mode)
   (global-diff-hl-mode +1))

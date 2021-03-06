@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-02-19 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-03-03 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -616,7 +616,8 @@ With prefix arg, insert the current timestamp to the current buffer."
 
 (defun run-snd ()
   (interactive)
-  (run-scheme "snd -notebook" "snd"))
+  (run-scheme "snd -notebook" )
+  (rename-buffer "*snd*"))
 
 (defvar inferior-lisp-prompt)
 ;; Added "<" for Scheme "#<unspecified>"
@@ -722,7 +723,7 @@ With prefix arg, insert the current timestamp to the current buffer."
             ;; BTW, Perl mode fits perfectly for different conf-files
             (equal mode-name "Fundamental")))
       (perl-mode)))
-;; (add-hook 'find-file-hooks 'my-pl-find-file-hook)
+;; (add-hook 'find-file-hook 'my-pl-find-file-hook)
 
 ;; Create Perl links in the *Man* buffer
 (with-eval-after-load 'man
