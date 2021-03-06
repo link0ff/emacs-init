@@ -367,8 +367,25 @@ by doing (clear-string STRING)."
                                   (line-end-position))))
       (forward-line 0)
       (insert-before-markers
-       (apply #'concat (make-list (or arg 1) (concat line "\n")))))))
+       (mapconcat #'identity (make-list (or arg 1) line) "\n") ?\n))))
 (define-key my-map "c" 'duplicate-line)
+
+(defun duplicate-line-or-region (&optional arg)
+  "Duplicate the whole current line ARG times or 1 by default."
+  (interactive "p")
+  (save-excursion
+    (let ((line (buffer-substring (if (use-region-p)
+                                      (region-beginning)
+                                    (line-beginning-position))
+                                  (if (use-region-p)
+                                      (region-end)
+                                    (line-end-position)))))
+      (unless (use-region-p) (forward-line 0))
+      (insert-before-markers
+       (apply #'concat (make-list (or arg 1)
+                                  (if (use-region-p)
+                                      line
+                                    (concat line "\n"))))))))
 
 
 ;;; cperl-mode
