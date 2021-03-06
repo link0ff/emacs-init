@@ -517,11 +517,11 @@ allows fitting as much as possible of the buffer contents on the screen:
             (define-key my-map "f4" 'follow-mode-4)))
 #+end_src
 
-** Org-like (S-)TAB heading cycle in all file buffers
+** Org-like (S-)TAB heading cycle in outline-regexp capable buffers
 
 To get a better overview of the functions implemented in a prog-mode buffer,
 or the document sections available in a text-mode buffer, it's easy to enable
-~outline-minor-mode~ and use =TAB= keys with modifiers to cycle visibility.
+~outline-cycle-minor-mode~ and use =TAB= keys with modifiers to cycle visibility.
 Also this allows hiding uninteresting parts of the buffer, while showing the
 currently relevant parts of the buffer.
 
@@ -531,7 +531,7 @@ This works in all modes including derived from prog-mode and text-mode.
 
 Some modes might require setting a suitable value of ~outline-regexp~.
 In some modes that use not too much highlighting, it's possible also
-to enable ~outline-minor-mode-highlight~ to highlight outline headings.
+to enable ~outline-cycle-highlight-minor-mode~ to highlight outline headings.
 An example of the mode where heading highlighting could be enabled is
 ~dictionary-mode~ customized at the bottom of this file.
 
@@ -539,19 +539,19 @@ An example of the mode where heading highlighting could be enabled is
 (defun my-outline-minor-mode ()
   ;; Enable in modes with reasonable `outline-regexp':
   (when (derived-mode-p 'emacs-lisp-mode)
-    (outline-cycle-minor-mode +1)))
-(add-hook 'find-file-hooks 'my-outline-minor-mode)
+    (outline-cycle-highlight-minor-mode +1)))
+(add-hook 'find-file-hook 'my-outline-minor-mode)
 #+end_src
 
 Also enable cycling on filename headings in *xref* buffers:
 
 #+begin_src emacs-lisp
-(advice-add 'xref--show-xref-buffer :around
-            (lambda (orig-fun &rest args)
-              (with-current-buffer (apply orig-fun args)
-                (setq-local outline-regexp "/")
-                (outline-cycle-minor-mode +1)))
-            '((name . xref-outline-cycle-minor-mode)))
+;; TODO: add xref hook?
+(advice-add 'xref--insert-xrefs :after
+            (lambda (&rest _args)
+              (setq-local outline-regexp "/")
+              (outline-cycle-highlight-minor-mode +1))
+            '((name . xref-outline-cycle-highlight-minor-mode)))
 #+end_src
 
 * Time optimization
@@ -1139,6 +1139,7 @@ Below is customization of different modes to support convenient navigation:
   (add-hook 'Man-mode-hook
             (lambda ()
               (set-syntax-table text-mode-syntax-table)))
+  (add-hook 'Man-cooked-hook 'outline-cycle-highlight-minor-mode)
   ;; Mozilla-like navigation:
   (define-key Man-mode-map [(meta right)] 'push-button) ;; 'man-follow
   ;; No need to kill Man buffer because it is not saved to desktop.
@@ -1226,6 +1227,7 @@ Below is customization of different modes to support convenient navigation:
 
   (add-hook 'diff-mode-hook
             (lambda ()
+              (outline-cycle-highlight-minor-mode +1)
               ;; Disable line truncation because need to
               ;; see everything while looking at diffs:
               (setq-local truncate-lines nil))))
@@ -3576,14 +3578,12 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
           (lambda ()
             (setq-local outline-regexp "From")
             (setq-local outline-level (lambda () 1))
-            (setq-local outline-minor-mode-cycle t)
-            (setq-local outline-minor-mode-highlight t)
-            (outline-minor-mode +1)
             (define-key dictionary-mode-map [(meta left)]  'dictionary-previous)
             (define-key dictionary-mode-map [(meta right)] 'dictionary-search-no-prompt)))
 
 (add-hook 'dictionary-post-buffer-hook
           (lambda ()
+            (outline-cycle-highlight-minor-mode +1)
             ;; Align screen to the bottom of the output buffer
             (goto-char (point-max))
             (recenter -2 t)))
