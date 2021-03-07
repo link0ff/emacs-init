@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-03-06
+#+DATE: 2021-03-07
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -530,8 +530,9 @@ Typing =S-TAB= on a heading line cycles visibility globally of the whole buffer.
 This works in all modes including derived from prog-mode and text-mode.
 
 Some modes might require setting a suitable value of ~outline-regexp~.
-In some modes that use not too much highlighting, it's possible also
-to enable ~outline-minor-mode-highlight~ to highlight outline headings.
+In some modes that use not too much highlighting, and where outline faces
+don't conflict with major-mode's faces, it's possible also to enable
+~outline-minor-mode-highlight~ to highlight outline headings.
 An example of the mode where heading highlighting could be enabled is
 ~dictionary-mode~ customized at the bottom of this file.
 
@@ -539,6 +540,19 @@ An example of the mode where heading highlighting could be enabled is
 (setq-default
  outline-minor-mode-cycle t
  outline-minor-mode-highlight t)
+
+(let ((map outline-mode-cycle-map)
+      (cmds '(("M-<down>"  outline-next-visible-heading)
+              ("M-<up>"    outline-previous-visible-heading)
+              ("M-<left>"  outline-hide-subtree)
+              ("M-<right>" outline-show-subtree))))
+  (dolist (command cmds)
+    (define-key map (kbd (nth 0 command))
+      `(menu-item
+        "" ,(nth 1 command)
+        ;; Only takes effect if point is on a heading.
+        :filter ,(lambda (cmd)
+                   (when (outline-on-heading-p) cmd))))))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -552,12 +566,10 @@ An example of the mode where heading highlighting could be enabled is
 Also enable cycling on filename headings in *xref* buffers:
 
 #+begin_src emacs-lisp
-;; TODO: add xref hook?
-(advice-add 'xref--insert-xrefs :after
-            (lambda (&rest _args)
-              (setq-local outline-regexp "/")
-              (outline-minor-mode +1))
-            '((name . xref-outline-minor-mode)))
+(add-hook 'xref-after-update-hook
+          (lambda ()
+            (setq-local outline-regexp "/")
+            (outline-minor-mode +1)))
 #+end_src
 
 * Time optimization
