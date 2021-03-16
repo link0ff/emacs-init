@@ -1253,18 +1253,11 @@ Below is customization of different modes to support convenient navigation:
 *** diff
 
 #+begin_src emacs-lisp
-(defun diff-goto-source-kill-buffer ()
-  (interactive)
-  (let ((buf (current-buffer)))
-    (call-interactively 'diff-goto-source)
-    (kill-buffer buf)))
-
 (with-eval-after-load 'diff-mode
   (define-key diff-mode-map [(meta down)] 'diff-hunk-next)
   (define-key diff-mode-map [(meta up)]   'diff-hunk-prev)
   (define-key diff-mode-map [(control meta down)] 'diff-file-next)
   (define-key diff-mode-map [(control meta up)]   'diff-file-prev)
-  (define-key diff-mode-map [(control return)] 'diff-goto-source-kill-buffer)
 
   (add-hook 'diff-mode-hook
             (lambda ()
@@ -2016,27 +2009,13 @@ to find all text properties with font-lock face."
 *** occur
 
 Make the =*Occur*= buffer names unique and writable
-(like in ~compilation-mode-hook~ the this file).
+(like in ~compilation-mode-hook~ in this file).
 
 #+begin_src emacs-lisp
 (add-hook 'occur-hook
           (lambda ()
             (occur-rename-buffer t)
             (setq buffer-read-only nil)))
-
-;; Based on ‘occur-mode-goto-occurrence-other-window’
-(defun occur-mode-goto-occurrence-kill-buffer ()
-  "Go to the occurrence the current line describes, and kill the Occur buffer."
-  (interactive)
-  (let ((buf (current-buffer))
-        (pos (occur-mode-find-occurrence)))
-    (switch-to-buffer-other-window (marker-buffer pos))
-    (goto-char pos)
-    (kill-buffer buf)
-    (run-hooks 'occur-mode-find-occurrence-hook)))
-
-;; Bind to "o" in place of ‘occur-mode-goto-occurrence’.
-(define-key occur-mode-map [(control return)] 'occur-mode-goto-occurrence-kill-buffer)
 #+end_src
 
 *** replace
@@ -3842,6 +3821,21 @@ the regexp search and adds the search string into the wrong history ring
 #+end_src
 
 ** Fix next-error
+
+With the =M-0= prefix argument, ~next-error~ will go to the next buffer and
+quit the previous buffer:
+
+#+begin_src emacs-lisp
+(defun my-next-error-quit-window ()
+  (when (and (eq current-prefix-arg 0)
+             (not (eq next-error-last-buffer (current-buffer))))
+    (let ((window (get-buffer-window next-error-last-buffer)))
+      (when (window-live-p window)
+        (with-selected-window window
+          (quit-restore-window window))))))
+
+(add-hook 'next-error-hook 'my-next-error-quit-window)
+#+end_src
 
 #+begin_src emacs-lisp
 (defvar my-next-error-prev-buffer nil)
