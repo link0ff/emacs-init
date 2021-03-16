@@ -3199,21 +3199,24 @@ This could be information about an org-link at POINT, or some other data."
 
 ** markdown-mode
 
-Fix keys broken by markdown-mode:
+Fix keys broken by ~markdown-mode~:
 
 #+begin_src emacs-lisp
 (use-package markdown-mode
   :custom-face
-  (markdown-table-face ((t (:inherit italic))))
   (markdown-blockquote-face ((t (:inherit italic))))
   (markdown-code-face ((t (:background "grey95"))))
+  (markdown-table-face ((t (:inherit italic))))
   :config
   ;; Revert hijacked keys to their original bindings
   (unbind-key "C-c <left>" markdown-mode-map)
   (unbind-key "C-c <right>" markdown-mode-map)
-  ;; Revert disabling spell-check in comments
   (add-hook 'markdown-mode-hook
             (lambda ()
+              ;; Allow multi-line comments
+              (setq-local comment-style 'multi-line ;; 'extra-line
+                          comment-continue "")
+              ;; Revert disabling spell-check in comments
               (kill-local-variable 'flyspell-generic-check-word-predicate)))
   (when delete-selection-mode
     (put 'markdown-enter-key 'delete-selection t)))
