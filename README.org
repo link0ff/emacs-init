@@ -3919,8 +3919,8 @@ quit the previous buffer:
   ;; Don't quit the xref window by TAB
   (define-key xref--xref-buffer-mode-map (kbd "TAB") nil)
   ;; Like compilation-next-error and compilation-previous-error:
-  (define-key xref--xref-buffer-mode-map "\t" 'xref-next-line-no-display)
-  (define-key xref--xref-buffer-mode-map [backtab] 'xref-prev-line-no-display)
+  (define-key xref--xref-buffer-mode-map "\t" 'xref-next-line-no-show)
+  (define-key xref--xref-buffer-mode-map [backtab] 'xref-prev-line-no-show)
 
   (add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely))
 #+end_src
