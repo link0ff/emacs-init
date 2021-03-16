@@ -2113,13 +2113,15 @@ TODO: We already have ~history-delete-duplicates~ that corresponds to ~ignoredup
 but still no option that would corresponds to ~ignorespace~.
 
 #+begin_src emacs-lisp
-(add-hook 'minibuffer-exit-hook
-          (lambda ()
-            (when (string-match
-                   "\\`\\(?:rm\\|git rm\\| \\)"
-                   (or (car-safe (symbol-value minibuffer-history-variable)) ""))
-              (set minibuffer-history-variable
-                   (cdr (symbol-value minibuffer-history-variable))))))
+(advice-add 'add-to-history :around
+            (lambda (orig-fun history-var newelt &rest args)
+              (unless (or (and (eq history-var 'shell-command-history)
+                               (string-match-p "\\`\\(?:rm\\|git rm\\| \\)" newelt))
+                          ;; I often type M-p RET inadvertently
+                          (and (eq history-var 'compile-history)
+                               (string-match-p "bootstrap" newelt)))
+                (apply orig-fun history-var newelt args)))
+            '((name . add-to-history-ignorespace)))
 #+end_src
 
 This is not needed when isearch C-s/C-r in the minibuffer is available
