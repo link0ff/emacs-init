@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-03-11
+#+DATE: 2021-03-16
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -311,7 +311,22 @@ to show all buffer names in the tab name:
 
 #+begin_src emacs-lisp
 (setq-default
- tab-bar-tab-name-function 'tab-bar-tab-name-all)
+ tab-bar-tab-name-function 'tab-bar-tab-name-all
+ tab-bar-new-tab-group t)
+#+end_src
+
+Also show tab groups and the clock at the right edge of the tab-bar:
+
+#+begin_src emacs-lisp
+(setq-default
+ tab-bar-format
+ '(tab-bar-format-history
+   tab-bar-format-tabs-groups
+   tab-bar-format-align-right
+   tab-bar-format-global))
+
+;; This expects that `tab-bar-format' contains `tab-bar-format-global':
+(display-time-mode +1)
 #+end_src
 
 Whereas tab-bar and tab-lines still take screen space, they are sometimes
