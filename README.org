@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-03-16
+#+DATE: 2021-03-17
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -3826,15 +3826,7 @@ With the =M-0= prefix argument, ~next-error~ will go to the next buffer and
 quit the previous buffer:
 
 #+begin_src emacs-lisp
-(defun my-next-error-quit-window ()
-  (when (and (eq current-prefix-arg 0)
-             (not (eq next-error-last-buffer (current-buffer))))
-    (let ((window (get-buffer-window next-error-last-buffer)))
-      (when (window-live-p window)
-        (with-selected-window window
-          (quit-restore-window window))))))
-
-(add-hook 'next-error-hook 'my-next-error-quit-window)
+(setq-default next-error-found-function 'next-error-quit-window)
 #+end_src
 
 #+begin_src emacs-lisp
