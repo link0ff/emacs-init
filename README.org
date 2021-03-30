@@ -27,9 +27,10 @@
   - [[#tabs-with-tab-bar-and-tab-lines][Tabs with tab-bar and tab-lines]]
   - [[#full-screen-emacs-desktop][Full-screen Emacs desktop]]
   - [[#show-the-current-buffer-in-3-or-4-columns][Show the current buffer in 3 or 4 columns]]
-  - [[#org-like-s-tab-heading-cycle-in-all-file-buffers][Org-like (S-)TAB heading cycle in all file buffers]]
+  - [[#org-like-s-tab-heading-cycle-in-outline-regexp-capable-buffers][Org-like (S-)TAB heading cycle in outline-regexp capable buffers]]
 - [[#time-optimization][Time optimization]]
   - [[#window-navigation][Window navigation]]
+  - [[#display-buffers-in-the-most-suitable-window][Display buffers in the most suitable window]]
   - [[#shorter-answers][Shorter answers]]
   - [[#dont-spend-time-answering-useless-questions][Don't spend time answering useless questions]]
   - [[#using-the-esc-key-as-a-cancel-key][Using the =ESC= key as a cancel key]]
@@ -38,6 +39,7 @@
   - [[#list-structural-editing][List structural editing]]
   - [[#efficient-navigation-in-different-modes][Efficient navigation in different modes]]
   - [[#better-keybindings][Better keybindings]]
+  - [[#repeat-mode][Repeat mode]]
 - [[#useful-features][Useful features]]
   - [[#copypaste][Copy/Paste]]
   - [[#searchreplace][Search/Replace]]
@@ -96,6 +98,7 @@
   - [[#fix-org-mode-code-blocks][Fix org-mode code blocks]]
   - [[#fix-mode-line-faces][Fix mode-line faces]]
   - [[#fix-dired][Fix dired]]
+  - [[#fix-file-sorting-order-between-vc-dir-and-vc-diff][Fix file sorting order between vc-dir and vc-diff]]
   - [[#fall-back-between-vc-diff-and-diff-backup][Fall back between vc-diff and diff-backup]]
   - [[#use-project-directories-everywhere][Use project directories everywhere]]
 - [[#other][Other]]
@@ -4142,6 +4145,53 @@ Fix ~nobreak-char-display~ in Dired file sizes (see [[https://debbugs.gnu.org/44
                                   '(markchars-nobreak-space
                                     markchars-nobreak-hyphen)))
               (markchars-mode 1))))
+#+end_src
+
+** Fix file sorting order between vc-dir and vc-diff
+
+Typing ~=~ in a *vc-dir* buffer displays a *vc-diff* buffer where files are
+sorted by different order than files are sorted in the *vc-dir* buffer.
+
+For example, there is a need to commit only part of changes.
+To decide what files should be marked in the *vc-dir* buffer,
+a convenient way is to browse diffs in the *vc-diff* buffer
+one by one and mark corresponding files in the *vc-dir* buffer.
+But since these file lists are in different order, the task
+becomes a major hassle because *vc-diff* doesn't distinguish
+between files and directories while sorting them by name,
+but *vc-dir* puts directories at the end after files.
+
+This can be fixed by creating a git-specific ~orderfile~ in ~vc-dir~
+and using it in ~vc-git-diff~:
+
+#+begin_src emacs-lisp
+(defvar vc-git-orderfile nil)
+
+(advice-add 'vc-dir-deduce-fileset :after
+            (lambda (&rest _)
+              (when (and vc-ewoc (eq this-command 'vc-diff))
+                (let* ((tmpfile (make-temp-file "vc-git-orderfile-"))
+                       files)
+                  (ewoc-map (lambda (filearg)
+                              (push (vc-dir-fileinfo->name filearg) files))
+                            vc-ewoc)
+                  (with-temp-file tmpfile
+                    (mapcar (lambda (file) (insert file "\n")) (nreverse files)))
+                  (setq vc-git-orderfile tmpfile))))
+            '((name . vc-dir-create-orderfile)))
+
+(advice-add 'vc-git-diff :around
+            (lambda (orig-fun &rest args)
+              (if (and vc-git-orderfile (file-exists-p vc-git-orderfile))
+                  (let ((vc-git-diff-switches
+                         (append (list (format "-O%s" vc-git-orderfile))
+                                 vc-git-diff-switches)))
+                    (unwind-protect
+	                (apply orig-fun args)
+	              (delete-file vc-git-orderfile)
+                      (setq vc-git-orderfile nil)))
+                (apply orig-fun args)))
+            '((name . vc-git-diff-use-orderfile)))
 #+end_src
 
 ** Fall back between vc-diff and diff-backup
