@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-03-30
+#+DATE: 2021-04-01
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -709,7 +709,9 @@ Visit grep/xref hits in the window where all previous hits were visited:
 
 (add-to-list 'display-buffer-alist
              '(display-buffer-from-grep-p
-               nil (previous-window . display-buffer-previous-window))
+               nil
+               (previous-window . display-buffer-previous-window)
+               (inhibit-same-window . nil))
              ;; Append to not override display-buffer-same-window
              'append)
 
@@ -2104,7 +2106,7 @@ but still no option that would corresponds to ~ignorespace~.
 #+begin_src emacs-lisp
 (advice-add 'add-to-history :around
             (lambda (orig-fun history-var newelt &rest args)
-              (unless (or (and (eq history-var 'shell-command-history)
+              (unless (or (and (memq history-var '(shell-command-history compile-history))
                                (string-match-p "\\`\\(?:rm\\|git rm\\| \\)" newelt))
                           ;; I often type M-p RET inadvertently
                           (and (eq history-var 'compile-history)
