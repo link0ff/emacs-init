@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-04-01
+#+DATE: 2021-04-08
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -601,7 +601,8 @@ Also enable cycling on filename headings in *xref* buffers:
 #+begin_src emacs-lisp
 (add-hook 'xref-after-update-hook
           (lambda ()
-            (setq-local outline-regexp "/")
+            (setq-local outline-regexp (if (eq xref-file-name-display 'abs)
+                                           "/" "[^ 0-9]"))
             (outline-minor-mode +1)))
 #+end_src
 
@@ -2885,6 +2886,25 @@ old log files:
 
 ** compile/grep
 
+Word-based ~rgrep~ and ~project-find-regexp~:
+
+#+begin_src emacs-lisp
+(defun wrgrep ()
+  "Word-based version of ‘rgrep’.
+Modifies ‘grep-find-template’ to add the option ‘-w’ that matches whole words."
+  (interactive)
+  (let ((grep-host-defaults-alist nil)
+        (grep-find-template
+         (replace-regexp-in-string "<C>" "-w \\&" grep-find-template)))
+    (call-interactively 'rgrep)))
+
+(defun project-find-word (regexp)
+  "Word-based version of ‘project-find-regexp’.
+Modifies REGEXP to add the word boundaries to match whole words."
+  (interactive (list (project--read-regexp)))
+  (project-find-regexp (concat "\\b" regexp "\\b")))
+#+end_src
+
 #+begin_src emacs-lisp
 ;; After running compilation/grep hide the header of the compilation/grep
 ;; buffer which contains information rarely useful to see (i.e. mode:
@@ -2962,15 +2982,6 @@ old log files:
   (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee *.sass Gemfile Gemfile.lock") grep-files-aliases)
   (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
   (push '("clj" . "*.clj*") grep-files-aliases))
-
-(defun wrgrep ()
-  "Word-based version of ‘rgrep’.
-Modifies the grep-find template to add the option ‘-w’ that matches whole words."
-  (interactive)
-  (let ((grep-host-defaults-alist nil)
-        (grep-find-template
-         (replace-regexp-in-string "<C>" "-w \\&" grep-find-template)))
-    (call-interactively 'rgrep)))
 
 ;; Don't pollute manually added entries in ‘grep-history’ with constructed commands
 (advice-add 'lgrep :around
