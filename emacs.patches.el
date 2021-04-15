@@ -306,6 +306,9 @@ by doing (clear-string STRING)."
   (define-key icomplete-minibuffer-map [(control left)]   'icomplete-backward-completions)
   (define-key icomplete-minibuffer-map [(control right)]  'icomplete-forward-completions)
   (define-key icomplete-minibuffer-map [(control return)] 'icomplete-force-complete-and-exit)
+  ;; For `icomplete-vertical-mode':
+  (define-key icomplete-minibuffer-map [(control up)]     'icomplete-backward-completions)
+  (define-key icomplete-minibuffer-map [(control down)]   'icomplete-forward-completions)
   ;; (define-key icomplete-minibuffer-map [(meta right)]  'icomplete-forward-completions)
   ;; (define-key icomplete-minibuffer-map [(meta left)]   'icomplete-backward-completions)
   ;; (setq icomplete-with-completion-tables t)
