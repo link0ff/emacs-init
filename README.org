@@ -12,7 +12,7 @@
 #+OPTIONS: broken-links:mark author:t creator:t timestamp:t email:t toc:t
 
 #+begin_quote
-"/Show me your init file and I'll tell you who you are./" -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
+“/Show me your init file and I'll tell you who you are./” -- [[http://www.google.com/search?q=%22tell+you+who+you+are%22+intitle%3Aproverbs+site%3Awikiquote.org][old proverb]] slightly modified
 #+end_quote
 
 * Table of Content                                                      :TOC:
@@ -327,7 +327,7 @@ Also show tab groups and the clock at the right edge of the tab-bar:
    tab-bar-format-align-right
    tab-bar-format-global))
 
-;; This expects that `tab-bar-format' contains `tab-bar-format-global':
+;; This expects that ‘tab-bar-format’ contains ‘tab-bar-format-global’:
 (display-time-mode +1)
 #+end_src
 
@@ -589,7 +589,7 @@ An example of the mode where heading highlighting could be enabled is
 
 #+begin_src emacs-lisp
 (defun my-outline-minor-mode ()
-  ;; Enable in modes with reasonable `outline-regexp':
+  ;; Enable in modes with reasonable ‘outline-regexp’:
   (when (derived-mode-p 'emacs-lisp-mode)
     (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
@@ -1112,8 +1112,8 @@ Below is customization of different modes to support convenient navigation:
       (push-button)
     (help-go-forward)))
 
-;; Please note that 'help-next-ref' is better than 'Info-next-reference'
-;; because it uses 'message' instead of 'error' if "No cross references".
+;; Please note that ‘help-next-ref’ is better than ‘Info-next-reference’
+;; because it uses ‘message’ instead of ‘error’ if “No cross references”.
 (with-eval-after-load 'help-mode
   ;; Mozilla-like navigation:
   (define-key help-mode-map [(meta left)]  'help-go-back)
@@ -1515,8 +1515,8 @@ Easier-to-type grep invocations:
 (define-key next-error-repeat-map [M-down] 'next-error)
 (define-key next-error-repeat-map [M-up] 'previous-error)
 
-;; Can't add this to bindings.el because `C-right' as `right-sexp'
-;; is often used after `C-x C-right' (`next-buffer'):
+;; Can't add this to bindings.el because ‘C-right’ as ‘right-sexp’
+;; is often used after ‘C-x C-right’ (‘next-buffer’):
 (defvar next-buffer-repeat-map
   (let ((map (make-sparse-keymap)))
     (define-key map [right]   'next-buffer)
@@ -3040,8 +3040,8 @@ that highlights escape sequences emitted by many programs:
 
 #+begin_src emacs-lisp
 (setq-default
- ;; FIXME: `comint-history-isearch' can't by customized by `setq-default'
- ;; because `custom-reevaluate-setting' in `comint-history-isearch-end'
+ ;; FIXME: ‘comint-history-isearch’ can't by customized by ‘setq-default’
+ ;; because ‘custom-reevaluate-setting’ in ‘comint-history-isearch-end’
  ;; reverts this customized value:
  ;; comint-history-isearch 'dwim
  comint-input-ignoredups t
