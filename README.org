@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-04-08
+#+DATE: 2021-04-23
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -836,7 +836,7 @@ Here's a short table of mappings:
 
 #+begin_src emacs-lisp
 (defun use-fancy-quotes-p ()
-  (and (memq buffer-file-coding-system '(utf-8-unix utf-8-emacs-unix))
+  (and (memq buffer-file-coding-system '(utf-8 utf-8-unix utf-8-emacs-unix))
        (or (and comment-start (nth 4 (syntax-ppss)))
            (and (derived-mode-p 'text-mode)
                 (not (and (derived-mode-p 'org-mode)
@@ -1695,34 +1695,6 @@ Use this in isearch as well:
 (define-key isearch-mode-map "\M-y" 'isearch-yank-pop)
 #+end_src
 
-*** Start isearch with text from the active region
-
-Use key =M-s r= or =M-s M-.= to run Isearch and pull text from the active region
-to the search string:
-
-#+begin_src emacs-lisp
-(defun isearch-forward-region ()
-  "Do incremental search forward for text from the active region.
-Like ordinary incremental search except that text from the region
-is added to the search string initially if the region is active."
-  (interactive)
-  (isearch-forward nil 1)
-  (cond
-   ((use-region-p)
-    (when (< (mark) (point))
-      (exchange-point-and-mark))
-    (isearch-yank-string
-     (buffer-substring-no-properties (region-beginning) (region-end)))
-    (deactivate-mark))
-   (t
-    (setq isearch-error "No active region")
-    (isearch-push-state)
-    (isearch-update))))
-
-(define-key search-map "r"    'isearch-forward-region)
-(define-key search-map "\M-." 'isearch-forward-region)
-#+end_src
-
 *** isearch-lazy-hints
 
 I admit this could be a separate package:
@@ -1888,11 +1860,23 @@ Also moves point to the beginning of the found search string.
                 (setq search-ring (cdr search-ring))))))
 #+end_src
 
-=S-RET= exits and leaves lazy-highlighted matches on the screen after exiting isearch.
+=S-RET= exits and activates the region on the found match.
 
 #+begin_src emacs-lisp
-(define-key isearch-mode-map [(shift return)]
-                             'my-isearch-exit-leave-lazy-highlight)
+(define-key isearch-mode-map [(shift return)] 'my-isearch-exit-activate-region)
+
+(defun my-isearch-exit-activate-region ()
+  "Exit search and activate the region on the found match."
+  (interactive)
+  (unless (use-region-p)
+    (push-mark isearch-other-end t 'activate))
+  (isearch-exit))
+#+end_src
+
+=M-RET= exits and leaves lazy-highlighted matches on the screen after exiting isearch.
+
+#+begin_src emacs-lisp
+(define-key isearch-mode-map [(meta return)] 'my-isearch-exit-leave-lazy-highlight)
 
 (defun my-isearch-exit-leave-lazy-highlight ()
   "Exit search and leave extra match highlighting."
