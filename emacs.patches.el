@@ -768,6 +768,8 @@ delete flagged files.\n\n"))))))
                            "Tags: patch wontfix moreinfo unreproducible fixed notabug security confirmed"
                            "X-Debbugs-Cc:"
                            ,(format "unarchive %s" bug)
+                           ,(format "merge %s" bug)
+                           ,(format "forcemerge %s" bug)
                            ,(format "reopen %s" bug)
                            ,(format "severity %s serious important normal minor wishlist" bug)
                            ,(format "tags %s + patch wontfix moreinfo unreproducible fixed notabug security confirmed" bug)

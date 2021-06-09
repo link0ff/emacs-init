@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-04-23
+#+DATE: 2021-06-09
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -624,10 +624,12 @@ Holding the =S-s-= keys and typing arrow keys will move windows up/down, left/ri
 like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 #+begin_src emacs-lisp
-(windmove-default-keybindings 'hyper)
-(windmove-display-default-keybindings '(hyper meta))
-(windmove-delete-default-keybindings nil 'hyper)
-(windmove-swap-states-default-keybindings '(shift hyper))
+(use-package windmove
+  :custom
+  (windmove-default-keybindings '(nil hyper))
+  (windmove-delete-default-keybindings `(,(kbd "C-x") hyper))
+  (windmove-display-default-keybindings '(nil meta hyper))
+  (windmove-swap-states-default-keybindings '(nil shift hyper)))
 #+end_src
 
 Another important setting ~windmove-create-window~ is to automatically
@@ -1503,6 +1505,7 @@ Easier-to-type grep invocations:
 
 #+begin_src emacs-lisp
 (setq-default repeat-exit-key [return])
+(setq-default repeat-exit-timeout 0.5)
 (repeat-mode +1)
 
 (define-key resize-window-repeat-map [up]    'enlarge-window)
@@ -1831,20 +1834,24 @@ Also moves point to the beginning of the found search string.
 (add-hook 'isearch-mode-end-hook
           (lambda ()
             ;; Exiting isearch with C-RET
-            (when (eq last-input-event 'C-return)
-              ;; Move point to the beginning of the found search string
-              (if (and isearch-forward isearch-other-end)
-                  (goto-char isearch-other-end))
-              ;; Don't add the current search string to the search ring
-              (if isearch-regexp
-                  (setq regexp-search-ring (cdr regexp-search-ring))
-                (setq search-ring (cdr search-ring))))))
+            (when (eq 'return (event-basic-type last-input-event))
+              (when (memq 'control (event-modifiers last-input-event))
+                ;; Move point to the beginning of the found search string
+                (if (region-active-p)
+                    (exchange-point-and-mark)
+                  (when (and isearch-forward isearch-other-end)
+                    (goto-char isearch-other-end)))
+                ;; Don't add the current search string to the search ring
+                (if isearch-regexp
+                    (setq regexp-search-ring (cdr regexp-search-ring))
+                  (setq search-ring (cdr search-ring)))))))
 #+end_src
 
 =S-RET= exits and activates the region on the found match.
 
 #+begin_src emacs-lisp
 (define-key isearch-mode-map [(shift return)] 'my-isearch-exit-activate-region)
+(define-key isearch-mode-map [(control shift return)] 'my-isearch-exit-activate-region)
 
 (defun my-isearch-exit-activate-region ()
   "Exit search and activate the region on the found match."
@@ -3511,7 +3518,12 @@ The difference between N and the number of articles ticked is returned."
             (modify-syntax-entry ?' "'   " message-mode-syntax-table)
             ;; Prevent premature sending when ‘C-c C-s’
             ;; is typed instead of ‘C-x C-s’
-            (define-key message-mode-map "\C-c\C-s" nil)))
+            (define-key message-mode-map "\C-c\C-s" nil)
+            ;; ‘S-RET’ like in ‘org-mode’:
+            (define-key message-mode-map [S-return]
+              (lambda ()
+                (interactive)
+                (insert "#+begin_src emacs-lisp\n#+end_src\n")))))
 ;; TODO: try to use (message-tab) in message mode
 #+end_src
 
