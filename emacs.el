@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-03-03 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-07-08 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -830,7 +830,7 @@ With prefix arg, insert the current timestamp to the current buffer."
           (goto-char (point-min))
           (re-search-forward str nil t)))
     (outline-show-entry) ;?
-    (message str)))
+    (message "%s" str)))
 
 ;; for PROLOG manual:
 ;; outline-regexp: "Chapter\\|[0-9]\\.[0-9]+ .....\\|[0-9]+\\.[0-9]+\\.[0-9]+ ....."
@@ -1418,6 +1418,7 @@ Example:
 ;;; dropbox
 
 ;; Don't make auto-saves and backups in the Dropbox directory:
+(add-to-list 'lock-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
 (add-to-list 'auto-save-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
 (add-to-list 'backup-directory-alist '("\\`.*/Dropbox/.*" . "/tmp/"))
 

@@ -61,6 +61,8 @@
  '(delete-old-versions 'other)
  '(delete-pair-blink-delay 0.3)
  '(delete-selection-mode t)
+ '(delete-window-choose-selected 'pos)
+ '(describe-bindings-outline t)
  '(describe-char-unidata-list t)
  '(desktop-auto-save-timeout 60)
  '(desktop-restore-in-current-display t)
