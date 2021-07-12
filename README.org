@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-07-08
+#+DATE: 2021-07-11
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -990,7 +990,7 @@ Otherwise, call ‘indent-for-tab-command’ that indents line or region."
       (completion-at-point)
     (indent-for-tab-command arg)))
 
-(define-key emacs-lisp-mode-map [tab] 'my-lisp-indent-or-complete)
+(define-key emacs-lisp-mode-map (kbd "TAB") 'my-lisp-indent-or-complete)
 #+end_src
 
 A smarter jumping to the beginning of the line:
@@ -1218,7 +1218,7 @@ Below is customization of different modes to support convenient navigation:
          (ignore-errors (Man-next-section 1))
          (point)))))
   (define-key Man-mode-map [f2] 'toggle-truncate-lines)
-  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; (define-key view-mode-map (kbd "TAB") 'other-window) ; used for next-ref
   ;; more/less scrolling style
   (define-key Man-mode-map [return] 'View-scroll-line-forward))
 #+end_src
@@ -1231,7 +1231,7 @@ Below is customization of different modes to support convenient navigation:
   (define-key view-mode-map "g" (lambda () (interactive) (revert-buffer nil t t)))
   (define-key view-mode-map "l" 'View-goto-line)
   (define-key view-mode-map [f2] 'toggle-truncate-lines)
-  ;; (define-key view-mode-map [tab] 'other-window) ; used for next-ref
+  ;; (define-key view-mode-map (kbd "TAB") 'other-window) ; used for next-ref
   ;; global: (define-key view-mode-map [(meta right)] 'find-file-at-point)
   ;; Commented out to use the global keybinding:
   ;; (define-key view-mode-map [(meta left)]
@@ -1320,7 +1320,7 @@ Below is customization of different modes to support convenient navigation:
     (progn (dired-next-subdir 1))))
 (define-key dired-mode-map [(meta down)] 'dired-next-line-cycle) ; dired-next-line
 (define-key dired-mode-map [(control meta down)] 'my-dired-move-to-next-dir)
-(define-key dired-mode-map [tab] 'my-dired-move-to-next-dir) ;'other-window
+(define-key dired-mode-map (kbd "TAB") 'my-dired-move-to-next-dir) ;'other-window
 
 (defun my-dired-move-to-prev-dir (_arg)
   (interactive "P")
@@ -1670,8 +1670,8 @@ Bind it to the shorter key that doesn't exit Isearch:
 (define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
 (define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
 
-(define-key isearch-mode-map             "\t" 'isearch-complete)
-(define-key minibuffer-local-isearch-map "\t" 'isearch-complete-edit)
+(define-key isearch-mode-map             (kbd "TAB") 'isearch-complete)
+(define-key minibuffer-local-isearch-map (kbd "TAB") 'isearch-complete-edit)
 #+end_src
 
 In Emacs 28, ~yank-pop~ uses the minibuffer to read a yanked strings.
@@ -3299,7 +3299,7 @@ Gnus Group buffer:
   ;;       "%M%m%S%p%P%4y:%B%(%-30,30g%) %3T %5t %2I %o %s\n")
   ;; (setq gnus-group-line-format
   ;;       "%M%S%5y: %(%-30,30g%) %9,9~(cut 4)d %5t %2I %2T %o %n %s\n")
-  (define-key gnus-group-mode-map [tab] 'gnus-group-next-unread-group)
+  (define-key gnus-group-mode-map (kbd "TAB") 'gnus-group-next-unread-group)
   (define-key gnus-group-mode-map [(shift iso-lefttab)] 'gnus-group-prev-unread-group)
   (setq gnus-message-archive-group
         '((lambda (group)
@@ -3326,7 +3326,7 @@ Gnus Summary buffers:
   ;; Add 2-digit year:
   (setq gnus-summary-line-format
         "%U%R%z%I%(%[%4L: %6,6~(cut 2)o: %-20,20f%]%) %s\n")
-  (define-key gnus-summary-mode-map [tab] 'gnus-summary-next-unread-article)
+  (define-key gnus-summary-mode-map (kbd "TAB") 'gnus-summary-next-unread-article)
   (define-key gnus-summary-mode-map [(shift iso-lefttab)]
     'gnus-summary-prev-unread-article)
   (define-key gnus-summary-mode-map [(meta right)] 'gnus-summary-show-thread)
@@ -3956,10 +3956,10 @@ quit the previous buffer:
 
   (define-key xref--xref-buffer-mode-map (kbd "C-j")  'xref-quit-and-goto-xref)
   ;; Don't quit the xref window by TAB
-  (define-key xref--xref-buffer-mode-map (kbd "TAB") nil)
+  ;; (define-key xref--xref-buffer-mode-map (kbd "TAB") nil)
   ;; Like compilation-next-error and compilation-previous-error:
-  (define-key xref--xref-buffer-mode-map "\t" 'xref-next-line-no-show)
-  (define-key xref--xref-buffer-mode-map [backtab] 'xref-prev-line-no-show)
+  (define-key xref--xref-buffer-mode-map (kbd "TAB") 'xref-next-line-no-show)
+  (define-key xref--xref-buffer-mode-map (kbd "<backtab>") 'xref-prev-line-no-show)
 
   (add-hook 'xref--xref-buffer-mode-hook 'rename-uniquely))
 #+end_src

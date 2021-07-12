@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-07-08 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-07-11 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1418,7 +1418,8 @@ Example:
 ;;; dropbox
 
 ;; Don't make auto-saves and backups in the Dropbox directory:
-(add-to-list 'lock-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
+(when (boundp 'lock-file-name-transforms)
+  (add-to-list 'lock-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t)))
 (add-to-list 'auto-save-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
 (add-to-list 'backup-directory-alist '("\\`.*/Dropbox/.*" . "/tmp/"))
 
