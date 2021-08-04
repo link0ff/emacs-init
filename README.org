@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-07-11
+#+DATE: 2021-08-04
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -406,8 +406,8 @@ On 1366x768 this gives 225 columns x 75 lines, this means either
 #+begin_src emacs-lisp
 (cond
  ((eq window-system 'x)
-  ;;(create-fontset-from-ascii-font "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
-  (create-fontset-from-ascii-font "-misc-fixed-medium-r-*--10-*-*-*-*-*-*-*")
+  ;; (create-fontset-from-ascii-font "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
+  ;; (create-fontset-from-ascii-font "-misc-fixed-medium-r-*--10-*-*-*-*-*-*-*")
   (setq default-frame-alist
         (append
          '(
@@ -605,7 +605,12 @@ Also enable cycling on filename headings in *xref* buffers:
           (lambda ()
             (setq-local outline-regexp (if (eq xref-file-name-display 'abs)
                                            "/" "[^ 0-9]"))
-            (outline-minor-mode +1)))
+            (outline-minor-mode +1)
+            (save-excursion
+              (goto-char (point-min))
+              (while (and (re-search-forward "ChangeLog\\|test/manual/etags" nil t)
+                          (get-text-property (point) 'xref-group))
+                (outline-cycle)))))
 #+end_src
 
 * Time optimization
@@ -1532,6 +1537,19 @@ Easier-to-type grep invocations:
   "Keymap to repeat next-buffer key sequences.  Used in `repeat-mode'.")
 (put 'next-buffer 'repeat-map 'next-buffer-repeat-map)
 (put 'previous-buffer 'repeat-map 'next-buffer-repeat-map)
+#+end_src
+
+Unset ~repeat-exit-timeout~ in the debugger buffers
+where the repeat key can be pressed after a long delay.
+
+#+begin_src emacs-lisp
+(advice-add 'gud-find-file :around
+            (lambda (orig-fun &rest args)
+              (let ((buf (apply orig-fun args)))
+                (when (buffer-live-p buf)
+                  (with-current-buffer buf
+                    (setq-local repeat-exit-timeout nil)))))
+            '((name . disable-repeat-timeout-in-gdb)))
 #+end_src
 
 * Useful features
@@ -3635,12 +3653,14 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
 (defun dictionary-search-no-prompt ()
   "Search immediately with the default word without asking."
   (interactive)
-  (dictionary-search
-   (or (dictionary-search-default)
-       ;; Try to get a copied word from the clipboard
-       (and kill-ring
-            (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
-            (current-kill 0)))))
+  (require 'dictionary)
+  (let ((word (or (dictionary-search-default)
+                  ;; Try to get a copied word from the clipboard
+                  (and kill-ring
+                       (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
+                       (current-kill 0)))))
+    (add-to-history 'dictionary-word-history word)
+    (dictionary-search word)))
 
 (define-key my-map "wd" 'dictionary-search)
 (define-key my-map "ww" 'dictionary-search-no-prompt)
