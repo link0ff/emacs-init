@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-08-04
+#+DATE: 2021-09-19
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
@@ -128,7 +128,7 @@ To support lexical binding, the output file should have the
 ~lexical-binding~ cookie in its header:
 
 #+begin_src emacs-lisp
-;;; .emacs --- Emacs init file  -*- lexical-binding: t; -*-
+;;; .emacs --- Emacs init file  -*- lexical-binding: t; buffer-read-only: t -*-
 #+end_src
 
 You can read more about details of weaving and tangling in [[https://www.gnu.org/software/emacs/manual/html_mono/org.html#Extracting-source-code][the Org manual]].
@@ -2981,21 +2981,21 @@ Compilation buffer names:
           'my-compilation-buffer-name-function))
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; After running compilation/grep hide the header of the compilation/grep
 ;; buffer which contains information rarely useful to see (i.e. mode:
 ;; grep; default-directory:..., start time).  This header can be hidden by
 ;; setting the output window's start at position of the 4-th output line.
 ;; TODO: try to put 'invisible property on it, because next doesn't work well.
 ;; But commented out because I don't like this code anymore:
-;; (add-hook 'compilation-finish-functions
-;;        (lambda (cur-buffer _msg)
-;;             (mapc (lambda (window)
-;;                     (set-window-start window
-;;                                       (save-excursion
-;;                                         (goto-char (point-min))
-;;                                         (line-beginning-position 4))))
-;;                   (get-buffer-window-list cur-buffer))))
+(add-hook 'compilation-finish-functions
+       (lambda (cur-buffer _msg)
+            (mapc (lambda (window)
+                    (set-window-start window
+                                      (save-excursion
+                                        (goto-char (point-min))
+                                        (line-beginning-position 4))))
+                  (get-buffer-window-list cur-buffer))))
 
 ;; Run the compiled program in gdb if live gdb buffer exists
 (add-hook 'compilation-finish-functions
@@ -3016,7 +3016,9 @@ Compilation buffer names:
                     (goto-char (point-max))
                     (insert "r")
                     (comint-send-input)))))))
+#+end_src
 
+#+begin_src emacs-lisp
 (with-eval-after-load 'grep
   (push '("ch" . "*.[chm]") grep-files-aliases) ; override existing alias with added *.m
   (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
@@ -3177,7 +3179,7 @@ Pre-load some useful packages:
 ;; ‘display-buffer-alist’ is ignored in ‘org-no-popups’
 ;; until ‘org-switch-to-buffer-other-window’ is overridden below:
 (defalias 'org-switch-to-buffer-other-window 'switch-to-buffer-other-window)
-(push '("\\`\\*Org \\(Links\\|Select\\)\\*\\'"
+(push '("\\`\\*\\(Org \\(Links\\|Select\\)\\|Org-Babel Error Output\\)\\*\\'"
         display-buffer-below-selected
         (window-height . fit-window-to-buffer)
         (preserve-size . (nil . t)))
