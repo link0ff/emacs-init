@@ -1072,13 +1072,20 @@ files one by one in a Dired buffer, or from a menu of links to Info nodes, etc.
 (defun my-go-back ()
   "Go back from current buffer and jump to Dired."
   (interactive)
-  ;; Keep the buffer displayed on the frame or in a tab
-  (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
-          (tab-bar-get-buffer-tab (current-buffer) t t))
-      (dired-jump)
-    ;; Go to the top to not store emacs-places.
-    (goto-char (point-min))
-    (kill-current-buffer-and-dired-jump)))
+  (let* ((prev-buffer (car (nth 0 (window-prev-buffers))))
+         (prev-dired (when (buffer-live-p prev-buffer)
+                       (with-current-buffer prev-buffer
+                         (eq major-mode 'dired-mode))))
+         (jump-dired (or prev-dired (derived-mode-p 'vc-dir-mode))))
+    ;; Keep the buffer displayed on the frame or in a tab
+    (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
+            (tab-bar-get-buffer-tab (current-buffer) t t))
+        (if jump-dired (dired-jump) (quit-window))
+      ;; Go to the top to not store emacs-places.
+      ;; (goto-char (point-min))
+      (if jump-dired
+          (kill-current-buffer-and-dired-jump)
+        (quit-window-kill-buffer)))))
 
 (defun my-find-thing-at-point ()
   "Find variable, function or file at point."
@@ -2899,6 +2906,7 @@ Modifies ‘grep-find-template’ to add the option ‘-w’ that matches whole 
 Modifies REGEXP to add the word boundaries to match whole words."
   (interactive (list (project--read-regexp)))
   (project-find-regexp (concat "\\b" regexp "\\b")))
+(define-key project-prefix-map "w" 'project-find-word)
 #+end_src
 
 Don't pollute manually added entries in ~grep-history~ with constructed commands:
