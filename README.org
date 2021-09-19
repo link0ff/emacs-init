@@ -1559,7 +1559,8 @@ where the repeat key can be pressed after a long delay.
               (let ((buf (apply orig-fun args)))
                 (when (buffer-live-p buf)
                   (with-current-buffer buf
-                    (setq-local repeat-exit-timeout nil)))))
+                    (setq-local repeat-exit-timeout nil)))
+                buf))
             '((name . disable-repeat-timeout-in-gdb)))
 #+end_src
 
@@ -3039,6 +3040,17 @@ Compilation buffer names:
   (push '("clj" . "*.clj*") grep-files-aliases))
 #+end_src
 
+** gdb
+
+#+begin_src emacs-lisp
+(push `(,(rx bos "*" (and "input/output of " (+ (any "A-za-z"))) "*" eos)
+        (display-buffer-reuse-window
+         display-buffer-below-selected)
+        (dedicated . nil)
+        (window-height . 10))
+      display-buffer-alist)
+#+end_src
+
 ** process
 
 Increase throughput of process output:
@@ -3652,7 +3664,7 @@ Add more globals to save between sessions:
               search-ring
               regexp-search-ring
               vc-git-history
-              ;; gud-gdb-history
+              gud-gdb-history
               )
             (delq 'register-alist desktop-globals-to-save)))))
 #+end_src
