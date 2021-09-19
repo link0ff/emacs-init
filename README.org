@@ -1657,7 +1657,10 @@ the same screen state that was before.
 (setq isearch-push-state-function
       (lambda ()
         ;; Recenter new search hits outside of window boundaries
-        (when (and isearch-success (not (pos-visible-in-window-p)))
+        (when (and isearch-success
+                   (not (pos-visible-in-window-p))
+                   (not (and (bound-and-true-p isearch-allow-motion)
+                             (memq this-command '(scroll-up-command scroll-down-command)))))
           ;; reposition-window takes too much time in large buffers
           (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode)
                   (> (buffer-size) 1000000))
@@ -1697,8 +1700,9 @@ In Emacs 27, ~isearch-beginning-of-buffer~ is bound to =M-s M-<=.
 Bind it to the shorter key that doesn't exit Isearch:
 
 #+begin_src emacs-lisp
-(define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
-(define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
+;; Commented out since no need with ‘isearch-allow-motion’:
+;; (define-key isearch-mode-map "\M-<" 'isearch-beginning-of-buffer)
+;; (define-key isearch-mode-map "\M->" 'isearch-end-of-buffer)
 
 (define-key isearch-mode-map             (kbd "TAB") 'isearch-complete)
 (define-key minibuffer-local-isearch-map (kbd "TAB") 'isearch-complete-edit)

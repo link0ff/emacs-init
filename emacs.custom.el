@@ -154,6 +154,8 @@
  '(inhibit-startup-echo-area-message "juri")
  '(inhibit-startup-screen nil)
  '(initial-buffer-choice nil)
+ '(isearch-allow-motion t)
+ '(isearch-motion-changes-direction nil)
  '(isearch-repeat-on-direction-change t)
  '(js-indent-level 2)
  '(kill-do-not-save-duplicates t)
