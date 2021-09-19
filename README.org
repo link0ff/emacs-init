@@ -690,9 +690,11 @@ Clicking a link from the =*Help*= buffer opens source code in the same window:
 (defun display-buffer-from-help-p (_buffer-name _action)
   (unless current-prefix-arg
     (with-current-buffer (window-buffer)
-      (eq major-mode 'help-mode))))
+      (derived-mode-p 'help-mode))))
 
-(push '(display-buffer-from-help-p display-buffer-same-window)
+(push '(display-buffer-from-help-p
+        display-buffer-same-window
+        (inhibit-same-window . nil))
       display-buffer-alist)
 #+end_src
 
@@ -703,7 +705,9 @@ Visiting new files using next-error commands should be in the same window:
   (unless current-prefix-arg
     (memq this-command '(next-error previous-error))))
 
-(push '(display-buffer-from-next-error-p display-buffer-same-window)
+(push '(display-buffer-from-next-error-p
+        display-buffer-same-window
+        (inhibit-same-window . nil))
       display-buffer-alist)
 #+end_src
 
@@ -3470,7 +3474,7 @@ Example:
 \"emacs-devel&query=\" (url-hexify-string (concat \"+message-id:\"
 \"12345678.fsf@gnu.org\"))))"
   (interactive "P")
-  (unless (eq major-mode 'gnus-summary-mode)
+  (unless (derived-mode-p 'gnus-summary-mode)
     (error "Not in a gnus group buffer"))
   (let ((list-archive
          (with-current-buffer gnus-original-article-buffer
@@ -3501,7 +3505,7 @@ Example:
 \(browse-url (concat \"http://thread.gmane.org/\"
  (url-hexify-string \"12345678.fsf@gnu.org\")))"
   (interactive "P")
-  (unless (eq major-mode 'gnus-summary-mode)
+  (unless (derived-mode-p 'gnus-summary-mode)
     (error "Not in a gnus group buffer"))
   (let ((message-id
          (with-current-buffer gnus-original-article-buffer
@@ -3774,7 +3778,7 @@ display battery status on the mode line.
         (run-at-time t 600 (lambda ()
                              (display-battery-mode
                               (if (member (cdr (assoc ?L (funcall battery-status-function)))
-                                          '("AC" "on-line"))
+                                          '("AC" "on-line" "N/A"))
                                   0 1))))))
 #+end_src
 
