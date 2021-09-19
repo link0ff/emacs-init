@@ -2338,8 +2338,9 @@ when filling the paragraph with =M-q=:
 
 #+begin_src emacs-lisp
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
-(add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
+(add-hook 'fill-nobreak-predicate 'fill-single-char-nobreak-p)
+;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
+;; (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
 
 (add-hook 'text-mode-hook       'flyspell-mode)
 (add-hook 'change-log-mode-hook 'flyspell-mode)
