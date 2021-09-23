@@ -1,10 +1,10 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-09-19
+#+DATE: 2021-09-23
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
-#+Copyright: (C) 1989-2020  Juri Linkov <juri@linkov.net>/
+#+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
 #+HTML_link_home: http://www.linkov.net/emacs
 #+HTML_head: <script type="text/javascript" src="load.js"></script>
 #+InfoJS_opt: view:info toc:t
@@ -566,7 +566,7 @@ An example of the mode where heading highlighting could be enabled is
  outline-minor-mode-cycle t
  outline-minor-mode-highlight t)
 
-(let ((map outline-mode-cycle-map)
+(let ((map outline-minor-mode-cycle-map)
       (cmds '(("M-<down>"  outline-next-visible-heading)
               ("M-<up>"    outline-previous-visible-heading)
               ;; ("M-<left>"  outline-hide-subtree)
@@ -1136,8 +1136,8 @@ Below is customization of different modes to support convenient navigation:
 ;; because it uses ‘message’ instead of ‘error’ if “No cross references”.
 (with-eval-after-load 'help-mode
   ;; Mozilla-like navigation:
-  (define-key help-mode-map [(meta left)]  'help-go-back)
-  (define-key help-mode-map [(meta right)] 'my-help-follow)
+  ;; (define-key help-mode-map [(meta left)]  'help-go-back)
+  ;; (define-key help-mode-map [(meta right)] 'my-help-follow)
   ;; Lynx-like navigation:
   (define-key help-mode-map [(meta up)]
     (lambda () (interactive)
@@ -1639,8 +1639,11 @@ The following features are new in Emacs 27:
 #+begin_src emacs-lisp
 (setq-default
  isearch-lazy-count t
+ isearch-allow-scroll 'unlimited
  isearch-yank-on-move 'shift
- isearch-allow-scroll 'unlimited)
+ isearch-allow-motion t
+ isearch-motion-changes-direction nil
+ isearch-repeat-on-direction-change t)
 #+end_src
 
 *** Smoother isearch navigation
@@ -1659,8 +1662,9 @@ the same screen state that was before.
         ;; Recenter new search hits outside of window boundaries
         (when (and isearch-success
                    (not (pos-visible-in-window-p))
-                   (not (and (bound-and-true-p isearch-allow-motion)
-                             (memq this-command '(scroll-up-command scroll-down-command)))))
+                   ;; (not (and (bound-and-true-p isearch-allow-motion)
+                   ;;           (memq this-command '(scroll-up-command scroll-down-command))))
+                   )
           ;; reposition-window takes too much time in large buffers
           (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode)
                   (> (buffer-size) 1000000))
@@ -1892,7 +1896,7 @@ Also moves point to the beginning of the found search string.
 (defun my-isearch-exit-activate-region ()
   "Exit search and activate the region on the found match."
   (interactive)
-  (unless (use-region-p)
+  (unless (or (use-region-p) (not isearch-other-end))
     (push-mark isearch-other-end t 'activate))
   (isearch-exit))
 #+end_src
@@ -4387,7 +4391,7 @@ Display the time of the Emacs initialization:
 
 * Copyright
 
-Copyright (C) 1989-2020  Juri Linkov <juri@linkov.net>
+Copyright (C) 1989-2021  Juri Linkov <juri@linkov.net>
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
