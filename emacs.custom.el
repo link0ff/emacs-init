@@ -233,6 +233,7 @@
  '(set-mark-command-repeat-pop t)
  '(sgml-xml-mode t)
  '(shift-select-mode 'permanent)
+ '(show-paren-mode nil)
  '(shr-use-fonts nil)
  '(smiley-style 'emoji)
  '(smtpmail-debug-info t)
