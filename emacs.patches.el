@@ -316,50 +316,6 @@ by doing (clear-string STRING)."
   )
 
 
-;;; window.el
-
-;; FROM http://thread.gmane.org/gmane.emacs.devel/159692/focus=159721
-(defvar window-resize-keymap
-  (let ((map (make-sparse-keymap)))
-    ;; Standard keys:
-    (define-key map "0" 'delete-window)
-    (define-key map "1" 'delete-other-windows)
-    (define-key map "2" 'split-window-below)
-    (define-key map "3" 'split-window-right)
-    (define-key map "o" 'other-window)
-    (define-key map "^" 'enlarge-window)
-    (define-key map "}" 'enlarge-window-horizontally)
-    (define-key map "{" 'shrink-window-horizontally)
-    (define-key map "-" 'shrink-window-if-larger-than-buffer)
-    (define-key map "+" 'balance-windows)
-    ;; Additional keys:
-    (define-key map "v"     'shrink-window)
-    (define-key map [down]  'shrink-window)
-    (define-key map [up]    'enlarge-window)
-    (define-key map [left]  'shrink-window-horizontally)
-    (define-key map [right] 'enlarge-window-horizontally)
-    map)
-  "Keymap to resize windows.")
-(when (fboundp 'advice-add)
-  (advice-add 'enlarge-window-horizontally
-              :after (lambda (&rest _args)
-                       (set-transient-map window-resize-keymap)))
-  (advice-add 'shrink-window-horizontally
-              :after (lambda (&rest _args)
-                       (set-transient-map window-resize-keymap)))
-  (advice-add 'enlarge-window
-              :after (lambda (&rest _args)
-                       (set-transient-map window-resize-keymap)))
-  (advice-add 'shrink-window
-              :after (lambda (&rest _args)
-                       (set-transient-map window-resize-keymap)))
-  (defun window-resize-command ()
-    (interactive)
-    (message "Use window-resizing keys...")
-    (set-transient-map window-resize-keymap))
-  (define-key ctl-x-map "wr" 'window-resize-command))
-
-
 ;;; misc.el
 
 (defun duplicate-line (&optional arg)

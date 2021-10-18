@@ -52,6 +52,7 @@
  '(completions-group t)
  '(completions-group-sort 'alphabetical)
  '(confirm-kill-emacs 'y-or-n-p)
+ '(context-menu-mode t)
  '(cperl-continued-statement-offset 0)
  '(css-indent-offset 2)
  '(cursor-in-non-selected-windows nil)
