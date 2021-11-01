@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-07-11 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-10-18 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -991,7 +991,8 @@ With prefix arg, insert the current timestamp to the current buffer."
   (define-key ruby-mode-map [(control left)] 'ruby-backward-sexp)
   (define-key ruby-mode-map [(control right)] 'ruby-forward-sexp)
   (when delete-selection-mode
-    (put 'ruby-end-return 'delete-selection t))
+    (put 'ruby-end-return 'delete-selection t)
+    (put 'ruby-end-space 'delete-selection t))
   (add-hook 'ruby-mode-hook
             (lambda ()
               ;; Copied some keywords from ‘ruby-block-beg-keywords’ and

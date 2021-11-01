@@ -322,7 +322,8 @@ Also show tab groups and the clock at the right edge of the tab-bar:
 #+begin_src emacs-lisp
 (setq-default
  tab-bar-format
- '(tab-bar-format-history
+ '(tab-bar-format-menu-bar
+   ;; tab-bar-format-history
    tab-bar-format-tabs-groups
    tab-bar-format-align-right
    tab-bar-format-global))
@@ -680,7 +681,9 @@ so there is no need to switch windows back and forth:
              (? (and "<" (+ (not (any ">"))) ">"))
              eos)
         display-buffer-same-window
-        (inhibit-same-window . nil))
+        (inhibit-same-window . nil)
+        ;; Inhibit resizing Help buffers (bug#51062)
+        (window-height . nil))
       display-buffer-alist)
 #+end_src
 
