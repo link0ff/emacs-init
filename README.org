@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-09-23
+#+DATE: 2021-11-01
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2645,25 +2645,34 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (define-key dired-mode-map "\M-=" 'dired-backup-diff)
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(defadvice dired-backup-diff (around my-dired-backup-diff act)
-  (let* ((filename (dired-get-filename t))
-         (coding-system (with-temp-buffer
-                          (insert-file-contents filename nil 0 1024)
-                          buffer-file-coding-system))
-         (coding-system-for-read coding-system)
-         (coding-system-for-write coding-system))
-    ad-do-it))
+(advice-add
+ 'dired-backup-diff :around
+ (lambda (orig-fun &rest args)
+   (let* ((filename (dired-get-filename))
+          (coding-system (when (and (file-regular-p filename)
+                                    (not (file-remote-p filename)))
+                           (with-temp-buffer
+                             (insert-file-contents filename nil 0 1024)
+                             buffer-file-coding-system)))
+          (coding-system-for-read (or coding-system coding-system-for-read))
+          (coding-system-for-write (or coding-system coding-system-for-write)))
+     (apply orig-fun args)))
+ '((name . my-dired-backup-diff)))
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(defadvice dired-diff (around my-dired-diff act)
-  (let* ((filename (dired-get-filename t))
-         (coding-system (when (file-regular-p filename)
-                          (with-temp-buffer
-                            (insert-file-contents filename nil 0 1024)
-                            buffer-file-coding-system)))
-         (coding-system-for-read coding-system)
-         (coding-system-for-write coding-system))
-    ad-do-it))
+(advice-add
+ 'dired-diff :around
+ (lambda (orig-fun &rest args)
+   (let* ((filename (dired-get-filename))
+          (coding-system (when (and (file-regular-p filename)
+                                    (not (file-remote-p filename)))
+                           (with-temp-buffer
+                             (insert-file-contents filename nil 0 1024)
+                             buffer-file-coding-system)))
+          (coding-system-for-read (or coding-system coding-system-for-read))
+          (coding-system-for-write (or coding-system coding-system-for-write)))
+     (apply orig-fun args)))
+ '((name . my-dired-diff)))
 
 ;; (define-key dired-mode-map "\C-y" (lambda (&optional arg)
 ;;                                     (interactive)
