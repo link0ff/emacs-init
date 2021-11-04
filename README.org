@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-11-02
+#+DATE: 2021-11-04
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -1649,6 +1649,18 @@ The following features are new in Emacs 27:
  isearch-repeat-on-direction-change t)
 #+end_src
 
+With non-nil ~isearch-allow-motion~, =up= and =down= arrow keys
+go to the previous/next matches:
+
+#+begin_src emacs-lisp
+(put 'previous-line 'isearch-motion '(left-char . backward))
+(put 'next-line 'isearch-motion '(right-char . forward))
+;; (put 'previous-line 'isearch-motion '((lambda () (forward-line 0)) . backward))
+;; (put 'next-line 'isearch-motion '(forward-line . forward))
+;; (put 'left-char 'isearch-motion '(left-char . backward))
+;; (put 'right-char 'isearch-motion '(right-char . forward))
+#+end_src
+
 *** Smoother isearch navigation
 
 Save and restore window start positions on returning back to previous search hit.
@@ -1667,7 +1679,8 @@ the same screen state that was before.
                    (not (pos-visible-in-window-p))
                    ;; (not (and (bound-and-true-p isearch-allow-motion)
                    ;;           (memq this-command '(scroll-up-command scroll-down-command))))
-                   )
+                   ;; ‘follow-mode’ doesn't need recentering
+                   (not follow-mode))
           ;; reposition-window takes too much time in large buffers
           (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode)
                   (> (buffer-size) 1000000))
@@ -4113,7 +4126,7 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 ** Fix outline-mode in NEWS files
 
 Workaround a bug in NEWS files where Symbol search fails.
-Use solution like in change-log-mode-syntax-table.
+Use solution like in ~change-log-mode-syntax-table~.
 See more at [[https://debbugs.gnu.org/31231][bug#31231]].
 
 #+begin_src emacs-lisp
