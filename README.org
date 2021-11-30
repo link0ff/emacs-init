@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-11-22
+#+DATE: 2021-11-30
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -607,11 +607,14 @@ Also enable cycling on filename headings in *xref* buffers:
             (setq-local outline-regexp (if (eq xref-file-name-display 'abs)
                                            "/" "[^ 0-9]"))
             (outline-minor-mode +1)
-            (save-excursion
-              (goto-char (point-min))
-              (while (and (re-search-forward "ChangeLog\\|test/manual/etags" nil t)
-                          (get-text-property (point) 'xref-group))
-                (outline-cycle)))))
+            (outline-map-region
+             (lambda ()
+               (when (string-match-p "ChangeLog\\|test/manual/etags"
+                                     (buffer-substring
+                                      (line-beginning-position)
+                                      (line-end-position)))
+                 (outline-hide-entry)))
+             (point-min) (point-max))))
 #+end_src
 
 * Time optimization
@@ -3735,7 +3738,8 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
                   (and kill-ring
                        (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
                        (current-kill 0)))))
-    (add-to-history 'dictionary-word-history word)
+    (when word
+      (add-to-history 'dictionary-word-history word))
     (dictionary-search word)))
 
 (define-key my-map "wd" 'dictionary-search)
