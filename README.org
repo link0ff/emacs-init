@@ -4247,18 +4247,16 @@ Strip any ANSI escape sequences from the output:
 
 ** Fix mode-line faces
 
-The default mode-line faces are reversed and make no sense.  Instead of this,
-the mode-line of the current buffer should have the =pressed= style,
-like when a button is pressed that means it's used.  And an inactive
-mode-line should have the =released= style (i.e. unused):
+Make the default mode-line faces look like active/inactive tabs on the tab bar:
 
 #+begin_src emacs-lisp
-(set-face-attribute
- 'mode-line nil
- :box '(:line-width -1 :style pressed-button))
-(set-face-attribute
- 'mode-line-inactive nil
- :box '(:line-width -1 :style released-button))
+(set-face-attribute 'mode-line-active   nil :box '(:line-width -1 :style released-button))
+(set-face-attribute 'mode-line-inactive nil :box '(:line-width -1 :style released-button))
+(set-face-attribute 'mode-line-active   nil :background "grey85")
+(set-face-attribute 'mode-line-inactive nil :background "grey75")
+(set-face-attribute 'mode-line-active   nil :foreground "black")
+(set-face-attribute 'mode-line-inactive nil :foreground "black")
+(set-face-attribute 'mode-line-inactive nil :weight 'normal)
 #+end_src
 
 ** Fix dired
