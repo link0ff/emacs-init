@@ -4095,8 +4095,11 @@ Allow set-variable to set internal variables, not only customizable ones:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'follow
-  (define-key follow-mode-map [prior] 'follow-scroll-down)
-  (define-key follow-mode-map [next]  'follow-scroll-up))
+  (define-key follow-mode-map [remap scroll-up-command] #'follow-scroll-up)
+  (define-key follow-mode-map [remap scroll-down-command] #'follow-scroll-down)
+  (define-key follow-mode-map [remap View-scroll-page-forward] #'follow-scroll-up)
+  (define-key follow-mode-map [remap View-scroll-page-forward-set-page-size] #'follow-scroll-up)
+  (define-key follow-mode-map [remap View-scroll-page-backward] #'follow-scroll-down))
 #+end_src
 
 ** Fix =*Messages*= buffer
