@@ -1548,6 +1548,7 @@ Easier-to-type grep invocations:
 
 #+begin_src emacs-lisp
 (setq-default repeat-exit-key [return])
+;; (setq-default repeat-exit-key "RET")
 (setq-default repeat-exit-timeout 0.5)
 (repeat-mode +1)
 
@@ -1575,18 +1576,13 @@ Easier-to-type grep invocations:
 (put 'previous-buffer 'repeat-map 'next-buffer-repeat-map)
 #+end_src
 
-Unset ~repeat-exit-timeout~ in the debugger buffers
+Override ~repeat-exit-timeout~ for the debugger commands
 where the repeat key can be pressed after a long delay.
 
 #+begin_src emacs-lisp
-(advice-add 'gud-find-file :around
-            (lambda (orig-fun &rest args)
-              (let ((buf (apply orig-fun args)))
-                (when (buffer-live-p buf)
-                  (with-current-buffer buf
-                    (setq-local repeat-exit-timeout nil)))
-                buf))
-            '((name . disable-repeat-timeout-in-gdb)))
+(dolist (command '( gud-next gud-step gud-stepi gud-cont
+                    gud-refresh gud-finish gud-up gud-down))
+  (put command 'repeat-exit-timeout 'no))
 #+end_src
 
 * Useful features
@@ -2649,6 +2645,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
          (root (and project (car (project-roots project)))))
     (dired (or (and root (file-directory-p root) root) default-directory))))
 
+;; The same as `C-x p D'
 (define-key ctl-x-map "D" 'dired-in-project-root)
 
 (defun my-dired-do-shell-command-on-current-file ()
