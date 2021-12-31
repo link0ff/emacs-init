@@ -4152,6 +4152,18 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 ;; (add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 #+end_src
 
+** Fix outline-regexp
+
+By default, ~outline-regexp~ includes the page delimiter =^L=.
+When a file contains a lot of page delimiters, they are displayed
+as empty lines that take too much screen space for nothing (bug#51016).
+So remove page delimiters from the default value:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'outline
+  (setq-default outline-regexp (string-replace "\^L" "" (default-value 'outline-regexp))))
+#+end_src
+
 ** Fix outline-mode in NEWS files
 
 Workaround a bug in NEWS files where Symbol search fails.
