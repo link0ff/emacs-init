@@ -383,13 +383,10 @@ is by =Shift-`=, and selecting a previous tab is by =Alt+`=:
 #+end_src
 
 ~tab-bar-history-mode~ is like ~winner-mode~ but replaces it
-with the same keybindings when ~tab-bar-mode~ is enabled:
+with the same keybindings =C-c left= and =C-c right=:
 
 #+begin_src emacs-lisp
 (when (fboundp 'tab-bar-history-mode) (tab-bar-history-mode 1))
-(when tab-bar-history-mode
-  (define-key global-map [(control c) left]  'tab-bar-history-back)
-  (define-key global-map [(control c) right] 'tab-bar-history-forward))
 #+end_src
 
 ** Full-screen Emacs desktop
