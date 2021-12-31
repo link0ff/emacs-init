@@ -173,7 +173,7 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (if (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode)
+  (if (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode 'mail-archives-mode)
       (recenter-top)
     (reposition-window)))
 
@@ -874,14 +874,14 @@ Here's a short table of mappings:
 
 #+begin_src emacs-lisp
 (defun use-fancy-quotes-p ()
-  (and (memq buffer-file-coding-system '(utf-8 utf-8-unix utf-8-emacs-unix))
+  (and (memq (coding-system-base buffer-file-coding-system) '(utf-8 utf-8-emacs))
        (or (and comment-start (nth 4 (syntax-ppss)))
            (and (derived-mode-p 'text-mode)
                 (not (and (derived-mode-p 'org-mode)
                           (consp (get-text-property (point) 'face))
                           (memq 'org-block (get-text-property (point) 'face))))
-                (not (derived-mode-p 'sgml-mode))
                 (not (derived-mode-p 'vc-git-log-edit-mode))
+                (not (derived-mode-p 'sgml-mode))
                 (not (derived-mode-p 'yaml-mode))
                 )
            ;; (derived-mode-p 'fundamental-mode)
@@ -1562,8 +1562,8 @@ Easier-to-type grep invocations:
 (define-key next-error-repeat-map [M-down] 'next-error)
 (define-key next-error-repeat-map [M-up] 'previous-error)
 
-;; Can't add this to bindings.el because ‘C-right’ as ‘right-sexp’
-;; is often used after ‘C-x C-right’ (‘next-buffer’):
+;; Can't add this to bindings.el because ‘C-right’ as ‘right-word’
+;; or ‘right-sexp’ is often used after ‘C-x C-right’ (‘next-buffer’):
 (defvar next-buffer-repeat-map
   (let ((map (make-sparse-keymap)))
     (define-key map [right]   'next-buffer)
@@ -1581,7 +1581,10 @@ where the repeat key can be pressed after a long delay.
 
 #+begin_src emacs-lisp
 (dolist (command '( gud-next gud-step gud-stepi gud-cont
-                    gud-refresh gud-finish gud-up gud-down))
+                    gud-refresh gud-finish gud-up gud-down
+                    ;; These as well because there is no need to type
+                    ;; a self-inserting keys after these commands:
+                    next-error previous-error))
   (put command 'repeat-exit-timeout 'no))
 #+end_src
 
@@ -2350,8 +2353,8 @@ Uses the value of the variable ‘search-whitespace-regexp’."
 #+end_src
 
 While ~canonically-space-region~ removes extra spaces and leaves two spaces
-at end of sentences, a new function ~canonically-double-space-region~
-*adds* two spaces at end of sentences (then they end with just one space)
+at the end of sentences, a new function ~canonically-double-space-region~
+*adds* two spaces at the end of sentences (then they end with just one space)
 when filling the paragraph with =M-q=:
 
 #+begin_src emacs-lisp
@@ -2512,8 +2515,8 @@ Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
 (advice-add 'vc-git-log-search :after
             (lambda (buffer pattern)
               (with-current-buffer buffer
-                (vc-run-delayed
-                  (when pattern
+                (when pattern
+                  (vc-run-delayed
                     (highlight-regexp pattern 'hi-yellow)))))
             '((name . vc-git-log-search-highlight)))
 
@@ -4095,6 +4098,7 @@ Allow set-variable to set internal variables, not only customizable ones:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'follow
+  (define-key follow-mode-map [remap recenter-top-bottom] #'follow-recenter)
   (define-key follow-mode-map [remap scroll-up-command] #'follow-scroll-up)
   (define-key follow-mode-map [remap scroll-down-command] #'follow-scroll-down)
   (define-key follow-mode-map [remap View-scroll-page-forward] #'follow-scroll-up)
@@ -4262,6 +4266,9 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 (set-face-attribute 'mode-line-active   nil :foreground "black")
 (set-face-attribute 'mode-line-inactive nil :foreground "black")
 (set-face-attribute 'mode-line-inactive nil :weight 'normal)
+;; Variable pitch is better on the mode line
+(set-face-attribute 'mode-line-active   nil :inherit '(mode-line variable-pitch))
+(set-face-attribute 'mode-line-inactive nil :inherit '(mode-line variable-pitch))
 #+end_src
 
 ** Fix dired
