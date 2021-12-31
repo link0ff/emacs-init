@@ -801,7 +801,9 @@ instead of knocking it 3 times:
 #+begin_src emacs-lisp
 (when window-system
   (define-key global-map [escape] 'keyboard-escape-quit)
-  (define-key isearch-mode-map  [escape] 'isearch-cancel))
+  (define-key isearch-mode-map  [escape] 'isearch-cancel)
+  ;; (define-key completion-list-mode-map [escape] 'delete-completion-window))
+  (define-key completion-list-mode-map [escape] 'switch-to-minibuffer))
 #+end_src
 
 ** Dedicated keymap =C-z= my-map
