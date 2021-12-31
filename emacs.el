@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-10-18 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2021-12-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -905,12 +905,7 @@ With prefix arg, insert the current timestamp to the current buffer."
     "HTML level 2 headline tags."
     nil
     "<h2><a name=\"" (setq str (read-string "Name: "))
-    "\" id=\"" str "\">" _ "</a></h2>")
-
-  (add-hook 'sgml-mode-hook
-          (lambda ()
-            ;; Don't insert newlines after <span></span>
-            (setq-local skeleton-end-newline nil))))
+    "\" id=\"" str "\">" _ "</a></h2>"))
 
 (add-hook 'html-mode-hook 'turn-off-auto-fill)
 (add-hook 'html-mode-hook
