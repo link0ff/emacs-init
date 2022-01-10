@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2021-12-31
+#+DATE: 2022-01-10
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -306,7 +306,7 @@ to be able to select a tab by its ordinal number by typing e.g.
 #+begin_src emacs-lisp
 (setq-default
  tab-bar-tab-hints t
- tab-bar-select-tab-modifiers '(hyper))
+ tab-bar-select-tab-modifiers '(super))
 #+end_src
 
 By default, the tab shows the name of the current buffer, but I prefer
@@ -365,12 +365,12 @@ is by =Shift-`=, and selecting a previous tab is by =Alt+`=:
 #+begin_src emacs-lisp
 (when (featurep 'tab-bar)
   (define-key global-map [(meta     ?`)] 'tab-switcher)
-  (define-key global-map [(hyper    ?`)] 'tab-switcher)
+  (define-key global-map [(super    ?`)] 'tab-switcher)
   (define-key global-map [(meta  ?\xa7)] 'tab-switcher)
   ;; (define-key global-map [(meta ?\x8a7)] 'tab-switcher)
   (with-eval-after-load 'tab-bar
     (define-key tab-switcher-mode-map [(meta     ?`)] 'tab-switcher-select)
-    (define-key tab-switcher-mode-map [(hyper    ?`)] 'tab-switcher-select)
+    (define-key tab-switcher-mode-map [(super    ?`)] 'tab-switcher-select)
     (define-key tab-switcher-mode-map [(meta  ?\xa7)] 'tab-switcher-select)
     ;; (define-key tab-switcher-mode-map [(meta ?\x8a7)] 'tab-switcher-select)
     (define-key tab-switcher-mode-map [(    ?`)] 'tab-switcher-next-line)
@@ -641,11 +641,12 @@ like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 #+begin_src emacs-lisp
 (setq-default
- windmove-default-keybindings '(nil hyper)
- windmove-display-default-keybindings '(nil hyper meta)
- windmove-delete-default-keybindings `(,(kbd "C-x") hyper)
- windmove-swap-states-default-keybindings '(nil shift hyper))
-(require 'windmove)
+ windmove-default-keybindings '(nil super)
+ windmove-display-default-keybindings '(nil super meta)
+ windmove-delete-default-keybindings `(,(kbd "C-x") super)
+ windmove-swap-states-default-keybindings '(nil shift super))
+;; (require 'windmove)
+(windmove-mode)
 #+end_src
 
 Another important setting ~windmove-create-window~ is to automatically
@@ -3153,7 +3154,7 @@ that highlights escape sequences emitted by many programs:
 
 #+begin_src emacs-lisp
 (setq-default
- ;; FIXME: ‘comint-history-isearch’ can't by customized by ‘setq-default’
+ ;; FIXME: ‘comint-history-isearch’ can't be customized by ‘setq-default’
  ;; because ‘custom-reevaluate-setting’ in ‘comint-history-isearch-end’
  ;; reverts this customized value:
  ;; comint-history-isearch 'dwim
@@ -3207,11 +3208,11 @@ Pre-load some useful packages:
 #+begin_src emacs-lisp
 (when (require 'ee-autoloads nil t)
   (define-key global-map [f1] 'ee-info)
-  (define-key global-map [(hyper tab)] 'ee-buffers)
+  (define-key global-map [(super tab)] 'ee-buffers)
   ;; (define-key ctl-x-map [(control tab)] 'ee-buffers)
   ;; (define-key my-map [(control tab)] 'ee-buffers)
   (with-eval-after-load 'ee-buffers
-    (define-key ee-buffers-keymap [(hyper tab)] 'ee-view-record-select-or-expansion-show-or-hide))
+    (define-key ee-buffers-keymap [(super tab)] 'ee-view-record-select-or-expansion-show-or-hide))
   (define-key my-map "eb"  'ee-buffers)
   (define-key my-map "ehc" 'ee-history-command)
   (define-key my-map "ehe" 'ee-history-extended-command)
@@ -3227,12 +3228,12 @@ Pre-load some useful packages:
   ;; (define-key global-map [(meta  ?\xa7)] 'ee-windows-and-add-current)
   ;; (define-key global-map [(meta ?\x8a7)] 'ee-windows-and-add-current)
   ;; (define-key global-map [(meta     ?`)] 'ee-windows-and-add-current)
-  ;; (define-key global-map [(hyper    ?`)] 'ee-windows-and-add-current)
+  ;; (define-key global-map [(super    ?`)] 'ee-windows-and-add-current)
   (with-eval-after-load 'ee-windows
     (define-key ee-windows-keymap [(meta  ?\xa7)] 'ee-windows-select-and-delete-current)
     ;; (define-key ee-windows-keymap [(meta ?\x8a7)] 'ee-windows-select-and-delete-current)
     (define-key ee-windows-keymap [(meta     ?`)] 'ee-windows-select-and-delete-current)
-    (define-key ee-windows-keymap [(hyper    ?`)] 'ee-windows-select-and-delete-current)
+    (define-key ee-windows-keymap [(super    ?`)] 'ee-windows-select-and-delete-current)
     (define-key ee-windows-keymap [( ?\xa7)] 'ee-view-record-next)
     ;; (define-key ee-windows-keymap [(?\x8a7)] 'ee-view-record-next)
     (define-key ee-windows-keymap [(    ?`)] 'ee-view-record-next)

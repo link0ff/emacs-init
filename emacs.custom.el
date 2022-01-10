@@ -334,6 +334,7 @@
  '(gnus-summary-low-read ((t (:foreground "light goldenrod"))))
  '(gnus-summary-normal-ancient ((t (:foreground "gray30"))))
  '(help-argument-name ((t (:foreground "SkyBlue4"))))
+ '(hl-line ((t (:extend t :background "AntiqueWhite1"))))
  '(holiday ((((class color)) (:background "tan"))))
  '(html-tag-face ((t (:foreground "blue"))))
  '(info-xref ((t (:inherit link :underline t))))
