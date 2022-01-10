@@ -3330,11 +3330,16 @@ Fix keys broken by ~markdown-mode~:
 
 #+begin_src emacs-lisp
 (use-package markdown-mode
-  :custom-face
-  (markdown-blockquote-face ((t (:inherit italic))))
-  (markdown-code-face ((t (:background "grey95"))))
-  (markdown-table-face ((t (:inherit italic))))
+  ;; :custom-face
+  ;; (markdown-blockquote-face ((t (:inherit italic))))
+  ;; (markdown-code-face ((t (:background "grey95"))))
+  ;; (markdown-table-face ((t (:inherit italic))))
+  ;; ‘:custom-face’ saves faces to ‘custom-set-faces’,
+  ;; so do the same explicitly below:
   :config
+  (face-spec-set 'markdown-blockquote-face '((t (:inherit italic))))
+  (face-spec-set 'markdown-code-face '((t (:background "grey95"))))
+  (face-spec-set 'markdown-table-face '((t (:inherit italic))))
   ;; Revert hijacked keys to their original bindings
   (unbind-key "C-c <left>" markdown-mode-map)
   (unbind-key "C-c <right>" markdown-mode-map)
