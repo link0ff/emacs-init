@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2022-01-10
+#+DATE: 2022-01-11
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -563,27 +563,51 @@ An example of the mode where heading highlighting could be enabled is
 (setq-default
  outline-minor-mode-cycle t
  ;; Some modes use own TAB keys at the beginning of the line,
+ ;; such as e.g. diff-mode where TAB goes to the next hunk,
  ;; so allow cycling when point is not at BOL:
  outline-minor-mode-cycle-filter '(lambda nil (not (bolp)))
  outline-minor-mode-highlight t)
 
-(let ((map outline-minor-mode-cycle-map)
-      (cmds '(("M-<down>"  outline-next-visible-heading)
-              ("M-<up>"    outline-previous-visible-heading)
+;; It might be useful to use short keys only on headings.
+;; This works only when ‘outline-minor-mode-cycle-filter’
+;; is not enabled partially, so outline navigation could be used
+;; when navigation keys move point to ‘bolp’.
+;; (map-keymap (lambda (key binding)
+;;               (outline-minor-mode-cycle--bind
+;;                outline-minor-mode-cycle-map
+;;                (vector key) binding))
+;;             outline-mode-prefix-map)
+
+(let ((cmds '(
+              ;; Like in ‘outline-mode-map’:
+              ("C-c C-u" outline-up-heading)
+              ("C-c C-n" outline-next-visible-heading)
+              ("C-c C-p" outline-previous-visible-heading)
+              ("C-c <down>" outline-next-visible-heading)
+              ("C-c <up>"   outline-previous-visible-heading)
+              ;; ("M-<down>"  outline-next-visible-heading)
+              ;; ("M-<up>"    outline-previous-visible-heading)
               ;; ("M-<left>"  outline-hide-subtree)
               ;; ("M-<right>" outline-show-subtree)
               )))
   (dolist (command cmds)
     (outline-minor-mode-cycle--bind
-     map (kbd (nth 0 command)) (nth 1 command)
+     outline-minor-mode-cycle-map
+     (kbd (nth 0 command)) (nth 1 command)
      (lambda (cmd)
-       (when (and (bolp)
+       (when (and (outline-on-heading-p t) (bolp)
                   ;; Exclude emacs-lisp-mode:
                   ;; outline-minor-mode-highlight
                   ;; BETTER:
                   ;; (buffer-file-name (current-buffer))
-                  buffer-read-only)
+                  ;; buffer-read-only
+                  )
          cmd)))))
+
+(define-key outline-navigation-repeat-map (kbd "<down>")
+            #'outline-next-visible-heading)
+(define-key outline-navigation-repeat-map (kbd "<up>")
+            #'outline-previous-visible-heading)
 #+end_src
 
 #+begin_src emacs-lisp
