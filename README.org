@@ -2409,6 +2409,18 @@ when filling the paragraph with =M-q=:
             '((name . fill-paragraph-double-space)))
 #+end_src
 
+While using ~repunctuate-sentences~, skip some known abbreviations:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'paragraphs
+  (add-function :after-while repunctuate-sentences-filter
+                (lambda (start end)
+                  (not (looking-back (rx (or "e.g." "i.e.") " ") 5))))
+  (add-function :after-while repunctuate-sentences-filter
+                (lambda (start end)
+                  (not (looking-back (rx (or "т.е.") " ") 5)))))
+#+end_src
+
 ** Spelling features
 
 #+begin_src emacs-lisp
