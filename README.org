@@ -2488,7 +2488,12 @@ Don't reuse existing diff buffers, and add more highlighting:
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
         (append diff-font-lock-keywords
-                '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend))))))
+                '(("^\\(?:diff\\|revno:\\|Only in\\|Binary files\\)" (0 'match prepend)))))
+
+  ;; Allow hi-lock overlays over diff-refine overlays
+  (add-hook 'diff-mode-hook
+            (lambda ()
+              (setq-local hi-lock-use-overlays t))))
 
 (define-generic-mode 'diff-generic-mode
   (list ?#)
