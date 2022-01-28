@@ -1632,6 +1632,13 @@ where the repeat key can be pressed after a long delay.
   (put command 'repeat-exit-timeout 'no))
 #+end_src
 
+** Context menu mode
+
+#+begin_src emacs-lisp
+(context-menu-mode +1)
+(add-hook 'context-menu-functions 'dictionary-context-menu 15)
+#+end_src
+
 * Useful features
 
 ** Copy/Paste
