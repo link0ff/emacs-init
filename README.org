@@ -1518,6 +1518,22 @@ Better navigation:
 (define-key global-map [(control kp-begin)] 'goto-line)
 #+end_src
 
+For other-window scrolling with =M-<PgUp>=, =M-<PgDn>=, =M-<Home>=, =M-<End>=,
+use the most recently used window:
+
+#+begin_src emacs-lisp
+(setq other-window-scroll-default (lambda () (get-mru-window t t t)))
+#+end_src
+
+Also use ~recenter-top-bottom~ after =M-<Home>= and don't recenter after =M-<End>=:
+
+#+begin_src emacs-lisp
+(define-key global-map [M-end] (lambda ()
+                                 (interactive)
+                                 (end-of-buffer-other-window
+                                  current-prefix-arg 'no-recenter)))
+#+end_src
+
 Use new dwim case commands:
 
 #+begin_src emacs-lisp
