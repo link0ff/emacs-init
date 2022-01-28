@@ -2507,6 +2507,10 @@ Don't reuse existing diff buffers, and add more highlighting:
             (lambda ()
               (setq-local hi-lock-use-overlays t))))
 
+;; Don't shrink diff and log buffers:
+(remove-hook 'vc-diff-finish-functions 'vc-shrink-buffer-window)
+(remove-hook 'vc-log-finish-functions 'vc-shrink-buffer-window)
+
 (define-generic-mode 'diff-generic-mode
   (list ?#)
   nil
