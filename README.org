@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2022-01-28
+#+DATE: 2022-01-29
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -1528,10 +1528,17 @@ use the most recently used window:
 Also use ~recenter-top-bottom~ after =M-<Home>= and don't recenter after =M-<End>=:
 
 #+begin_src emacs-lisp
-(define-key global-map [M-end] (lambda ()
-                                 (interactive)
-                                 (end-of-buffer-other-window
-                                  current-prefix-arg 'no-recenter)))
+(advice-add 'beginning-of-buffer-other-window :after
+            (lambda (&rest _args)
+              (with-selected-window (other-window-for-scrolling)
+                (recenter-top-bottom)))
+            '((name . beginning-of-buffer-other-window-recenter)))
+
+(advice-add 'end-of-buffer-other-window :after
+            (lambda (&rest _args)
+              (with-selected-window (other-window-for-scrolling)
+                (recenter -1)))
+            '((name . end-of-buffer-other-window-recenter)))
 #+end_src
 
 Use new dwim case commands:
