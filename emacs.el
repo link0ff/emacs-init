@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2021-12-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2022-02-08 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1214,6 +1214,9 @@ Example:
 
 
 ;;; calendar
+
+(define-key calendar-mode-map "q" (lambda () (interactive)
+                                    (calendar-exit 'kill)))
 
 ;; (define-key my-map "cc" 'calendar)
 ;; (define-key my-map "cd" 'diary)
