@@ -2268,7 +2268,7 @@ if the deleted element was the last in the history list."
 #+begin_src emacs-lisp
 ;; TODO: use bookmark.el?
 ;; TODO: add Info node and line number
-(defun qv (&optional url anchor)
+(defun qv (&optional url anchor count)
   "Add or activate live bookmarks.
 When called interactively, put the address of the current location
 inside a function call to ‘qv’ into the clipboard that can be
@@ -2291,6 +2291,7 @@ goes to the saved location."
                                     (line-beginning-position)
                                     (line-end-position))))))
                         ")")))
+    (push-mark nil t)
     (cond
      ((file-exists-p url)
       (find-file url)
@@ -2303,13 +2304,13 @@ goes to the saved location."
        ((and (stringp anchor)
              (string-match-p "^^" anchor))
         (goto-char (point-min))
-        (if (re-search-forward anchor)
-            (goto-char (match-beginning 0))))
+        (when (re-search-forward anchor nil nil count)
+          (goto-char (match-beginning 0))))
        ;; Line string
        ((stringp anchor)
         (goto-char (point-min))
-        (if (re-search-forward (format "\\s-*%s" (regexp-quote anchor)))
-            (goto-char (match-beginning 0)))))))))
+        (when (re-search-forward (format "\\s-*%s" (regexp-quote anchor)) nil nil count)
+          (goto-char (match-beginning 0)))))))))
 #+end_src
 
 * Useful settings
