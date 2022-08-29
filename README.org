@@ -2222,12 +2222,13 @@ but still no option that would corresponds to ~ignorespace~.
             '((name . add-to-history-ignorespace)))
 #+end_src
 
-This is not needed when isearch C-s/C-r in the minibuffer is available
-(but =C-M-r ^command= doesn't match at the beginning of the input area):
+This is not needed when isearch =C-s=/=C-r= in the minibuffer is available
+(but =C-M-r ^command= doesn't match at the beginning of the input area),
+also ~minibuffer-complete-history~ in available in Emacs 29:
 
 #+begin_src emacs-lisp
-(define-key minibuffer-local-map "\eN" 'next-complete-history-element)
-(define-key minibuffer-local-map "\eP" 'previous-complete-history-element)
+;; (define-key minibuffer-local-map "\eN" 'next-complete-history-element)
+;; (define-key minibuffer-local-map "\eP" 'previous-complete-history-element)
 #+end_src
 
 =M-k= in the minibuffer deletes the minibuffer history element:
