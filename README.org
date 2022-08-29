@@ -2427,7 +2427,8 @@ when filling the paragraph with =M-q=:
   (canonically-space-region beg end)
   (unless (markerp end) (setq end (copy-marker end t)))
   (let* ((sentence-end-double-space nil) ; to get right regexp below
-         (end-spc-re (rx (>= 5 (not (in ".?!"))) (regexp (sentence-end)))))
+         ;; See also the variable `sentence-end-base':
+         (end-spc-re (rx (>= 5 (not (in ".?!…"))) (regexp (sentence-end)))))
     (save-excursion
       (goto-char beg)
       (while (and (< (point) end)
@@ -2448,13 +2449,12 @@ when filling the paragraph with =M-q=:
 While using ~repunctuate-sentences~, skip some known abbreviations:
 
 #+begin_src emacs-lisp
-(with-eval-after-load 'paragraphs
-  (add-function :after-while repunctuate-sentences-filter
-                (lambda (start end)
-                  (not (looking-back (rx (or "e.g." "i.e.") " ") 5))))
-  (add-function :after-while repunctuate-sentences-filter
-                (lambda (start end)
-                  (not (looking-back (rx (or "т.е.") " ") 5)))))
+(add-function :after-while repunctuate-sentences-filter
+              (lambda (start end)
+                (not (looking-back (rx (or "e.g." "i.e.") " ") 5))))
+(add-function :after-while repunctuate-sentences-filter
+              (lambda (start end)
+                (not (looking-back (rx (or "т.е." "т.н." "т.ч." "см.") " ") 5))))
 #+end_src
 
 ** Spelling features
