@@ -459,6 +459,9 @@ that removes any remaining window decorations including the title bar:
 (modify-frame-parameters nil '((undecorated . t)))
 #+end_src
 
+Note that in Emacs 29 instead of above you can use:
+~(add-hook 'window-size-change-functions 'frame-hide-title-bar-when-maximized)~
+
 In earlier versions there was no way to unframe and maximize Emacs window from Emacs,
 so it was necessary to use such code in =~/.sawfish/rc=:
 
@@ -727,7 +730,9 @@ Clicking a link from the =*Help*= buffer opens source code in the same window:
       display-buffer-alist)
 #+end_src
 
-Visiting new files using next-error commands should be in the same window:
+Note that in Emacs 29 instead of above you can customize ~help-window-keep-selected~.
+
+Visiting new files using ~next-error~ commands should be in the same window:
 
 #+begin_src emacs-lisp
 (defun display-buffer-from-next-error-p (_buffer-name _action)
@@ -2218,7 +2223,7 @@ but still no option that would corresponds to ~ignorespace~.
                                      '( shell-command-history compile-history
                                         read-expression-history))
                                (string-match-p "\\`\\(?:rm\\|git rm\\| \\)" newelt))
-                          ;; I often type M-p RET inadvertently
+                          ;; I often type `M-p RET' inadvertently
                           (and (eq history-var 'compile-history)
                                (string-match-p "bootstrap" newelt)))
                 (apply orig-fun history-var newelt args)))
@@ -4108,7 +4113,7 @@ quit the previous buffer:
 ** Fix xref
 
 #+begin_src emacs-lisp
-;; This supposes display-buffer-alist to be customized to contain:
+;; This supposes ‘display-buffer-alist’ to be customized to contain:
 ;; '((display-buffer-to-xref-p display-buffer-maybe-below-selected) ...)
 (defun display-buffer-to-xref-p (buffer-name _action)
   (and (stringp buffer-name)
