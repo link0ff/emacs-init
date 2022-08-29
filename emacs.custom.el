@@ -140,6 +140,8 @@
  '(grep-program "rg")
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
+ '(help-clean-buttons t)
+ '(help-enable-variable-value-editing t)
  '(highlight-nonselected-windows t)
  '(history-delete-duplicates t)
  '(history-length t)
