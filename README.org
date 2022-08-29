@@ -3343,7 +3343,8 @@ Pre-load some useful packages:
 ;; Unfortunately, Org window customization has no effect because
 ;; ‘display-buffer-alist’ is ignored in ‘org-no-popups’
 ;; until ‘org-switch-to-buffer-other-window’ is overridden below:
-(defalias 'org-switch-to-buffer-other-window 'switch-to-buffer-other-window)
+;; This was fixed in org-mode after removing display-buffer-alist from org-no-popups:
+;; (defalias 'org-switch-to-buffer-other-window 'switch-to-buffer-other-window)
 (push '("\\`\\*\\(Org \\(Links\\|Select\\)\\|Org-Babel Error Output\\)\\*\\'"
         display-buffer-below-selected
         (window-height . fit-window-to-buffer)
@@ -3381,7 +3382,8 @@ Fix keys broken by org:
 
   (when delete-selection-mode
     (put 'org-self-insert-commandorg-return 'delete-selection t)
-    (put 'org-return 'delete-selection t)))
+    (put 'org-return 'delete-selection t)
+    (put 'org-open-line 'delete-selection t)))
 #+end_src
 
 Show the link under point immediately (from [[https://debbugs.gnu.org/42484][bug#42484]]):
