@@ -318,33 +318,23 @@ by doing (clear-string STRING)."
 
 ;;; misc.el
 
-(defun duplicate-line (&optional arg)
-  "Duplicate the whole current line ARG times or 1 by default."
+(defun duplicate-line (&optional n)
+  "Duplicate the current line N times.
+Interactively, N is the prefix numeric argument, and defaults to 1.
+Also see the `copy-from-above-command' command."
   (interactive "p")
-  (save-excursion
-    (let ((line (buffer-substring (line-beginning-position)
-                                  (line-end-position))))
-      (forward-line 0)
-      (insert-before-markers
-       (mapconcat #'identity (make-list (or arg 1) line) "\n") ?\n))))
+  (unless n
+    (setq n 1))
+  (let ((line (buffer-substring (line-beginning-position) (line-end-position)))
+        (column (current-column)))
+    (forward-line 1)
+    (unless (bolp)
+      (insert "\n"))
+    (save-excursion
+      (dotimes (_ n)
+        (insert line "\n")))
+    (move-to-column column)))
 (define-key my-map "c" 'duplicate-line)
-
-(defun duplicate-line-or-region (&optional arg)
-  "Duplicate the whole current line ARG times or 1 by default."
-  (interactive "p")
-  (save-excursion
-    (let ((line (buffer-substring (if (use-region-p)
-                                      (region-beginning)
-                                    (line-beginning-position))
-                                  (if (use-region-p)
-                                      (region-end)
-                                    (line-end-position)))))
-      (unless (use-region-p) (forward-line 0))
-      (insert-before-markers
-       (apply #'concat (make-list (or arg 1)
-                                  (if (use-region-p)
-                                      line
-                                    (concat line "\n"))))))))
 
 
 ;;; cperl-mode
