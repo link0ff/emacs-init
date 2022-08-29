@@ -776,13 +776,13 @@ Visit grep/xref hits in the window where all previous hits were visited:
 Debugging should use the same window:
 
 #+begin_src emacs-lisp
-(advice-add 'edebug-pop-to-buffer :around
-            (lambda (orig-fun buffer &optional window)
-              (when (string-prefix-p "edebug" (format "%s" real-this-command))
-                (window--display-buffer buffer (old-selected-window) 'reuse
-                                        '(nil (inhibit-same-window . nil))))
-              (funcall orig-fun buffer window))
-            '((name . edebug-pop-to-buffer-same-window)))
+;; (advice-add 'edebug-pop-to-buffer :around
+;;             (lambda (orig-fun buffer &optional window)
+;;               (when (string-prefix-p "edebug" (format "%s" real-this-command))
+;;                 (window--display-buffer buffer (old-selected-window) 'reuse
+;;                                         '(nil (inhibit-same-window . nil))))
+;;               (funcall orig-fun buffer window))
+;;             '((name . edebug-pop-to-buffer-same-window)))
 #+end_src
 
 ** Shorter answers
@@ -3174,17 +3174,23 @@ Compilation buffer names:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'grep
-  (push '("ch" . "*.[chm]") grep-files-aliases) ; override existing alias with added *.m
-  (push '("js" . "*.js *.jsx *.vue") grep-files-aliases)
-  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee *.sass Gemfile Gemfile.lock") grep-files-aliases)
-  (push '("ex" . "*.ex* *.eex *.erl") grep-files-aliases)
-  (push '("clj" . "*.clj*") grep-files-aliases))
+  ;; Use ‘cdr’ to add new only after the first that is "all" by default:
+  (push '("ch" . "*.[chm]") (cdr grep-files-aliases)) ; override existing alias with added *.m
+  (push '("clj" . "*.clj*") (cdr grep-files-aliases))
+  (push '("js" . "*.js *.jsx *.vue") (cdr grep-files-aliases))
+  (push '("ex" . "*.ex* *.eex *.erl") (cdr grep-files-aliases))
+  (push '("rb" . "*.rb *.erb *.rake *.haml *.yml *.yaml *.js *.coffee *.sass Gemfile Gemfile.lock")
+        (cdr grep-files-aliases)))
 #+end_src
 
-** gdb
+** debugger
 
 #+begin_src emacs-lisp
-(push `(,(rx bos "*" (and "input/output of " (+ (any "A-za-z"))) "*" eos)
+(push `(,(rx bos
+             "*"
+             (or (and "input/output of " (+ (any "A-za-z"))) ; gdb
+                 "Edebug Results") ; edebug
+             "*" eos)
         (display-buffer-reuse-window
          display-buffer-below-selected)
         (dedicated . nil)
