@@ -2525,7 +2525,6 @@ Don't reuse existing diff buffers, and add more highlighting:
   ;; that has ‘(get-buffer-create (format " *org-src-fontification:%s*" lang-mode))’
   ;; because it renames internal buffers, so they can't be reused.
   (add-hook 'diff-mode-hook 'rename-uniquely)
-  (add-hook 'log-view-mode-hook 'rename-uniquely)
 
   ;; Make revision separators more noticeable:
   (setq diff-font-lock-keywords
@@ -2536,6 +2535,12 @@ Don't reuse existing diff buffers, and add more highlighting:
   (add-hook 'diff-mode-hook
             (lambda ()
               (setq-local hi-lock-use-overlays t))))
+
+(with-eval-after-load 'log-view
+  (add-hook 'log-view-mode-hook 'rename-uniquely))
+
+(with-eval-after-load 'log-edit
+  (add-hook 'log-edit-mode-hook 'rename-uniquely))
 
 ;; Don't shrink diff and log buffers:
 (remove-hook 'vc-diff-finish-functions 'vc-shrink-buffer-window)
