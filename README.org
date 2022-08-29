@@ -2195,25 +2195,17 @@ See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
 (define-key minibuffer-local-map [S-return] 'newline)
 #+end_src
 
-=C-RET= in the =*Completions*= buffer inserts the selected completion
-to the minibuffer without exiting it.
-
-#+begin_src emacs-lisp
-(defun choose-completion-no-auto-exit ()
-  (interactive)
-  (let ((completion-no-auto-exit t))
-    (call-interactively 'choose-completion)))
-
-(define-key completion-list-mode-map [C-return] 'choose-completion-no-auto-exit)
-#+end_src
-
 Remove potentially dangerous commands from the history immediately.
-Also like in Bash HISTCONTROL: "A colon-separated list of values controlling
-how commands are saved on the history list.  If the list of values includes
-ignorespace, lines which begin with a space character are not saved in the
-history list.  A value of ignoredups causes lines matching the previous
-history entry to not be saved."
-TODO: We already have ~history-delete-duplicates~ that corresponds to ~ignoredups~,
+Also like in Bash HISTCONTROL:
+
+#+begin_quote
+"A colon-separated list of values controlling how commands are saved on the
+history list.  If the list of values includes ignorespace, lines which
+begin with a space character are not saved in the history list.  A value of
+ignoredups causes lines matching the previous history entry to not be saved."
+#+end_quote
+
+=TODO=: We already have ~history-delete-duplicates~ that corresponds to ~ignoredups~,
 but still no option that would corresponds to ~ignorespace~.
 
 #+begin_src emacs-lisp
