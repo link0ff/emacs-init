@@ -173,7 +173,7 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (if (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode 'mail-archives-mode)
+  (if (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode 'mail-archives-mode 'markdown-mode)
       (recenter-top)
     (reposition-window)))
 
@@ -1751,7 +1751,7 @@ the same screen state that was before.
                    ;; ‘follow-mode’ doesn't need recentering
                    (not (bound-and-true-p follow-mode)))
           ;; reposition-window takes too much time in large buffers
-          (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode)
+          (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode 'markdown-mode)
                   (> (buffer-size) 1000000))
               (recenter-top)
             (condition-case nil
@@ -2429,10 +2429,15 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
 #+begin_src emacs-lisp
 (add-function :after-while repunctuate-sentences-filter
               (lambda (start end)
-                (not (looking-back (rx (or "e.g." "i.e.") " ") 5))))
+                (not (looking-back (rx (or "e.g." "i.e.")
+                                       " ")
+                                   5))))
 (add-function :after-while repunctuate-sentences-filter
               (lambda (start end)
-                (not (looking-back (rx (or "т.е." "т.н." "т.ч." "см.") " ") 5))))
+                (not (looking-back (rx (or (and "т." (any "екнч") ".")
+                                           "см.")
+                                       " ")
+                                   5))))
 #+end_src
 
 ** Spelling features
@@ -3911,7 +3916,7 @@ Use buffer's coding for the output of ~base64-decode~ ([[https://debbugs.gnu.org
 
 #+begin_src emacs-lisp
 (advice-add 'base64-decode-region :after
-            (lambda (beg end &optional _base64url)
+            (lambda (beg end &rest _)
               (decode-coding-region
                beg (min end (point-max))
                (or coding-system-for-write
@@ -4286,14 +4291,17 @@ of outline faces.  So need to restore original distinctive colors in outline fac
   (set-face-foreground 'outline-6 "dark cyan")
   (set-face-foreground 'outline-7 "dark slate blue")
   (set-face-foreground 'outline-8 "sienna") ;; "VioletRed4"
-  )
+
+  ;; Header colors like in Wikipedia
+  (mapc (lambda (f) (set-face-background f "#ddeeff")) outline-font-lock-faces)
+  (mapc (lambda (f) (set-face-extend f t)) outline-font-lock-faces))
 #+end_src
 
 ** Fix org-mode faces
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'org-faces
-  ;; Header color like in Wikipedia
+  ;; Header colors like in Wikipedia
   (mapc (lambda (f) (set-face-background f "#ddeeff")) org-level-faces)
   ;; TODO: :extend should be fixed in next version of Org, so remove later:
   (mapc (lambda (f) (set-face-extend f t)) org-level-faces))
