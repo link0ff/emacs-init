@@ -1615,19 +1615,6 @@ Easier-to-type grep invocations:
 (define-key goto-map [M-up] 'previous-error)
 (define-key next-error-repeat-map [M-down] 'next-error)
 (define-key next-error-repeat-map [M-up] 'previous-error)
-
-;; Can't add this to bindings.el because ‘C-right’ as ‘right-word’
-;; or ‘right-sexp’ is often used after ‘C-x C-right’ (‘next-buffer’):
-(defvar next-buffer-repeat-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [right]   'next-buffer)
-    (define-key map [C-right] 'next-buffer)
-    (define-key map [left]    'previous-buffer)
-    (define-key map [C-left]  'previous-buffer)
-    map)
-  "Keymap to repeat next-buffer key sequences.  Used in `repeat-mode'.")
-(put 'next-buffer 'repeat-map 'next-buffer-repeat-map)
-(put 'previous-buffer 'repeat-map 'next-buffer-repeat-map)
 #+end_src
 
 Override ~repeat-exit-timeout~ for the debugger commands
