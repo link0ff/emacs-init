@@ -624,9 +624,7 @@ Also enable cycling on filename headings in *xref* buffers:
 #+begin_src emacs-lisp
 (add-hook 'xref-after-update-hook
           (lambda ()
-            (setq-local outline-regexp (if (eq xref-file-name-display 'abs)
-                                           "/" "[^ 0-9]")
-                        outline-minor-mode-highlight nil
+            (setq-local outline-minor-mode-highlight nil
                         outline-default-state 1
                         outline-default-rules '((match-regexp . "ChangeLog\\|test/manual/etags")))
             (outline-minor-mode +1)))
