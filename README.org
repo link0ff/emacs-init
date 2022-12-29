@@ -1322,11 +1322,9 @@ Below is customization of different modes to support convenient navigation:
     (beginning-of-line))
 
   ;; Remove verbosity from view.el functions (bug#21893):
-  (advice-add 'view-end-message :around
-              (lambda (orig-fun &rest args)
-                (let ((inhibit-message t))
-                  (apply orig-fun args)))
-              '((name . non-verbose-view-end-message))))
+  ;; Also no need to set ‘view-inhibit-help-message’.
+  (when (boundp 'inhibit-message-regexps)
+    (add-to-list 'inhibit-message-regexps "^End of buffer")))
 #+end_src
 
 *** diff
