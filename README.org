@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2022-08-31
+#+DATE: 2022-12-29
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -1601,8 +1601,7 @@ Easier-to-type grep invocations:
 ** Repeat mode
 
 #+begin_src emacs-lisp
-(setq-default repeat-exit-key [return])
-;; (setq-default repeat-exit-key "RET")
+(setq-default repeat-exit-key "RET")
 (setq-default repeat-exit-timeout 0.5)
 (repeat-mode +1)
 
@@ -2264,7 +2263,7 @@ goes to the saved location."
                                   buffer-file-name
                                   ;;(line-number-at-pos)
                                   (replace-regexp-in-string
-                                   "^\\s-*" ""
+                                   "^[\s\t]*" ""
                                    (buffer-substring-no-properties
                                     (line-beginning-position)
                                     (line-end-position))))))
@@ -2287,7 +2286,7 @@ goes to the saved location."
        ;; Line string
        ((stringp anchor)
         (goto-char (point-min))
-        (when (re-search-forward (format "\\s-*%s" (regexp-quote anchor)) nil nil count)
+        (when (re-search-forward (format "[\s\t]*%s" (regexp-quote anchor)) nil nil count)
           (goto-char (match-beginning 0)))))))))
 #+end_src
 
@@ -3247,11 +3246,13 @@ that highlights escape sequences emitted by many programs:
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
 (unless package--initialized
   (package-initialize))
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package t))
-(eval-when-compile
-  (require 'use-package))
+;; Try a built-in use-package
+(unless (require 'use-package nil t)
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package t))
+  (eval-when-compile
+    (require 'use-package)))
 (setq use-package-always-ensure t)
 #+end_src
 
