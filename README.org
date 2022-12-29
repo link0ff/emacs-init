@@ -748,27 +748,36 @@ Visit grep/xref hits in the window where all previous hits were visited:
 #+begin_src emacs-lisp
 (defun display-buffer-from-grep-p (_buffer-name _action)
   (with-current-buffer (window-buffer)
-    (or (derived-mode-p 'compilation-mode)
-        (derived-mode-p 'xref--xref-buffer-mode))))
+    (and (memq this-command '(compile-goto-error xref-goto-xref my-xref-goto-xref))
+         (or (derived-mode-p 'compilation-mode)
+             (derived-mode-p 'xref--xref-buffer-mode)))))
 
 (defvar-local display-buffer-previous-window nil)
 
 (add-to-list 'display-buffer-alist
              '(display-buffer-from-grep-p
-               nil
+               display-buffer-in-previous-window
                (previous-window . display-buffer-previous-window)
                (inhibit-same-window . nil))
              ;; Append to not override display-buffer-same-window
              'append)
 
-(advice-add 'window--display-buffer :around
+(advice-add 'xref-goto-xref :around
             (lambda (orig-fun &rest args)
-              (let ((buffer (current-buffer))
-                    (window (apply orig-fun args)))
+              (let ((buffer (current-buffer)))
+                (apply orig-fun args)
                 (with-current-buffer buffer
-                  (setq-local display-buffer-previous-window window))
-                window))
+                  (setq-local display-buffer-previous-window (selected-window)))))
             '((name . window--display-buffer-set-previous-window)))
+
+;; (advice-add 'window--display-buffer :around
+;;             (lambda (orig-fun &rest args)
+;;               (let ((buffer (current-buffer))
+;;                     (window (apply orig-fun args)))
+;;                 (with-current-buffer buffer
+;;                   (setq-local display-buffer-previous-window window))
+;;                 window))
+;;             '((name . window--display-buffer-set-previous-window)))
 #+end_src
 
 Debugging should use the same window:
@@ -4136,6 +4145,14 @@ quit the previous buffer:
 
 ;; Use this keybinding only in buffers created by xref-find-definitions,
 ;; but not by e.g. project-find-regexp
+(defun my-xref-goto-xref ()
+  (interactive)
+  (if (memq xref--original-command '(xref-find-definitions))
+      ;; (call-interactively 'xref-quit-and-goto-xref)
+      (call-interactively 'xref-goto-xref)
+    (setq xref--original-window nil)
+    (call-interactively 'xref-goto-xref)))
+
 (with-eval-after-load 'xref
   (defvar xref--original-command nil)
   (advice-add 'xref-find-definitions :after
@@ -4143,14 +4160,7 @@ quit the previous buffer:
                 (with-current-buffer (window-buffer)
                   (setq-local xref--original-command 'xref-find-definitions)))
               '((name . from-xref-find-definitions)))
-  (define-key xref--button-map [(control ?m)]
-    (lambda ()
-      (interactive)
-      (if (memq xref--original-command '(xref-find-definitions))
-          ;; (call-interactively 'xref-quit-and-goto-xref)
-          (call-interactively 'xref-goto-xref)
-        (setq xref--original-window nil)
-        (call-interactively 'xref-goto-xref))))
+  (define-key xref--button-map [(control ?m)] 'my-xref-goto-xref)
 
   (define-key xref--xref-buffer-mode-map (kbd "C-j")  'xref-quit-and-goto-xref)
   ;; Don't quit the xref window by TAB
