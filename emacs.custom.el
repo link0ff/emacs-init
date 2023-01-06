@@ -135,7 +135,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading -j8 --sort path -M 200 --max-columns-preview -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading -j8 --sort path -e <R>")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-program "rg")
  '(grep-use-null-device nil)
@@ -287,6 +287,7 @@
  '(xref-history-storage 'xref-window-local-history)
  '(xref-search-program 'ripgrep)
  '(xref-show-definitions-function 'xref--show-defs-minibuffer)
+ '(xref-truncation-width 200)
  '(yank-excluded-properties t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
