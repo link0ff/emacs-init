@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-01-06
+#+DATE: 2023-01-08
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -3832,42 +3832,49 @@ Add more globals to save between sessions:
 ** tree-sitter
 
 #+begin_src emacs-lisp
+;; Configuration of ts modes:
 (when (treesit-available-p)
+  (require 'treesit)
+  (when (treesit-ready-p 'bash t)
+    (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
   (when (treesit-ready-p 'c t)
-    (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
-    (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-ts-mode)))
+    (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode)))
   (when (treesit-ready-p 'cpp t)
     (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode)))
+  (when (and (treesit-ready-p 'c t) (treesit-ready-p 'cpp t))
+    (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode)))
   (when (treesit-ready-p 'css t)
     (add-to-list 'major-mode-remap-alist '(css-mode . css-ts-mode)))
   (when (treesit-ready-p 'javascript t)
     (add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
-    (add-to-list 'major-mode-remap-alist '(js-mode . js-ts-mode))
-    (add-to-list 'major-mode-remap-alist '(js-json-mode . js-ts-mode)))
+    (add-to-list 'major-mode-remap-alist '(js-mode . js-ts-mode)))
   (when (treesit-ready-p 'json t)
     (add-to-list 'major-mode-remap-alist '(json-mode . json-ts-mode)))
+  (when (and (treesit-ready-p 'javascript t) (treesit-ready-p 'json t))
+    (add-to-list 'major-mode-remap-alist '(js-json-mode . js-ts-mode)))
   (when (treesit-ready-p 'ruby t)
     (add-to-list 'major-mode-remap-alist '(ruby-mode . ruby-ts-mode)))
   (when (treesit-ready-p 'toml t)
     (add-to-list 'major-mode-remap-alist '(conf-toml-mode . toml-ts-mode)))
   (when (treesit-ready-p 'yaml t)
-    (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode)))
-  (when (treesit-ready-p 'bash t)
-    (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
+    (if (featurep 'yaml-mode)
+        (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode))))
   (when (treesit-ready-p 'dockerfile t)
-    )
+    ))
 
-  (add-hook 'js-ts-mode-hook
-            (lambda ()
-              (treesit-font-lock-recompute-features '(property))))
-
-  (add-hook 'yaml-ts-mode-hook
-            (lambda ()
-              ;; Alternative config:
-              ;; (setq-local treesit-font-lock-level 4)
-              ;; (treesit-font-lock-recompute-features)
-              (treesit-font-lock-recompute-features '() '(string))))
-  )
+;; Customization of ts modes:
+(when (treesit-available-p)
+  (when (treesit-ready-p 'javascript t)
+    (add-hook 'js-ts-mode-hook
+              (lambda ()
+                (treesit-font-lock-recompute-features '(property)))))
+  (when (treesit-ready-p 'yaml t)
+    (add-hook 'yaml-ts-mode-hook
+              (lambda ()
+                ;; Alternative config:
+                ;; (setq-local treesit-font-lock-level 4)
+                ;; (treesit-font-lock-recompute-features)
+                (treesit-font-lock-recompute-features '() '(string))))))
 #+end_src
 
 * Multi-language features
