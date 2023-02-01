@@ -227,7 +227,6 @@
  '(require-final-newline t)
  '(revert-buffer-quick-short-answers t)
  '(ruby-insert-encoding-magic-comment nil)
- '(safe-local-variable-values '((encoding . utf-8)))
  '(save-interprogram-paste-before-kill t)
  '(save-place-limit nil)
  '(save-place-mode t)

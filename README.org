@@ -3861,8 +3861,9 @@ Add more globals to save between sessions:
   (when (treesit-ready-p 'toml t)
     (add-to-list 'major-mode-remap-alist '(conf-toml-mode . toml-ts-mode)))
   (when (treesit-ready-p 'yaml t)
-    (if (featurep 'yaml-mode)
-        (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode))))
+    (if (require 'yaml-mode nil t)
+        (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode))
+      (require 'yaml-ts-mode)))
   (when (treesit-ready-p 'dockerfile t)
     ))
 

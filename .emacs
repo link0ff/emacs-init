@@ -4,11 +4,6 @@
 
 (setq system-name "localhost")
 
-(mapc (lambda (pair)
-	(put (car pair) 'safe-local-variable (cdr pair)))
-      '((snd-file                      . stringp)
-	(iimage-mode-image-regex-alist . t)))
-
 (load (setq custom-file (or custom-file "emacs.custom.el")))
 (load "init.el")
 (load "emacs");;loaded twice because of custom-file by startup.el
