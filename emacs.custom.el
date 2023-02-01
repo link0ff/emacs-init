@@ -205,6 +205,7 @@
  '(org-fontify-todo-headline nil)
  '(org-fontify-whole-heading-line t)
  '(org-startup-with-inline-images t)
+ '(outline-minor-mode-use-buttons 'in-margins)
  '(parens-require-spaces nil)
  '(perl-indent-level 2)
  '(perl-prettify-symbols nil)
