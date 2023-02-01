@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-01-08
+#+DATE: 2023-02-01
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2459,28 +2459,27 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
 (add-hook 'prog-mode-hook       'flyspell-prog-mode)
 #+end_src
 
-Flyspell only on typing, not on moving point:
+Flyspell only on moving point from the edited word,
+not when moving point without editing:
 
 #+begin_src emacs-lisp
-;; (add-hook 'flyspell-mode-hook
-;;           (lambda ()
-;;             (remove-hook 'post-command-hook (function flyspell-post-command-hook) t)
-;;             (add-hook 'after-change-functions
-;;                       (lambda (start stop len)
-;;                         (flyspell-post-command-hook)) t t)))
+(defun my-flyspell-post-command-hook ()
+  (when flyspell-mode
+    (with-local-quit
+      (when (consp flyspell-changes)
+        (let ((start (car (car flyspell-changes)))
+              (stop  (cdr (car flyspell-changes)))
+              (word (save-excursion (flyspell-get-word))))
+          (unless (and word (<= (nth 1 word) start) (>= (nth 2 word) stop))
+            (save-excursion
+              (goto-char start)
+              (flyspell-word))
+            (setq flyspell-changes nil)))))))
 
-;; Alternative solution for Flyspell only on typing, not on moving point
 (add-hook 'flyspell-mode-hook
           (lambda ()
-            (advice-add 'flyspell-check-pre-word-p :override (lambda () nil))
-            ;; After evaluating the next, flyspell doesn't check the last word
-            ;; in ‘auto-fill-mode’ when typing SPC moves to the next line,
-            ;; because the order of calls in ‘internal_self_insert’ is:
-            ;; 1. insert_and_inherit ();
-            ;; 2. Frun_hook_with_args (Qafter_change_functions);
-            ;; 3. auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
-            ;; 4. Frun_hooks (1, &Qpost_self_insert_hook);
-            (advice-add 'flyspell-check-word-p     :override (lambda () nil))))
+            (remove-hook 'post-command-hook (function flyspell-post-command-hook) t)
+            (add-hook 'post-command-hook (function my-flyspell-post-command-hook) t t)))
 #+end_src
 
 ** Other settings
@@ -3132,6 +3131,7 @@ Compilation buffer names:
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
+;; UNUSED!
 ;; After running compilation/grep hide the header of the compilation/grep
 ;; buffer which contains information rarely useful to see (i.e. mode:
 ;; grep; default-directory:..., start time).  This header can be hidden by
