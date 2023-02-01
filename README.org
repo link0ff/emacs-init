@@ -3807,6 +3807,7 @@ Add more globals to save between sessions:
               find-tag-history
               ;; file-name-history
               find-args-history
+              find-command-history
               grep-history
               grep-files-history
               ;; grep-find-history
@@ -3854,6 +3855,9 @@ Add more globals to save between sessions:
     (add-to-list 'major-mode-remap-alist '(js-json-mode . js-ts-mode)))
   (when (treesit-ready-p 'ruby t)
     (add-to-list 'major-mode-remap-alist '(ruby-mode . ruby-ts-mode)))
+  (when (treesit-ready-p 'html t)
+    (add-to-list 'major-mode-remap-alist '(html-mode . html-ts-mode))
+    (add-to-list 'major-mode-remap-alist '(mhtml-mode . html-ts-mode)))
   (when (treesit-ready-p 'toml t)
     (add-to-list 'major-mode-remap-alist '(conf-toml-mode . toml-ts-mode)))
   (when (treesit-ready-p 'yaml t)

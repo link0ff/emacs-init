@@ -115,7 +115,6 @@
  '(find-grep-options "-iq")
  '(find-ls-option '("-print0 | sort -z | xargs -0 -e ls -ld" . "-ld"))
  '(flymake-no-changes-timeout nil)
- '(flyspell-use-mouse-3-for-menu t)
  '(garbage-collection-messages t)
  '(gc-cons-threshold 128000000)
  '(global-eldoc-mode nil)

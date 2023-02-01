@@ -4,20 +4,10 @@
 
 (setq system-name "localhost")
 
-;; (let ((string-or-null (lambda (a) (or (stringp a) (null a)))))
-;;   (eval
-;;    `
-   (mapc (lambda (pair)
-	    (put (car pair) 'safe-local-variable (cdr pair)))
-	  '((snd-file                      . stringp)
-	    (iimage-mode-image-regex-alist . t)
-	    (ispell-check-comments         . t)
-	    (ispell-local-dictionary       . string-or-null-p)
-	    (time-stamp-format             . string-or-null-p)
-	    (time-stamp-start              . string-or-null-p)
-	    (time-stamp-end                . string-or-null-p)))
-;;    )
-;;   )
+(mapc (lambda (pair)
+	(put (car pair) 'safe-local-variable (cdr pair)))
+      '((snd-file                      . stringp)
+	(iimage-mode-image-regex-alist . t)))
 
 (load (setq custom-file (or custom-file "emacs.custom.el")))
 (load "init.el")
