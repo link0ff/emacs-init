@@ -134,9 +134,10 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading -j8 --sort path -M 200 --max-columns-preview -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading --null -j8 --sort path -M 200 --max-columns-preview -e <R>")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-program "rg")
+ '(grep-use-headings t)
  '(grep-use-null-device nil)
  '(grep-use-null-filename-separator nil)
  '(help-clean-buttons t)
@@ -286,7 +287,7 @@
  '(xref-history-storage 'xref-window-local-history)
  '(xref-search-program 'ripgrep)
  '(xref-search-program-alist
-   '((ripgrep . "xargs -0 rg <C> --null -nH --sort path --no-heading --no-messages -g '!*/' -e <R>")))
+   '((ripgrep . "xargs -0 rg <C> --null -nH --sort path --no-heading --null --no-messages -g '!*/' -e <R>")))
  '(xref-show-definitions-function 'xref--show-defs-minibuffer)
  '(xref-truncation-width 200)
  '(yank-excluded-properties t))
@@ -382,5 +383,4 @@
  '(w3m-current-anchor-face ((t (:foreground "red"))) t)
  '(widget-button ((t nil)))
  '(xref-file-header ((t (:extend t :background "grey90"))))
- '(xref-line-number ((t (:inherit shadow))))
- '(xref-match ((t (:inherit match)))))
+ '(xref-line-number ((t (:inherit shadow)))))
