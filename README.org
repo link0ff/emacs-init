@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-03-03
+#+DATE: 2023-04-07
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -3182,7 +3182,11 @@ Compilation buffer names:
 This is useful with customized =grep-use-headings= with xref-like output:
 
 #+begin_src emacs-lisp
-(add-hook 'grep-mode-hook 'outline-minor-mode)
+(add-hook 'grep-mode-hook
+          (lambda ()
+            (setq-local compilation-line-face 'xref-line-number)
+            (setq-local outline-minor-mode-use-buttons 'insert)
+            (outline-minor-mode +1)))
 #+end_src
 
 ** debugger
@@ -3901,7 +3905,7 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
   (require 'dictionary)
   (let ((word (or (dictionary-search-default)
                   ;; Try to get a copied word from the clipboard
-                  (and kill-ring
+                  (and (current-kill 0)
                        (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
                        (current-kill 0)))))
     (when word
