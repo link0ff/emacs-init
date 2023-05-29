@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-04-07
+#+DATE: 2023-05-29
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -1447,9 +1447,6 @@ Below is customization of different modes to support convenient navigation:
             (define-key comint-mode-map [C-up]   nil)
             (define-key comint-mode-map [C-down] nil)
             (define-key comint-mode-map "\er" 'comint-history-isearch-backward)))
-
-(when delete-selection-mode
-  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
 #+end_src
 
 *** image-mode
@@ -3258,6 +3255,13 @@ that highlights escape sequences emitted by many programs:
  comint-input-ignoredups t
  comint-input-ring-size 65535
  comint-move-point-for-output nil)
+
+(setq-default comint-pager "cat | head -1000")
+;; Variant to try:
+;; (setq-default comint-pager "cat | sed -e '1000aOUTPUT TRUNCATED' -e '1000q'")
+
+(when delete-selection-mode
+  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
 #+end_src
 
 * Used packages
@@ -3911,8 +3915,8 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
   (require 'dictionary)
   (let ((word (or (dictionary-search-default)
                   ;; Try to get a copied word from the clipboard
-                  (and (current-kill 0)
-                       (string-match-p "\\`[A-Za-z]+\\'" (current-kill 0))
+                  (and (ignore-errors (current-kill 0))
+                       (string-match-p "\\`[A-Za-z]+\n?\\'" (current-kill 0))
                        (current-kill 0)))))
     (when word
       (add-to-history 'dictionary-word-history word))
