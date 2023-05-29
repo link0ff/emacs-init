@@ -2180,6 +2180,12 @@ Make the =*Occur*= buffer names unique and writable
 
 ** Minibuffer features
 
+Complete history in all non-completion minibuffers like 'rgrep' (bug#62800):
+
+#+begin_src emacs-lisp
+(keymap-set minibuffer-local-map "TAB" 'minibuffer-complete-history)
+#+end_src
+
 See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
 
 #+begin_src emacs-lisp
