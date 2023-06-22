@@ -342,7 +342,6 @@
  '(gnus-summary-high-unread ((t (:foreground "blue"))))
  '(gnus-summary-low-read ((t (:foreground "light goldenrod"))))
  '(gnus-summary-normal-ancient ((t (:foreground "gray30"))))
- '(grep-heading ((t (:inherit xref-file-header))))
  '(help-argument-name ((t (:foreground "SkyBlue4"))))
  '(hl-line ((t (:extend t :background "AntiqueWhite1"))))
  '(holiday ((((class color)) (:background "tan"))))

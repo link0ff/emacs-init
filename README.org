@@ -3188,8 +3188,10 @@ This is useful with customized =grep-use-headings= with xref-like output:
 #+begin_src emacs-lisp
 (add-hook 'grep-mode-hook
           (lambda ()
-            (setq-local compilation-line-face 'xref-line-number)
+            (require 'xref) ;; to be able to use `xref-file-header'
+            (face-spec-set 'grep-heading '((t (:inherit xref-file-header))))
             (setq-local outline-minor-mode-use-buttons 'insert)
+            (setq-local compilation-line-face 'xref-line-number)
             (outline-minor-mode +1)))
 #+end_src
 
