@@ -318,23 +318,7 @@ by doing (clear-string STRING)."
 
 ;;; misc.el
 
-(defun duplicate-line (&optional n)
-  "Duplicate the current line N times.
-Interactively, N is the prefix numeric argument, and defaults to 1.
-Also see the `copy-from-above-command' command."
-  (interactive "p")
-  (unless n
-    (setq n 1))
-  (let ((line (buffer-substring (line-beginning-position) (line-end-position)))
-        (column (current-column)))
-    (forward-line 1)
-    (unless (bolp)
-      (insert "\n"))
-    (save-excursion
-      (dotimes (_ n)
-        (insert line "\n")))
-    (move-to-column column)))
-(define-key my-map "c" 'duplicate-line)
+(define-key my-map "c" 'duplicate-dwim)
 
 
 ;;; cperl-mode
