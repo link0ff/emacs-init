@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-05-29
+#+DATE: 2023-07-17
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2271,13 +2271,18 @@ goes to the saved location."
                         (cond
                          (buffer-file-name
                           (format "\"%s\"\n    %S" ;; "\"%s\" %s"
-                                  buffer-file-name
+                                  (abbreviate-file-name buffer-file-name)
                                   ;;(line-number-at-pos)
                                   (replace-regexp-in-string
                                    "^[\s\t]*" ""
-                                   (buffer-substring-no-properties
-                                    (line-beginning-position)
-                                    (line-end-position))))))
+                                   (if (region-active-p)
+                                       (prog1 (buffer-substring-no-properties
+                                               (region-beginning)
+                                               (region-end))
+                                         (deactivate-mark))
+                                       (buffer-substring-no-properties
+                                        (line-beginning-position)
+                                        (line-end-position)))))))
                         ")")))
     (push-mark nil t)
     (cond
@@ -3860,12 +3865,12 @@ Add more globals to save between sessions:
   (require 'treesit)
   (when (treesit-ready-p 'bash t)
     (add-to-list 'major-mode-remap-alist '(sh-mode . bash-ts-mode)))
-  (when (treesit-ready-p 'c t)
-    (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode)))
-  (when (treesit-ready-p 'cpp t)
-    (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode)))
-  (when (and (treesit-ready-p 'c t) (treesit-ready-p 'cpp t))
-    (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode)))
+  ;; (when (treesit-ready-p 'c t)
+  ;;   (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode)))
+  ;; (when (treesit-ready-p 'cpp t)
+  ;;   (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode)))
+  ;; (when (and (treesit-ready-p 'c t) (treesit-ready-p 'cpp t))
+  ;;   (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode)))
   (when (treesit-ready-p 'css t)
     (add-to-list 'major-mode-remap-alist '(css-mode . css-ts-mode)))
   (when (treesit-ready-p 'javascript t)
@@ -4472,8 +4477,9 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 (set-face-attribute 'mode-line-inactive nil :foreground "black")
 (set-face-attribute 'mode-line-inactive nil :weight 'normal)
 ;; Variable pitch is better on the mode line
-(set-face-attribute 'mode-line-active   nil :inherit '(mode-line variable-pitch))
-(set-face-attribute 'mode-line-inactive nil :inherit '(mode-line variable-pitch))
+;; (set-face-attribute 'mode-line-active   nil :inherit '(mode-line variable-pitch))
+;; (set-face-attribute 'mode-line-inactive nil :inherit '(mode-line variable-pitch))
+(set-face-attribute 'mode-line nil :inherit '(variable-pitch))
 #+end_src
 
 ** Fix dired
