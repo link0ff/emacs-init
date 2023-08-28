@@ -258,10 +258,10 @@ Let =C-M-a= (~beginning-of-defun~) not scroll the window
 when after jumping point stays within current window bounds:
 
 #+begin_src emacs-lisp
-(define-advice beginning-of-defun (:around (orig-fun &rest args) recenter-top)
+(define-advice beginning-of-defun (:around (ofun &rest args) recenter-top)
   (let ((w-s (window-start))
         (w-e (window-end)))
-    (apply orig-fun args)
+    (apply ofun args)
     (when (and
            ;; Only when used interactively
            (eq this-command 'beginning-of-defun)
@@ -442,13 +442,13 @@ that removes any remaining window decorations including the title bar:
             (select-frame-set-input-focus frame)))
 
 ;; Apply ‘undecorated’ to new frames created by these commands:
-(define-advice make-frame-on-monitor (:around (orig-fun monitor &optional display parameters)
+(define-advice make-frame-on-monitor (:around (ofun monitor &optional display parameters)
                                       make-frame-on-monitor-undecorated)
-  (funcall orig-fun monitor display (append '((undecorated . t)) parameters)))
+  (funcall ofun monitor display (append '((undecorated . t)) parameters)))
 
-(define-advice make-frame-on-current-monitor (:around (orig-fun &optional parameters)
+(define-advice make-frame-on-current-monitor (:around (ofun &optional parameters)
                                               make-frame-on-current-monitor-undecorated)
-  (funcall orig-fun (append '((undecorated . t)) parameters)))
+  (funcall ofun (append '((undecorated . t)) parameters)))
 
 ;; Undecorate the initial frame as well
 (modify-frame-parameters nil '((undecorated . t)))
@@ -758,18 +758,18 @@ Visit grep/xref hits in the window where all previous hits were visited:
              'append)
 
 (define-advice xref-goto-xref (:around
-                               (orig-fun &rest args)
+                               (ofun &rest args)
                                window--display-buffer-set-previous-window)
   (let ((buffer (current-buffer)))
-    (apply orig-fun args)
+    (apply ofun args)
     (with-current-buffer buffer
       (setq-local display-buffer-previous-window (selected-window)))))
 
 ;; (define-advice window--display-buffer (:around
-;;                                        (orig-fun &rest args)
+;;                                        (ofun &rest args)
 ;;                                        window--display-buffer-set-previous-window)
 ;;   (let ((buffer (current-buffer))
-;;         (window (apply orig-fun args)))
+;;         (window (apply ofun args)))
 ;;     (with-current-buffer buffer
 ;;       (setq-local display-buffer-previous-window window))
 ;;     window))
@@ -779,12 +779,12 @@ Debugging should use the same window:
 
 #+begin_src emacs-lisp
 ;; (define-advice edebug-pop-to-buffer (:around
-;;                                      (orig-fun buffer &optional window)
+;;                                      (ofun buffer &optional window)
 ;;                                      edebug-pop-to-buffer-same-window)
 ;;   (when (string-prefix-p "edebug" (format "%s" real-this-command))
 ;;     (window--display-buffer buffer (old-selected-window) 'reuse
 ;;                             '(nil (inhibit-same-window . nil))))
-;;   (funcall orig-fun buffer window))
+;;   (funcall ofun buffer window))
 #+end_src
 
 ** Shorter answers
@@ -1643,8 +1643,8 @@ to more nice-looking https://en.wikipedia.org/wiki/Ω
 when copying a URL from a web browser to Emacs:
 
 #+begin_src emacs-lisp
-(define-advice gui-selection-value (:around (orig-fun &rest args) gui-selection-value-url-decode)
-  (let ((value (apply orig-fun args)))
+(define-advice gui-selection-value (:around (ofun &rest args) gui-selection-value-url-decode)
+  (let ((value (apply ofun args)))
     (when (and (stringp value)
                (string-match-p
                 (rx bos "http" (* nonl) "%" (* nonl) eos) value))
@@ -2186,7 +2186,7 @@ ignoredups causes lines matching the previous history entry to not be saved."
 but still no option that would corresponds to ~ignorespace~.
 
 #+begin_src emacs-lisp
-(define-advice add-to-history (:around (orig-fun history-var newelt &rest args)
+(define-advice add-to-history (:around (ofun history-var newelt &rest args)
                                        add-to-history-ignorespace)
   (unless (or (and (memq history-var
                          '( shell-command-history compile-history
@@ -2195,7 +2195,7 @@ but still no option that would corresponds to ~ignorespace~.
               ;; I often type `M-p RET' inadvertently
               (and (eq history-var 'compile-history)
                    (string-match-p "bootstrap" newelt)))
-    (apply orig-fun history-var newelt args)))
+    (apply ofun history-var newelt args)))
 #+end_src
 
 This is not needed when isearch =C-s=/=C-r= in the minibuffer is available
@@ -2726,7 +2726,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (define-key dired-mode-map "\M-=" 'dired-backup-diff)
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(define-advice dired-backup-diff (:around (orig-fun &rest args) my-dired-backup-diff)
+(define-advice dired-backup-diff (:around (ofun &rest args) my-dired-backup-diff)
   (let* ((filename (dired-get-filename))
          (coding-system (when (and (file-regular-p filename)
                                    (not (file-remote-p filename)))
@@ -2735,10 +2735,10 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
                             buffer-file-coding-system)))
          (coding-system-for-read (or coding-system coding-system-for-read))
          (coding-system-for-write (or coding-system coding-system-for-write)))
-    (apply orig-fun args)))
+    (apply ofun args)))
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(define-advice dired-diff (:around (orig-fun &rest args) my-dired-diff)
+(define-advice dired-diff (:around (ofun &rest args) my-dired-diff)
   (let* ((filename (dired-get-filename))
          (coding-system (when (and (file-regular-p filename)
                                    (not (file-remote-p filename)))
@@ -2747,7 +2747,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
                             buffer-file-coding-system)))
          (coding-system-for-read (or coding-system coding-system-for-read))
          (coding-system-for-write (or coding-system coding-system-for-write)))
-    (apply orig-fun args)))
+    (apply ofun args)))
 
 ;; (define-key dired-mode-map "\C-y" (lambda (&optional arg)
 ;;                                     (interactive)
@@ -3006,12 +3006,12 @@ Modifies REGEXP to add the word boundaries to match whole words."
 Don't pollute manually added entries in ~grep-history~ with constructed commands:
 
 #+begin_src emacs-lisp
-(define-advice lgrep (:around (orig-fun &rest args) vc-git-grep-no-history)
+(define-advice lgrep (:around (ofun &rest args) vc-git-grep-no-history)
   (let ((grep-history '()))
-    (apply orig-fun args)))
-(define-advice vc-git-grep (:around (orig-fun &rest args) vc-git-grep-no-history)
+    (apply ofun args)))
+(define-advice vc-git-grep (:around (ofun &rest args) vc-git-grep-no-history)
   (let ((grep-history '()))
-    (apply orig-fun args)))
+    (apply ofun args)))
 #+end_src
 
 Project-based compilation:
@@ -3998,15 +3998,15 @@ words of another script.  This advice fixes this:
       (unless (bobp) (memq (get-char-code-property (char-before) 'bidi-class) '(R NSM)))
       (unless (eobp) (memq (get-char-code-property (char-after)  'bidi-class) '(R NSM)))))
 
-(define-advice right-word (:around (orig-fun &rest args) mixed-content)
+(define-advice right-word (:around (ofun &rest args) mixed-content)
   (if (right-script-p)
       (apply #'backward-word args)
-    (apply orig-fun args)))
+    (apply ofun args)))
 
-(define-advice left-word (:around (orig-fun &rest args) mixed-content)
+(define-advice left-word (:around (ofun &rest args) mixed-content)
   (if (right-script-p)
       (apply #'forward-word args)
-    (apply orig-fun args)))
+    (apply ofun args)))
 #+end_src
 
 There was no symmetry for sexp like in =right-char= / =left-char=
@@ -4085,10 +4085,10 @@ the regexp search and adds the search string into the wrong history ring
 ~regexp-search-ring~.  So here is a fix for such a situation:
 
 #+begin_src emacs-lisp
-(define-advice isearch-mode (:around (orig-fun forward &optional regexp &rest args) isearch-mode-regexp-after-left-word)
+(define-advice isearch-mode (:around (ofun forward &optional regexp &rest args) isearch-mode-regexp-after-left-word)
   (when (and regexp (eq last-command 'left-word))
     (setq regexp nil))
-  (apply orig-fun forward regexp args))
+  (apply ofun forward regexp args))
 #+end_src
 
 ** Fix next-error
@@ -4188,12 +4188,12 @@ quit the previous buffer:
   )
 (with-eval-after-load 'project
   ;; Instead of numbers append the regexp to the xref buffer name:
-  (define-advice project-find-regexp (:around (orig-fun &rest args) project-find-regexp-unique)
+  (define-advice project-find-regexp (:around (ofun &rest args) project-find-regexp-unique)
     (require 'xref)
     (let ((xref-buffer-name
            (generate-new-buffer-name
             (format "%s<%s>" xref-buffer-name (car args)))))
-      (apply orig-fun args))))
+      (apply ofun args))))
 #+end_src
 
 ** Fix info
@@ -4209,14 +4209,14 @@ It's easier to type =C-5 C-h C-i= with control key pressed for all keys:
 Allow set-variable to set internal variables, not only customizable ones:
 
 #+begin_src emacs-lisp
-(define-advice set-variable (:around (orig-fun &rest args) override-custom-variable)
+(define-advice set-variable (:around (ofun &rest args) override-custom-variable)
   (interactive (lambda (spec)
                  (cl-letf (((symbol-function 'custom-variable-p)
                             (lambda (v)
                               (and (symbolp v) (boundp v)))))
                    (advice-eval-interactive-spec spec))))
   (cl-flet ((custom-variable-p (_v) t))
-    (apply orig-fun args)))
+    (apply ofun args)))
 #+end_src
 
 ** Fix follow-mode
@@ -4461,16 +4461,16 @@ and using it in ~vc-git-diff~:
         (mapcar (lambda (file) (insert file "\n")) (nreverse files)))
       (setq vc-git-orderfile tmpfile))))
 
-(define-advice vc-git-diff (:around (orig-fun &rest args) vc-git-diff-use-orderfile)
+(define-advice vc-git-diff (:around (ofun &rest args) vc-git-diff-use-orderfile)
   (if (and vc-git-orderfile (file-exists-p vc-git-orderfile))
       (let ((vc-git-diff-switches
              (append (list (format "-O%s" vc-git-orderfile))
                      vc-git-diff-switches)))
         (unwind-protect
-	    (apply orig-fun args)
+	    (apply ofun args)
 	  (delete-file vc-git-orderfile)
           (setq vc-git-orderfile nil)))
-    (apply orig-fun args)))
+    (apply ofun args)))
 #+end_src
 
 ** Fall back between vc-diff and diff-backup
@@ -4481,9 +4481,9 @@ And vice versa: when =C-x v == (~vc-diff~) is accidentally typed on
 a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779][Bug#41779]])
 
 #+begin_src emacs-lisp
-(define-advice diff-backup (:around (orig-fun file &optional switches) diff-backup-fallback-to-vc-diff)
+(define-advice diff-backup (:around (ofun file &optional switches) diff-backup-fallback-to-vc-diff)
   (condition-case err
-      (funcall orig-fun file switches)
+      (funcall ofun file switches)
     (error
      ;; Fall back to vc-diff
      (if (vc-backend file)
@@ -4493,9 +4493,9 @@ a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779
             t (list (vc-backend file) (list file)) nil nil t))
        (error (cadr err))))))
 
-(define-advice vc-diff (:around (orig-fun &rest args) vc-diff-fallback-to-diff-backup)
+(define-advice vc-diff (:around (ofun &rest args) vc-diff-fallback-to-diff-backup)
   (if (vc-deduce-backend)
-      (apply orig-fun args)
+      (apply ofun args)
     ;; Fall back to non-vc diff-backup
     (let ((file (if (derived-mode-p 'dired-mode)
                     (dired-get-filename)
@@ -4514,7 +4514,7 @@ directories saved in =~/.emacs.d/projects=.
 #+begin_src emacs-lisp
 (require 'project)
 
-(define-advice read-directory-name (:around (orig-fun prompt &optional dir default-dirname
+(define-advice read-directory-name (:around (ofun prompt &optional dir default-dirname
 			                          mustmatch initial)
                                             read-directory-name-project-defaults)
   (when (featurep 'project)
@@ -4527,7 +4527,7 @@ directories saved in =~/.emacs.d/projects=.
                    (t
                     (list default-dirname)))
                   (project-known-project-roots))))
-  (let ((ret (funcall orig-fun prompt dir default-dirname
+  (let ((ret (funcall ofun prompt dir default-dirname
 		      mustmatch initial)))
     (when (featurep 'project)
       ;; Update project list with selected project dir
