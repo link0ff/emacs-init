@@ -258,19 +258,17 @@ Let =C-M-a= (~beginning-of-defun~) not scroll the window
 when after jumping point stays within current window bounds:
 
 #+begin_src emacs-lisp
-(advice-add 'beginning-of-defun :around
-            (lambda (orig-fun &rest args)
-              (let ((w-s (window-start))
-                    (w-e (window-end)))
-                (apply orig-fun args)
-                (when (and
-                       ;; Only when used interactively
-                       (eq this-command 'beginning-of-defun)
-                       ;; And only when jumping outside of window
-                       ;; to the center of the window
-                       (or (< (point) w-s) (> (point) w-e)))
-                  (recenter-top))))
-            '((name . recenter-top)))
+(define-advice beginning-of-defun (:around (orig-fun &rest args) recenter-top)
+  (let ((w-s (window-start))
+        (w-e (window-end)))
+    (apply orig-fun args)
+    (when (and
+           ;; Only when used interactively
+           (eq this-command 'beginning-of-defun)
+           ;; And only when jumping outside of window
+           ;; to the center of the window
+           (or (< (point) w-s) (> (point) w-e)))
+      (recenter-top))))
 #+end_src
 
 * Space optimization
@@ -444,16 +442,13 @@ that removes any remaining window decorations including the title bar:
             (select-frame-set-input-focus frame)))
 
 ;; Apply ‘undecorated’ to new frames created by these commands:
-(advice-add 'make-frame-on-monitor :around
-            (lambda (orig-fun monitor &optional display parameters)
-              (funcall orig-fun monitor display
-                       (append '((undecorated . t)) parameters)))
-            '((name . make-frame-on-monitor-undecorated)))
+(define-advice make-frame-on-monitor (:around (orig-fun monitor &optional display parameters)
+                                      make-frame-on-monitor-undecorated)
+  (funcall orig-fun monitor display (append '((undecorated . t)) parameters)))
 
-(advice-add 'make-frame-on-current-monitor :around
-            (lambda (orig-fun &optional parameters)
-              (funcall orig-fun (append '((undecorated . t)) parameters)))
-            '((name . make-frame-on-current-monitor-undecorated)))
+(define-advice make-frame-on-current-monitor (:around (orig-fun &optional parameters)
+                                              make-frame-on-current-monitor-undecorated)
+  (funcall orig-fun (append '((undecorated . t)) parameters)))
 
 ;; Undecorate the initial frame as well
 (modify-frame-parameters nil '((undecorated . t)))
@@ -762,34 +757,34 @@ Visit grep/xref hits in the window where all previous hits were visited:
              ;; Append to not override display-buffer-same-window
              'append)
 
-(advice-add 'xref-goto-xref :around
-            (lambda (orig-fun &rest args)
-              (let ((buffer (current-buffer)))
-                (apply orig-fun args)
-                (with-current-buffer buffer
-                  (setq-local display-buffer-previous-window (selected-window)))))
-            '((name . window--display-buffer-set-previous-window)))
+(define-advice xref-goto-xref (:around
+                               (orig-fun &rest args)
+                               window--display-buffer-set-previous-window)
+  (let ((buffer (current-buffer)))
+    (apply orig-fun args)
+    (with-current-buffer buffer
+      (setq-local display-buffer-previous-window (selected-window)))))
 
-;; (advice-add 'window--display-buffer :around
-;;             (lambda (orig-fun &rest args)
-;;               (let ((buffer (current-buffer))
-;;                     (window (apply orig-fun args)))
-;;                 (with-current-buffer buffer
-;;                   (setq-local display-buffer-previous-window window))
-;;                 window))
-;;             '((name . window--display-buffer-set-previous-window)))
+;; (define-advice window--display-buffer (:around
+;;                                        (orig-fun &rest args)
+;;                                        window--display-buffer-set-previous-window)
+;;   (let ((buffer (current-buffer))
+;;         (window (apply orig-fun args)))
+;;     (with-current-buffer buffer
+;;       (setq-local display-buffer-previous-window window))
+;;     window))
 #+end_src
 
 Debugging should use the same window:
 
 #+begin_src emacs-lisp
-;; (advice-add 'edebug-pop-to-buffer :around
-;;             (lambda (orig-fun buffer &optional window)
-;;               (when (string-prefix-p "edebug" (format "%s" real-this-command))
-;;                 (window--display-buffer buffer (old-selected-window) 'reuse
-;;                                         '(nil (inhibit-same-window . nil))))
-;;               (funcall orig-fun buffer window))
-;;             '((name . edebug-pop-to-buffer-same-window)))
+;; (define-advice edebug-pop-to-buffer (:around
+;;                                      (orig-fun buffer &optional window)
+;;                                      edebug-pop-to-buffer-same-window)
+;;   (when (string-prefix-p "edebug" (format "%s" real-this-command))
+;;     (window--display-buffer buffer (old-selected-window) 'reuse
+;;                             '(nil (inhibit-same-window . nil))))
+;;   (funcall orig-fun buffer window))
 #+end_src
 
 ** Shorter answers
@@ -1535,17 +1530,15 @@ use the most recently used window:
 Also use ~recenter-top-bottom~ after =M-<Home>= and don't recenter after =M-<End>=:
 
 #+begin_src emacs-lisp
-(advice-add 'beginning-of-buffer-other-window :after
-            (lambda (&rest _args)
-              (with-selected-window (other-window-for-scrolling)
-                (recenter-top-bottom)))
-            '((name . beginning-of-buffer-other-window-recenter)))
+(define-advice beginning-of-buffer-other-window (:after (&rest _args)
+                                                        beginning-of-buffer-other-window-recenter)
+  (with-selected-window (other-window-for-scrolling)
+    (recenter-top-bottom)))
 
-(advice-add 'end-of-buffer-other-window :after
-            (lambda (&rest _args)
-              (with-selected-window (other-window-for-scrolling)
-                (recenter -1)))
-            '((name . end-of-buffer-other-window-recenter)))
+(define-advice end-of-buffer-other-window (:after (&rest _args)
+                                                  end-of-buffer-other-window-recenter)
+  (with-selected-window (other-window-for-scrolling)
+    (recenter -1)))
 #+end_src
 
 Use new dwim case commands:
@@ -1650,17 +1643,15 @@ to more nice-looking https://en.wikipedia.org/wiki/Ω
 when copying a URL from a web browser to Emacs:
 
 #+begin_src emacs-lisp
-(advice-add 'gui-selection-value :around
-            (lambda (orig-fun &rest args)
-              (let ((value (apply orig-fun args)))
-                (when (and (stringp value)
-                           (string-match-p
-                            (rx bos "http" (* nonl) "%" (* nonl) eos) value))
-                  (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
-                  ;; Encode spaces back again because ffap/thing-at-point fail at spaces
-                  (setq value (replace-regexp-in-string " " "%20" value)))
-                value))
-            '((name . gui-selection-value-url-decode)))
+(define-advice gui-selection-value (:around (orig-fun &rest args) gui-selection-value-url-decode)
+  (let ((value (apply orig-fun args)))
+    (when (and (stringp value)
+               (string-match-p
+                (rx bos "http" (* nonl) "%" (* nonl) eos) value))
+      (setq value (decode-coding-string (url-unhex-string value) 'utf-8))
+      ;; Encode spaces back again because ffap/thing-at-point fail at spaces
+      (setq value (replace-regexp-in-string " " "%20" value)))
+    value))
 #+end_src
 
 *** Copy text at point without activating the region
@@ -1669,37 +1660,33 @@ when copying a URL from a web browser to Emacs:
 (defvar kill-ring-save-set-region-p nil)
 
 ;; When M-w (kill-ring-save) is called without active region, copy text at point.
-(advice-add 'kill-ring-save :before
-            (lambda (&rest _args)
-              (interactive (lambda (spec)
-                             (setq kill-ring-save-set-region-p nil)
-                             (unless (use-region-p)
-                               (let ((bounds (or (bounds-of-thing-at-point 'url)
-                                                 (bounds-of-thing-at-point 'filename)
-                                                 (bounds-of-thing-at-point 'symbol)
-                                                 (bounds-of-thing-at-point 'sexp))))
-                                 (unless bounds
-                                   (signal 'mark-inactive nil))
-                                 (goto-char (car bounds))
-                                 (push-mark (cdr bounds) t t)
-                                 (setq kill-ring-save-set-region-p t)))
-                             (advice-eval-interactive-spec spec))))
-            '((name . set-region-if-inactive)))
+(define-advice kill-ring-save (:before (&rest _args) set-region-if-inactive)
+  (interactive (lambda (spec)
+                 (setq kill-ring-save-set-region-p nil)
+                 (unless (use-region-p)
+                   (let ((bounds (or (bounds-of-thing-at-point 'url)
+                                     (bounds-of-thing-at-point 'filename)
+                                     (bounds-of-thing-at-point 'symbol)
+                                     (bounds-of-thing-at-point 'sexp))))
+                     (unless bounds
+                       (signal 'mark-inactive nil))
+                     (goto-char (car bounds))
+                     (push-mark (cdr bounds) t t)
+                     (setq kill-ring-save-set-region-p t)))
+                 (advice-eval-interactive-spec spec))))
 
 ;; Indicate copied region, especially needed when
 ;; the region was activated by the advice above
-(advice-add 'kill-ring-save :after
-            (lambda (&rest _args)
-              ;; When the region was set by the advice above,
-              ;; only then display its text.
-              (when kill-ring-save-set-region-p
-                (let ((text (substring-no-properties (current-kill 0))))
-                  (message "Copied text \"%s\""
-                           (query-replace-descr ; don't show newlines literally
-                            (if (> (length text) 64)
-                                (concat (substring text 0 64) "..." (substring text -16))
-                              text))))))
-            '((name . indicate-copied-region)))
+(define-advice kill-ring-save (:after (&rest _args) indicate-copied-region)
+  ;; When the region was set by the advice above,
+  ;; only then display its text.
+  (when kill-ring-save-set-region-p
+    (let ((text (substring-no-properties (current-kill 0))))
+      (message "Copied text \"%s\""
+               (query-replace-descr     ; don't show newlines literally
+                (if (> (length text) 64)
+                    (concat (substring text 0 64) "..." (substring text -16))
+                  text))))))
 #+end_src
 
 ** Search/Replace
@@ -1776,15 +1763,11 @@ before searching for the next hit."
   ;; Push a new state
   (isearch-push-state))
 
-(advice-add 'isearch-repeat-forward :before
-            (lambda (&rest _args)
-              (isearch-refresh-state))
-            '((name . refresh-state)))
+(define-advice isearch-repeat-forward (:before (&rest _args) refresh-state)
+  (isearch-refresh-state))
 
-(advice-add 'isearch-repeat-backward :before
-            (lambda (&rest _args)
-              (isearch-refresh-state))
-            '((name . refresh-state)))
+(define-advice isearch-repeat-backward (:before (&rest _args) refresh-state)
+  (isearch-refresh-state))
 #+end_src
 
 *** Useful isearch keys
@@ -1892,9 +1875,8 @@ I admit this could be a separate package:
 
 ;; (add-hook 'isearch-mode-end-hook 'isearch-lazy-hints-cleanup)
 ;; To clean also after ispell lazy-highlight
-(advice-add 'lazy-highlight-cleanup :after
-            (lambda (&optional _force _procrastinate)
-              (isearch-lazy-hints-cleanup)))
+(define-advice lazy-highlight-cleanup (:after (&optional _force _procrastinate))
+  (isearch-lazy-hints-cleanup))
 
 ;; TODO: add to the end of isearch-lazy-highlight-new-loop
 (add-hook 'isearch-update-post-hook 'isearch-lazy-hints)
@@ -2204,17 +2186,16 @@ ignoredups causes lines matching the previous history entry to not be saved."
 but still no option that would corresponds to ~ignorespace~.
 
 #+begin_src emacs-lisp
-(advice-add 'add-to-history :around
-            (lambda (orig-fun history-var newelt &rest args)
-              (unless (or (and (memq history-var
-                                     '( shell-command-history compile-history
-                                        read-expression-history))
-                               (string-match-p "\\`\\(?:rm\\|git rm\\| \\)" newelt))
-                          ;; I often type `M-p RET' inadvertently
-                          (and (eq history-var 'compile-history)
-                               (string-match-p "bootstrap" newelt)))
-                (apply orig-fun history-var newelt args)))
-            '((name . add-to-history-ignorespace)))
+(define-advice add-to-history (:around (orig-fun history-var newelt &rest args)
+                                       add-to-history-ignorespace)
+  (unless (or (and (memq history-var
+                         '( shell-command-history compile-history
+                            read-expression-history))
+                   (string-match-p "\\`\\(?:rm\\|git rm\\| \\)" newelt))
+              ;; I often type `M-p RET' inadvertently
+              (and (eq history-var 'compile-history)
+                   (string-match-p "bootstrap" newelt)))
+    (apply orig-fun history-var newelt args)))
 #+end_src
 
 This is not needed when isearch =C-s=/=C-r= in the minibuffer is available
@@ -2430,13 +2411,11 @@ when filling the paragraph with =M-q=:
                     (looking-back "[[:space:]]\\{2\\}\\|\n" 3))
           (insert " "))))))
 
-(advice-add 'fill-paragraph :before
-            (lambda (&rest _args)
-              (when (use-region-p)
-                (canonically-double-space-region
-                 (region-beginning)
-                 (region-end))))
-            '((name . fill-paragraph-double-space)))
+(define-advice fill-paragraph (:before (&rest _args) fill-paragraph-double-space)
+  (when (use-region-p)
+    (canonically-double-space-region
+     (region-beginning)
+     (region-end))))
 #+end_src
 
 While using ~repunctuate-sentences~, skip some known abbreviations:
@@ -2576,13 +2555,11 @@ Highlight found occurrences in =*vc-search-log*= output buffer of ~vc-log-search
 Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
 
 #+begin_src emacs-lisp
-(advice-add 'vc-git-log-search :after
-            (lambda (buffer pattern)
-              (with-current-buffer buffer
-                (when pattern
-                  (vc-run-delayed
-                    (highlight-regexp pattern 'hi-yellow)))))
-            '((name . vc-git-log-search-highlight)))
+(define-advice vc-git-log-search (:after (buffer pattern) vc-git-log-search-highlight)
+  (with-current-buffer buffer
+    (when pattern
+      (vc-run-delayed
+        (highlight-regexp pattern 'hi-yellow)))))
 
 (add-hook 'log-view-mode-hook
           (lambda ()
@@ -2749,34 +2726,28 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 (define-key dired-mode-map "\M-=" 'dired-backup-diff)
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(advice-add
- 'dired-backup-diff :around
- (lambda (orig-fun &rest args)
-   (let* ((filename (dired-get-filename))
-          (coding-system (when (and (file-regular-p filename)
-                                    (not (file-remote-p filename)))
-                           (with-temp-buffer
-                             (insert-file-contents filename nil 0 1024)
-                             buffer-file-coding-system)))
-          (coding-system-for-read (or coding-system coding-system-for-read))
-          (coding-system-for-write (or coding-system coding-system-for-write)))
-     (apply orig-fun args)))
- '((name . my-dired-backup-diff)))
+(define-advice dired-backup-diff (:around (orig-fun &rest args) my-dired-backup-diff)
+  (let* ((filename (dired-get-filename))
+         (coding-system (when (and (file-regular-p filename)
+                                   (not (file-remote-p filename)))
+                          (with-temp-buffer
+                            (insert-file-contents filename nil 0 1024)
+                            buffer-file-coding-system)))
+         (coding-system-for-read (or coding-system coding-system-for-read))
+         (coding-system-for-write (or coding-system coding-system-for-write)))
+    (apply orig-fun args)))
 
 ;; Get coding from the file, so diff will output in the correct coding:
-(advice-add
- 'dired-diff :around
- (lambda (orig-fun &rest args)
-   (let* ((filename (dired-get-filename))
-          (coding-system (when (and (file-regular-p filename)
-                                    (not (file-remote-p filename)))
-                           (with-temp-buffer
-                             (insert-file-contents filename nil 0 1024)
-                             buffer-file-coding-system)))
-          (coding-system-for-read (or coding-system coding-system-for-read))
-          (coding-system-for-write (or coding-system coding-system-for-write)))
-     (apply orig-fun args)))
- '((name . my-dired-diff)))
+(define-advice dired-diff (:around (orig-fun &rest args) my-dired-diff)
+  (let* ((filename (dired-get-filename))
+         (coding-system (when (and (file-regular-p filename)
+                                   (not (file-remote-p filename)))
+                          (with-temp-buffer
+                            (insert-file-contents filename nil 0 1024)
+                            buffer-file-coding-system)))
+         (coding-system-for-read (or coding-system coding-system-for-read))
+         (coding-system-for-write (or coding-system coding-system-for-write)))
+    (apply orig-fun args)))
 
 ;; (define-key dired-mode-map "\C-y" (lambda (&optional arg)
 ;;                                     (interactive)
@@ -3035,16 +3006,12 @@ Modifies REGEXP to add the word boundaries to match whole words."
 Don't pollute manually added entries in ~grep-history~ with constructed commands:
 
 #+begin_src emacs-lisp
-(advice-add 'lgrep :around
-            (lambda (orig-fun &rest args)
-              (let ((grep-history '()))
-                (apply orig-fun args)))
-            '((name . vc-git-grep-no-history)))
-(advice-add 'vc-git-grep :around
-            (lambda (orig-fun &rest args)
-              (let ((grep-history '()))
-                (apply orig-fun args)))
-            '((name . vc-git-grep-no-history)))
+(define-advice lgrep (:around (orig-fun &rest args) vc-git-grep-no-history)
+  (let ((grep-history '()))
+    (apply orig-fun args)))
+(define-advice vc-git-grep (:around (orig-fun &rest args) vc-git-grep-no-history)
+  (let ((grep-history '()))
+    (apply orig-fun args)))
 #+end_src
 
 Project-based compilation:
@@ -3981,13 +3948,11 @@ Use buffer's coding for the output of ~base64-decode~ ([[https://debbugs.gnu.org
 (can be overridden by =C-x RET c=):
 
 #+begin_src emacs-lisp
-(advice-add 'base64-decode-region :after
-            (lambda (beg end &rest _)
-              (decode-coding-region
-               beg (min end (point-max))
-               (or coding-system-for-write
-                   buffer-file-coding-system)))
-            '((name . base64-decode-region-with-buffer-coding)))
+(define-advice base64-decode-region (:after (beg end &rest _) base64-decode-region-with-buffer-coding)
+  (decode-coding-region
+   beg (min end (point-max))
+   (or coding-system-for-write
+       buffer-file-coding-system)))
 #+end_src
 
 * Fixes for packages
@@ -4033,19 +3998,15 @@ words of another script.  This advice fixes this:
       (unless (bobp) (memq (get-char-code-property (char-before) 'bidi-class) '(R NSM)))
       (unless (eobp) (memq (get-char-code-property (char-after)  'bidi-class) '(R NSM)))))
 
-(advice-add 'right-word :around
-            (lambda (orig-fun &rest args)
-              (if (right-script-p)
-                  (apply #'backward-word args)
-                (apply orig-fun args)))
-            '((name . mixed-content)))
+(define-advice right-word (:around (orig-fun &rest args) mixed-content)
+  (if (right-script-p)
+      (apply #'backward-word args)
+    (apply orig-fun args)))
 
-(advice-add 'left-word :around
-            (lambda (orig-fun &rest args)
-              (if (right-script-p)
-                  (apply #'forward-word args)
-                (apply orig-fun args)))
-            '((name . mixed-content)))
+(define-advice left-word (:around (orig-fun &rest args) mixed-content)
+  (if (right-script-p)
+      (apply #'forward-word args)
+    (apply orig-fun args)))
 #+end_src
 
 There was no symmetry for sexp like in =right-char= / =left-char=
@@ -4124,12 +4085,10 @@ the regexp search and adds the search string into the wrong history ring
 ~regexp-search-ring~.  So here is a fix for such a situation:
 
 #+begin_src emacs-lisp
-(advice-add 'isearch-mode :around
-            (lambda (orig-fun forward &optional regexp &rest args)
-              (when (and regexp (eq last-command 'left-word))
-                (setq regexp nil))
-              (apply orig-fun forward regexp args))
-            '((name . isearch-mode-regexp-after-left-word)))
+(define-advice isearch-mode (:around (orig-fun forward &optional regexp &rest args) isearch-mode-regexp-after-left-word)
+  (when (and regexp (eq last-command 'left-word))
+    (setq regexp nil))
+  (apply orig-fun forward regexp args))
 #+end_src
 
 ** Fix next-error
@@ -4213,11 +4172,9 @@ quit the previous buffer:
 
 (with-eval-after-load 'xref
   (defvar xref--original-command nil)
-  (advice-add 'xref-find-definitions :after
-              (lambda (&rest _args)
-                (with-current-buffer (window-buffer)
-                  (setq-local xref--original-command 'xref-find-definitions)))
-              '((name . from-xref-find-definitions)))
+  (define-advice xref-find-definitions (:after (&rest _args) from-xref-find-definitions)
+    (with-current-buffer (window-buffer)
+      (setq-local xref--original-command 'xref-find-definitions)))
   (define-key xref--button-map [(control ?m)] 'my-xref-goto-xref)
 
   (define-key xref--xref-buffer-mode-map (kbd "C-j")  'xref-quit-and-goto-xref)
@@ -4231,14 +4188,12 @@ quit the previous buffer:
   )
 (with-eval-after-load 'project
   ;; Instead of numbers append the regexp to the xref buffer name:
-  (advice-add 'project-find-regexp :around
-              (lambda (orig-fun &rest args)
-                (require 'xref)
-                (let ((xref-buffer-name
-                       (generate-new-buffer-name
-                        (format "%s<%s>" xref-buffer-name (car args)))))
-                  (apply orig-fun args)))
-              '((name . project-find-regexp-unique))))
+  (define-advice project-find-regexp (:around (orig-fun &rest args) project-find-regexp-unique)
+    (require 'xref)
+    (let ((xref-buffer-name
+           (generate-new-buffer-name
+            (format "%s<%s>" xref-buffer-name (car args)))))
+      (apply orig-fun args))))
 #+end_src
 
 ** Fix info
@@ -4254,16 +4209,14 @@ It's easier to type =C-5 C-h C-i= with control key pressed for all keys:
 Allow set-variable to set internal variables, not only customizable ones:
 
 #+begin_src emacs-lisp
-(advice-add 'set-variable :around
-            (lambda (orig-fun &rest args)
-              (interactive (lambda (spec)
-                             (cl-letf (((symbol-function 'custom-variable-p)
-                                        (lambda (v)
-                                          (and (symbolp v) (boundp v)))))
-                               (advice-eval-interactive-spec spec))))
-              (cl-flet ((custom-variable-p (_v) t))
-                (apply orig-fun args)))
-            '((name . override-custom-variable)))
+(define-advice set-variable (:around (orig-fun &rest args) override-custom-variable)
+  (interactive (lambda (spec)
+                 (cl-letf (((symbol-function 'custom-variable-p)
+                            (lambda (v)
+                              (and (symbolp v) (boundp v)))))
+                   (advice-eval-interactive-spec spec))))
+  (cl-flet ((custom-variable-p (_v) t))
+    (apply orig-fun args)))
 #+end_src
 
 ** Fix follow-mode
@@ -4296,10 +4249,8 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 (defvar-local mark-active-window nil)
 
 ;; (add-hook 'activate-mark-hook (lambda () (setq mark-active-window (selected-window))))
-(advice-add 'activate-mark :after
-            (lambda (&rest _args)
-              (setq mark-active-window (selected-window)))
-            '((name . mark-active-window)))
+(define-advice activate-mark (:after (&rest _args) mark-active-window)
+  (setq mark-active-window (selected-window)))
 
 ;; Can't use deactivate-mark-hook because when clicking mouse in another window
 ;; with the same buffer it calls both activate-mark and deactivate-mark,
@@ -4307,10 +4258,8 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 ;; and doesn't advance further because mark-active was set to nil in the redisplay
 ;; hook below.  OTOH, the advice is used unconditionally.
 ;; (add-hook 'deactivate-mark-hook (lambda () (setq mark-active-window nil)))
-(advice-add 'deactivate-mark :after
-            (lambda (&rest _args)
-              (setq mark-active-window nil))
-            '((name . mark-active-window)))
+(define-advice deactivate-mark (:after (&rest _args) mark-active-window)
+  (setq mark-active-window nil))
 
 (defun redisplay--update-mark-active-window (window)
   (when mark-active-window
@@ -4501,31 +4450,27 @@ and using it in ~vc-git-diff~:
 #+begin_src emacs-lisp
 (defvar vc-git-orderfile nil)
 
-(advice-add 'vc-dir-deduce-fileset :after
-            (lambda (&rest _)
-              (when (and vc-ewoc (eq this-command 'vc-diff))
-                (let* ((tmpfile (make-temp-file "vc-git-orderfile-"))
-                       files)
-                  (ewoc-map (lambda (filearg)
-                              (push (vc-dir-fileinfo->name filearg) files))
-                            vc-ewoc)
-                  (with-temp-file tmpfile
-                    (mapcar (lambda (file) (insert file "\n")) (nreverse files)))
-                  (setq vc-git-orderfile tmpfile))))
-            '((name . vc-dir-create-orderfile)))
+(define-advice vc-dir-deduce-fileset (:after (&rest _) vc-dir-create-orderfile)
+  (when (and vc-ewoc (eq this-command 'vc-diff))
+    (let* ((tmpfile (make-temp-file "vc-git-orderfile-"))
+           files)
+      (ewoc-map (lambda (filearg)
+                  (push (vc-dir-fileinfo->name filearg) files))
+                vc-ewoc)
+      (with-temp-file tmpfile
+        (mapcar (lambda (file) (insert file "\n")) (nreverse files)))
+      (setq vc-git-orderfile tmpfile))))
 
-(advice-add 'vc-git-diff :around
-            (lambda (orig-fun &rest args)
-              (if (and vc-git-orderfile (file-exists-p vc-git-orderfile))
-                  (let ((vc-git-diff-switches
-                         (append (list (format "-O%s" vc-git-orderfile))
-                                 vc-git-diff-switches)))
-                    (unwind-protect
-	                (apply orig-fun args)
-	              (delete-file vc-git-orderfile)
-                      (setq vc-git-orderfile nil)))
-                (apply orig-fun args)))
-            '((name . vc-git-diff-use-orderfile)))
+(define-advice vc-git-diff (:around (orig-fun &rest args) vc-git-diff-use-orderfile)
+  (if (and vc-git-orderfile (file-exists-p vc-git-orderfile))
+      (let ((vc-git-diff-switches
+             (append (list (format "-O%s" vc-git-orderfile))
+                     vc-git-diff-switches)))
+        (unwind-protect
+	    (apply orig-fun args)
+	  (delete-file vc-git-orderfile)
+          (setq vc-git-orderfile nil)))
+    (apply orig-fun args)))
 #+end_src
 
 ** Fall back between vc-diff and diff-backup
@@ -4536,32 +4481,28 @@ And vice versa: when =C-x v == (~vc-diff~) is accidentally typed on
 a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779][Bug#41779]])
 
 #+begin_src emacs-lisp
-(advice-add 'diff-backup :around
-            (lambda (orig-fun file &optional switches)
-              (condition-case err
-                  (funcall orig-fun file switches)
-                (error
-                 ;; Fall back to vc-diff
-                 (if (vc-backend file)
-                     (let ((vc-diff-switches switches))
-                       (require 'vc)
-                       (vc-diff-internal
-                        t (list (vc-backend file) (list file)) nil nil t))
-                   (error (cadr err))))))
-            '((name . diff-backup-fallback-to-vc-diff)))
+(define-advice diff-backup (:around (orig-fun file &optional switches) diff-backup-fallback-to-vc-diff)
+  (condition-case err
+      (funcall orig-fun file switches)
+    (error
+     ;; Fall back to vc-diff
+     (if (vc-backend file)
+         (let ((vc-diff-switches switches))
+           (require 'vc)
+           (vc-diff-internal
+            t (list (vc-backend file) (list file)) nil nil t))
+       (error (cadr err))))))
 
-(advice-add 'vc-diff :around
-            (lambda (orig-fun &rest args)
-              (if (vc-deduce-backend)
-                  (apply orig-fun args)
-                ;; Fall back to non-vc diff-backup
-                (let ((file (if (derived-mode-p 'dired-mode)
-                                (dired-get-filename)
-                              buffer-file-name)))
-                  (if file
-                      (diff-backup file vc-diff-switches)
-                    (error "File is not under version control")))))
-            '((name . vc-diff-fallback-to-diff-backup)))
+(define-advice vc-diff (:around (orig-fun &rest args) vc-diff-fallback-to-diff-backup)
+  (if (vc-deduce-backend)
+      (apply orig-fun args)
+    ;; Fall back to non-vc diff-backup
+    (let ((file (if (derived-mode-p 'dired-mode)
+                    (dired-get-filename)
+                  buffer-file-name)))
+      (if file
+          (diff-backup file vc-diff-switches)
+        (error "File is not under version control")))))
 #+end_src
 
 ** Use project directories everywhere
@@ -4573,35 +4514,32 @@ directories saved in =~/.emacs.d/projects=.
 #+begin_src emacs-lisp
 (require 'project)
 
-(advice-add 'read-directory-name :around
-            (lambda (orig-fun prompt &optional dir default-dirname
-			      mustmatch initial)
-              (when (featurep 'project)
-                (setq default-dirname
-                      (append (cond
-                               ((null default-dirname)
-                                (list (or dir default-directory)))
-                               ((consp default-dirname)
-                                default-dirname)
-                               (t
-                                (list default-dirname)))
-                              (project-known-project-roots))))
-              (let ((ret (funcall orig-fun prompt dir default-dirname
-		                  mustmatch initial)))
-                (when (featurep 'project)
-                  ;; Update project list with selected project dir
-                  (let ((default-directory ret))
-                    (project-current)))
-                ret))
-            '((name . read-directory-name-project-defaults)))
+(define-advice read-directory-name (:around (orig-fun prompt &optional dir default-dirname
+			                          mustmatch initial)
+                                            read-directory-name-project-defaults)
+  (when (featurep 'project)
+    (setq default-dirname
+          (append (cond
+                   ((null default-dirname)
+                    (list (or dir default-directory)))
+                   ((consp default-dirname)
+                    default-dirname)
+                   (t
+                    (list default-dirname)))
+                  (project-known-project-roots))))
+  (let ((ret (funcall orig-fun prompt dir default-dirname
+		      mustmatch initial)))
+    (when (featurep 'project)
+      ;; Update project list with selected project dir
+      (let ((default-directory ret))
+        (project-current)))
+    ret))
 
-(advice-add 'vc-dir :after
-            (lambda (dir &optional _backend)
-              (when (featurep 'project)
-                ;; Add current vc project dir to project list
-                (let ((default-directory dir))
-                  (project-current))))
-            '((name . vc-dir-add-project)))
+(define-advice vc-dir (:after (dir &optional _backend) vc-dir-add-project)
+  (when (featurep 'project)
+    ;; Add current vc project dir to project list
+    (let ((default-directory dir))
+      (project-current))))
 #+end_src
 
 Add the default project command bound to the =RET= key,
