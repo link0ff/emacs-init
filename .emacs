@@ -1,4 +1,6 @@
 
+(setq gc-cons-threshold most-positive-fixnum)
+
 (if (equal system-configuration "x86_64-unknown-linux-gnu")
     (setq system-configuration "x86_64-pc-linux-gnu"))
 
@@ -55,3 +57,8 @@
 (when (fboundp 'global-robe-mode)
   (global-robe-mode +1)
   (add-to-list 'debug-ignored-errors "Method not found"))
+
+(run-at-time 1 nil (lambda ()
+                     (setq gc-cons-threshold 128000000)
+                     (garbage-collect)
+                     (setq garbage-collection-messages t)))

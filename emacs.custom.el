@@ -118,8 +118,6 @@
  '(find-ls-option '("-print0 | sort -z | xargs -0 -e ls -ld" . "-ld"))
  '(flymake-no-changes-timeout nil)
  '(flyspell-check-changes t)
- '(garbage-collection-messages t)
- '(gc-cons-threshold 128000000)
  '(global-eldoc-mode nil)
  '(global-mark-ring-max 1024)
  '(gnus-article-truncate-lines nil)
