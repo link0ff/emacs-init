@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-08-28
+#+DATE: 2023-08-30
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2535,7 +2535,9 @@ Fix keybindings and run ~vc-dir~ in project root:
   (define-key vc-dir-mode-map "+" 'vc-diff)
   ;; Often ‘v’ is mistyped to view files like in Dired
   (define-key vc-dir-mode-map "v" 'vc-dir-view-file)
-  (define-key vc-dir-mode-map "." 'vc-next-action))
+  (define-key vc-dir-mode-map "." 'vc-next-action)
+  ;; Like ‘i’ is Dired
+  (define-key vc-dir-mode-map "i" 'vc-dir-show-fileentry))
 
 (define-key my-map "d" 'project-vc-dir)
 #+end_src
