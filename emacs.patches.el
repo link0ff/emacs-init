@@ -663,13 +663,11 @@ delete flagged files.\n\n"))))))
                   '(:propertize ":%s" face compilation-mode-line-fail))))
 
 ;; ALSO with exit status:
-(advice-add 'shell-command-sentinel :after
-	    (lambda (process _signal)
-	      (with-current-buffer (process-buffer process)
-		(setq mode-line-process
-		      `(:propertize ,(format ":%s [%s]" "%s" (process-exit-status process))
-				    face compilation-mode-line-fail))))
-	    '((name . propertize-mode-line)))
+(define-advice shell-command-sentinel (:after (process _signal) propertize-mode-line)
+  (with-current-buffer (process-buffer process)
+    (setq mode-line-process
+	  `(:propertize ,(format ":%s [%s]" "%s" (process-exit-status process))
+			face compilation-mode-line-fail))))
 
 
 ;;; eshell

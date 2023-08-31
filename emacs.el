@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2022-07-08 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2023-08-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1128,10 +1128,8 @@ With prefix arg, insert the current timestamp to the current buffer."
 (when (boundp 'imagemagick-enabled-types)
   (add-to-list 'imagemagick-enabled-types 'WEBP))
 
-(advice-add 'imagemagick-types :around
-            (lambda (orig-fun &rest args)
-              (append (apply orig-fun args) '(WEBP)))
-            '((name . add-webp)))
+(define-advice imagemagick-types (:around (ofun &rest args) add-webp)
+  (append (apply ofun args) '(WEBP)))
 
 (imagemagick-register-types)
 
