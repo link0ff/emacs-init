@@ -1312,7 +1312,7 @@ Below is customization of different modes to support convenient navigation:
         (View-scroll-page-backward-set-page-size))))
 
   ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
-  (define-advice View-scroll-line-forward (:after (&rest args) bottomize)
+  (define-advice View-scroll-line-forward (:after (&rest _args) bottomize)
     "Fix point position to be at the bottom line."
     (move-to-window-line -1)
     (beginning-of-line))
@@ -3160,7 +3160,7 @@ Increase throughput of process output:
 ** proced
 
 #+begin_src emacs-lisp
-(define-advice proced (:after (&rest args) recenter-at-bottom)
+(define-advice proced (:after (&rest _args) recenter-at-bottom)
   (goto-char (point-max))
   (recenter -1))
 #+end_src
