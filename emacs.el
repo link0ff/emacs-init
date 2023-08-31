@@ -1140,7 +1140,7 @@ With prefix arg, insert the current timestamp to the current buffer."
 
 ;;; thumbs
 
-(defadvice thumbs-mode (after my-thumbs-mode activate)
+(define-advice thumbs-mode (:after (&rest args) toggle-truncate-lines)
   (toggle-truncate-lines -1))
 
 
@@ -1176,10 +1176,10 @@ With prefix arg, insert the current timestamp to the current buffer."
 
 ;; After switching a buffer, display names of adjacent buffers in the echo area.
 
-(defadvice previous-buffer (after my-previous-buffer activate)
+(define-advice previous-buffer (:after (&rest args) my-previous-buffer)
   (my-display-prev-next-buffers))
 
-(defadvice next-buffer (after my-next-buffer activate)
+(define-advice next-buffer (:after (&rest args) my-next-buffer)
   (my-display-prev-next-buffers))
 
 (defun my-display-prev-next-buffers ()

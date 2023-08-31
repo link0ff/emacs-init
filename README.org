@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-08-30
+#+DATE: 2023-08-31
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -1312,7 +1312,7 @@ Below is customization of different modes to support convenient navigation:
         (View-scroll-page-backward-set-page-size))))
 
   ;; qv http://thread.gmane.org/gmane.emacs.devel/111117/focus=112357
-  (defadvice View-scroll-line-forward (after my-View-scroll-line-forward activate)
+  (define-advice View-scroll-line-forward (:after (&rest args) bottomize)
     "Fix point position to be at the bottom line."
     (move-to-window-line -1)
     (beginning-of-line))
@@ -2888,35 +2888,35 @@ Use alternative shell history file:
 ;; instead of displaying output in the echo area.
 ;; TODO: Another idea from http://thread.gmane.org/gmane.emacs.bugs/4533
 ;;       Use M-RETURN to run ‘async-shell-command’.
-(defadvice shell-command (around my-shell-command-around act)
+(define-advice shell-command (:around (ofun &rest args) messagify)
   (let ((messages-buffer-max-lines
          ;; Don't add output to the *Messages* buffer
          ;; when S-RET displays the *Shell Command Output* buffer.
          (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
-    ad-do-it
+    (apply ofun args)
     (when (memq last-input-event '(S-return ?\C-j))
       (message "") ;; Clear the echo area
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
 
-;; The same as the previous defadvice.
-(defadvice dired-do-shell-command (around my-dired-do-shell-command act)
+;; The same as the previous ‘define-advice’.
+(define-advice dired-do-shell-command (:around (ofun &rest args) messagify)
   (let ((messages-buffer-max-lines
          (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
-    ad-do-it
+    (apply ofun args)
     (when (memq last-input-event '(S-return ?\C-j))
       (message "")
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
 
-;; The same as the previous defadvice.
-(defadvice dired-smart-shell-command (around my-dired-smart-shell-command act)
+;; The same as the previous ‘define-advice’.
+(define-advice dired-smart-shell-command (:around (ofun &rest args) messagify)
   (let ((messages-buffer-max-lines
          (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
-    ad-do-it
+    (apply ofun args)
     (when (memq last-input-event '(S-return ?\C-j))
       (message "")
       (pop-to-buffer "*Shell Command Output*")
@@ -3160,7 +3160,7 @@ Increase throughput of process output:
 ** proced
 
 #+begin_src emacs-lisp
-(defadvice proced (after my-proced activate)
+(define-advice proced (:after (&rest args) recenter-at-bottom)
   (goto-char (point-max))
   (recenter -1))
 #+end_src
