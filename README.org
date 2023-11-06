@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-08-31
+#+DATE: 2023-11-06
 #+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2003,6 +2003,11 @@ and customize it:
 
 (setq char-fold-symmetric t)
 
+;; Add some typographical punctuation marks
+(setq char-fold-include
+      (append char-fold-include
+              '((?- "–" "—"))))
+
 ;; Allow search to match accented Cyrillic chars, so e.g. in etc/HELLO
 ;; “Здравствуйте” will match “Здра́вствуйте” and vice versa:
 (setq char-fold-include
@@ -2219,6 +2224,22 @@ if the deleted element was the last in the history list."
 
 (define-key minibuffer-local-map "\ek" 'delete-history-element)
 (define-key minibuffer-local-isearch-map "\ek" 'delete-history-element)
+#+end_src
+
+Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
+
+#+begin_src emacs-lisp
+(define-advice project-find-file (:around (ofun &rest args) substring)
+  (let ((completion-styles '(flex)))
+    (apply ofun args)))
+
+(define-advice vc-print-branch-log (:around (ofun &rest args) substring)
+  (interactive (lambda (spec)
+                 (minibuffer-with-setup-hook
+                     (lambda ()
+                       (setq-local completion-styles '(flex)))
+                   (advice-eval-interactive-spec spec))))
+  (apply ofun args))
 #+end_src
 
 ** Evaluable bookmarks
