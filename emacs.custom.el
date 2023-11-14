@@ -275,6 +275,7 @@
  '(vc-bzr-diff-switches "-F ^(")
  '(vc-bzr-status-switches nil)
  '(vc-command-messages 'log)
+ '(vc-display-status 'no-backend)
  '(vc-find-revision-no-save t)
  '(vc-git-diff-switches '("--diff-algorithm=patience"))
  '(vc-git-log-switches '("--pretty=fuller"))

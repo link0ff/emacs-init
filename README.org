@@ -1,8 +1,8 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-11-06
-#+Version: GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+#+DATE: 2023-11-14
+#+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
 #+HTML_link_home: http://www.linkov.net/emacs
@@ -2579,6 +2579,25 @@ Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
               (highlight-regexp "bug#" 'hi-yellow))))
 #+end_src
 
+When ~project-mode-line~ is customized to ~t~ and
+~vc-display-status~ is customized to ~no-backend~,
+then it's nice to remove the space between the
+mode-line indicators for the project name and vc status
+to display the joined status like "project-branch":
+
+#+begin_src emacs-lisp
+(define-advice vc-mode-line (:after (&rest _args) remove-space)
+  (when vc-mode (setq vc-mode (string-trim-left vc-mode))))
+#+end_src
+
+It's useful to run such key sequences =C-x p p C-x v L=
+from any buffer:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'vc
+  (setq vc-deduce-backend-nonvc-modes nil))
+#+end_src
+
 Use ~display-fill-column-indicator~ to limit the width of log entries:
 
 #+begin_src emacs-lisp
@@ -4145,6 +4164,12 @@ quit the previous buffer:
 
 (add-function :after-until next-error-find-buffer-function
               #'next-error-buffer-unnavigated-current)
+#+end_src
+
+Show hidden outlines like isearch does:
+
+#+begin_src emacs-lisp
+(add-hook 'next-error-hook (lambda () (when outline-minor-mode (outline-show-entry))))
 #+end_src
 
 ** Fix xref
