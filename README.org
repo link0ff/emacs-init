@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-11-14
+#+DATE: 2023-11-16
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2153,19 +2153,24 @@ Make the =*Occur*= buffer names unique and writable
    t t delimited nil nil start end backward region-noncontiguous-p))
 #+end_src
 
-** Minibuffer features
-
-Complete history in all non-completion minibuffers like 'rgrep' (bug#62800):
-
-#+begin_src emacs-lisp
-(keymap-set minibuffer-local-map "TAB" 'minibuffer-complete-history)
-#+end_src
+** Minibuffer and Completions
 
 See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
 
 #+begin_src emacs-lisp
 (define-key minibuffer-local-map [S-return] 'newline)
 #+end_src
+
+*** history/defaults completion
+
+Complete history in all non-completion minibuffers like 'rgrep' (bug#62800):
+
+#+begin_src emacs-lisp
+(keymap-set minibuffer-local-map "TAB" 'minibuffer-complete-history)
+(keymap-set minibuffer-local-map "<backtab>" 'minibuffer-complete-defaults)
+#+end_src
+
+*** deletion of history items
 
 Remove potentially dangerous commands from the history immediately.
 Also like in Bash HISTCONTROL:
@@ -2190,15 +2195,6 @@ but still no option that would corresponds to ~ignorespace~.
               (and (eq history-var 'compile-history)
                    (string-match-p "bootstrap" newelt)))
     (apply ofun history-var newelt args)))
-#+end_src
-
-This is not needed when isearch =C-s=/=C-r= in the minibuffer is available
-(but =C-M-r ^command= doesn't match at the beginning of the input area),
-also ~minibuffer-complete-history~ in available in Emacs 29:
-
-#+begin_src emacs-lisp
-;; (define-key minibuffer-local-map "\eN" 'next-complete-history-element)
-;; (define-key minibuffer-local-map "\eP" 'previous-complete-history-element)
 #+end_src
 
 =M-k= in the minibuffer deletes the minibuffer history element:
@@ -2226,6 +2222,8 @@ if the deleted element was the last in the history list."
 (define-key minibuffer-local-isearch-map "\ek" 'delete-history-element)
 #+end_src
 
+*** completion styles
+
 Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
 
 #+begin_src emacs-lisp
@@ -2240,6 +2238,15 @@ Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
                        (setq-local completion-styles '(flex)))
                    (advice-eval-interactive-spec spec))))
   (apply ofun args))
+#+end_src
+
+*** completion-preview-mode
+
+#+begin_src emacs-lisp
+(add-hook 'prog-mode-hook #'completion-preview-mode)
+(with-eval-after-load 'completion-preview
+  (keymap-set completion-preview-active-mode-map "<down>" #'completion-preview-next-candidate)
+  (keymap-set completion-preview-active-mode-map "<up>"   #'completion-preview-prev-candidate))
 #+end_src
 
 ** Evaluable bookmarks
