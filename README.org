@@ -2893,14 +2893,15 @@ Highlight all matches in the =*Locate*= buffer like in the =*Occur*= buffer
 (define-key my-map "s" 'project-shell-maybe)
 #+end_src
 
-Use alternative shell history file:
+Per-project shell history:
 
 #+begin_src emacs-lisp
-(define-key my-map "S" (lambda ()
-                         (interactive)
-                         (let ((process-environment (copy-sequence process-environment)))
-                           (setenv "HISTFILE" (expand-file-name ".bash_history_2" (getenv "HOME")))
-                           (project-shell-maybe))))
+(define-advice shell (:around (ofun &rest args) per-project-history)
+  (let ((process-environment (copy-sequence process-environment))
+        (root (locate-dominating-file default-directory ".bash_history")))
+    (when root
+      (setenv "HISTFILE" (expand-file-name ".bash_history" root)))
+    (apply ofun args)))
 #+end_src
 
 #+begin_src emacs-lisp
