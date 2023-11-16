@@ -4176,7 +4176,10 @@ quit the previous buffer:
 Show hidden outlines like isearch does:
 
 #+begin_src emacs-lisp
-(add-hook 'next-error-hook (lambda () (when outline-minor-mode (outline-show-entry))))
+(add-hook 'next-error-hook
+          (lambda ()
+            (when (and outline-minor-mode (invisible-p (point)))
+              (outline-show-entry))))
 #+end_src
 
 ** Fix xref
