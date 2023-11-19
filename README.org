@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-11-16
+#+DATE: 2023-11-19
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
@@ -2231,13 +2231,13 @@ Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
   (let ((completion-styles '(flex)))
     (apply ofun args)))
 
-(define-advice vc-print-branch-log (:around (ofun &rest args) substring)
-  (interactive (lambda (spec)
-                 (minibuffer-with-setup-hook
-                     (lambda ()
-                       (setq-local completion-styles '(flex)))
-                   (advice-eval-interactive-spec spec))))
-  (apply ofun args))
+;; (define-advice vc-print-branch-log (:around (ofun &rest args) substring)
+;;   (interactive (lambda (spec)
+;;                  (minibuffer-with-setup-hook
+;;                      (lambda ()
+;;                        (setq-local completion-styles '(flex)))
+;;                    (advice-eval-interactive-spec spec))))
+;;   (apply ofun args))
 #+end_src
 
 *** completion-preview-mode
@@ -3596,6 +3596,9 @@ Gnus Article buffers:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'gnus-art
+  ;; Show attached patches inline:
+  (push "text/x-diff" mm-attachment-override-types)
+
   ;; Set more human-readable time units:
   (setq article-time-units
         `((year   . ,(* 60 60 24 365.25))
@@ -3800,44 +3803,6 @@ Save only such Dired buffers that are visible in windows or tabs:
         (lambda (_filename bufname mode &rest _)
           (or (not (memq mode '(dired-mode vc-dir-mode)))
               (tab-bar-get-buffer-tab bufname t)))))
-#+end_src
-
-Add more globals to save between sessions:
-
-#+begin_src emacs-lisp
-(if (boundp 'desktop-globals-to-save)
-    (setq desktop-globals-to-save
-          (delete-dups
-           (append
-            '(;; buffer-name-history
-              coding-system-history
-              ;; command-history
-              compile-history
-              extended-command-history
-              find-tag-history
-              ;; file-name-history
-              find-args-history
-              find-command-history
-              grep-history
-              grep-files-history
-              ;; grep-find-history
-              ;; Info-search-history
-              ;; locate-history-list
-              ;; my-dict-history
-              ;; minibuffer-history
-              ;; minibuffer-history-search-history
-              query-replace-history
-              query-replace-defaults
-              read-expression-history
-              regexp-history
-              dired-shell-command-history ;; TODO: merge with shell-command-history
-              shell-command-history
-              search-ring
-              regexp-search-ring
-              vc-git-history
-              gud-gdb-history
-              )
-            (delq 'register-alist desktop-globals-to-save)))))
 #+end_src
 
 ** tree-sitter

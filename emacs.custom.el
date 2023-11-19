@@ -67,6 +67,8 @@
  '(describe-bindings-outline t)
  '(describe-char-unidata-list t)
  '(desktop-auto-save-timeout 60)
+ '(desktop-globals-to-save
+   '(compile-history extended-command-history find-args-history find-command-history grep-history grep-files-history read-expression-history regexp-history dired-shell-command-history shell-command-history regexp-search-ring vc-git-history gud-gdb-history))
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diary-date-forms '((year "-" month "-" day "[^0-9]") (dayname "\\W")))
@@ -85,6 +87,7 @@
  '(dired-keep-marker-rename 82)
  '(dired-listing-switches
    "-Alv --group-directories-first --time-style=long-iso --block-size='1")
+ '(dired-movement-style 'cycle)
  '(dired-omit-size-limit 65535)
  '(dired-recursive-copies 'always)
  '(dired-recursive-deletes 'top)
@@ -234,8 +237,6 @@
  '(read-file-name-completion-ignore-case t)
  '(read-minibuffer-restore-windows nil)
  '(read-quoted-char-radix 16)
- '(recentf-exclude '("/[^/]+[@:]"))
- '(recentf-mode t)
  '(repeat-keep-prefix t)
  '(require-final-newline t)
  '(revert-buffer-quick-short-answers t)
