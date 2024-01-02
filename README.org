@@ -387,6 +387,11 @@ with the same keybindings =C-c left= and =C-c right=:
 (when (fboundp 'tab-bar-history-mode) (tab-bar-history-mode 1))
 #+end_src
 
+Too dangerous key =C-x t 1=:
+#+begin_src emacs-lisp
+(unbind-key "1" tab-prefix-map)
+#+end_src
+
 ** Full-screen Emacs desktop
 
 To use maximum screen space, my Emacs frame covers the entire screen
