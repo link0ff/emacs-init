@@ -82,6 +82,7 @@
  '(dired-create-destination-dirs 'ask)
  '(dired-do-revert-buffer '(lambda (dir) (not (file-remote-p dir))))
  '(dired-dwim-target 'dired-dwim-target-recent)
+ '(dired-filename-display-length 'window)
  '(dired-free-space 'separate)
  '(dired-isearch-filenames 'dwim)
  '(dired-keep-marker-rename 82)

@@ -1381,23 +1381,13 @@ Below is customization of different modes to support convenient navigation:
                   (dired-next-line 4))
          (dired-view-file)))))
 
-(defun my-dired-move-to-next-dir (_arg)
-  (interactive "P")
-  (if (not (memq ?R (append dired-actual-switches nil)))
-      (dired-next-dirline-cycle 1)
-    (progn (dired-next-subdir 1))))
-(define-key dired-mode-map [(meta down)] 'dired-next-line-cycle) ; dired-next-line
-(define-key dired-mode-map [(control meta down)] 'my-dired-move-to-next-dir)
-(define-key dired-mode-map (kbd "TAB") 'my-dired-move-to-next-dir) ;'other-window
+(define-key dired-mode-map [(meta down)] 'dired-next-line)
+(define-key dired-mode-map [(control meta down)] 'dired-next-dirline)
+(define-key dired-mode-map (kbd "TAB") 'dired-next-dirline) ;; maybe other-window
 
-(defun my-dired-move-to-prev-dir (_arg)
-  (interactive "P")
-  (if (not (memq ?R (append dired-actual-switches nil)))
-      (dired-prev-dirline-cycle 1)
-    (progn (dired-prev-subdir 1))))
-(define-key dired-mode-map [(meta up)] 'dired-previous-line-cycle) ; dired-previous-line
-(define-key dired-mode-map [(control meta up)] 'my-dired-move-to-prev-dir)
-(define-key dired-mode-map [(shift iso-lefttab)] 'my-dired-move-to-prev-dir)
+(define-key dired-mode-map [(meta up)] 'dired-previous-line)
+(define-key dired-mode-map [(control meta up)] 'dired-prev-dirline)
+(define-key dired-mode-map [(shift iso-lefttab)] 'dired-prev-dirline)
 #+end_src
 
 *** archive/tar
@@ -2348,7 +2338,7 @@ Display triangle for outline of invisible lines
     (let* ((face (lsh (face-id 'escape-glyph) 22)) ;; 22 was 19 in Emacs 22
            ;; (backslash (+ face ?\\))
            ;; TRIANGULAR BULLET keeps the default font height
-           (dot (+ face #x2023)))
+           (dot (+ face ?…)))
       ;; (aset standard-display-table 2208 (vector backslash ?\s)) ; no-break space
       ;; (aset standard-display-table 2221 (vector backslash ?-))  ; soft hyphen
       ;; (set-char-table-extra-slot standard-display-table 2 backslash) ; \364
