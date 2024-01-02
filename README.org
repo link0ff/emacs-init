@@ -1,10 +1,10 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2023-11-19
+#+DATE: 2024-01-02
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
-#+Copyright: (C) 1989-2021  Juri Linkov <juri@linkov.net>/
+#+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
 #+HTML_link_home: http://www.linkov.net/emacs
 #+HTML_head: <script type="text/javascript" src="load.js"></script>
 #+InfoJS_opt: view:info toc:t
@@ -1129,13 +1129,15 @@ files one by one in a Dired buffer, or from a menu of links to Info nodes, etc.
           (kill-current-buffer-and-dired-jump)
         (quit-window-kill-buffer)))))
 
-(defun my-find-thing-at-point ()
+(defun my-find-thing-at-point (&optional arg)
   "Find variable, function or file at point."
-  (interactive)
+  (interactive "P")
   (cond ((not (eq (variable-at-point) 0))
          (call-interactively 'describe-variable))
         ((function-called-at-point)
          (call-interactively 'describe-function))
+        ((thing-at-point 'url)
+         (browse-url (thing-at-point 'url) arg))
         (t (find-file-at-point))))
 
 (define-key global-map [(meta left)]  'my-go-back)
@@ -4023,8 +4025,8 @@ Depending on the bidirectional context, this may move either forward
 or backward in the buffer.  See more at ‘forward-sexp’."
   (interactive "^p")
   (if (right-script-p)
-      (backward-sexp arg)
-    (forward-sexp arg)))
+      (backward-sexp arg t)
+    (forward-sexp arg t)))
 
 (defun left-sexp (&optional arg)
   "Move across one balanced expression (sexp) to the left.
@@ -4032,8 +4034,8 @@ Depending on the bidirectional context, this may move either backward
 or forward in the buffer.  See more at ‘backward-sexp’."
   (interactive "^p")
   (if (right-script-p)
-      (forward-sexp arg)
-    (backward-sexp arg)))
+      (forward-sexp arg t)
+    (backward-sexp arg t)))
 
 (define-key global-map [(control left)]       'left-sexp)
 (define-key global-map [(control right)]      'right-sexp)
@@ -4590,7 +4592,7 @@ Display the time of the Emacs initialization:
 
 * Copyright
 
-Copyright (C) 1989-2021  Juri Linkov <juri@linkov.net>
+Copyright (C) 1989-2024  Juri Linkov <juri@linkov.net>
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
