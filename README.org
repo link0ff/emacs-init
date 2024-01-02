@@ -2219,9 +2219,9 @@ if the deleted element was the last in the history list."
 Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
 
 #+begin_src emacs-lisp
-(define-advice project-find-file (:around (ofun &rest args) substring)
-  (let ((completion-styles '(flex)))
-    (apply ofun args)))
+;; (define-advice project-find-file (:around (ofun &rest args) substring)
+;;   (let ((completion-styles '(flex)))
+;;     (apply ofun args)))
 
 ;; (define-advice vc-print-branch-log (:around (ofun &rest args) substring)
 ;;   (interactive (lambda (spec)
@@ -2888,7 +2888,7 @@ Highlight all matches in the =*Locate*= buffer like in the =*Occur*= buffer
 Per-project shell history:
 
 #+begin_src emacs-lisp
-(define-advice shell (:around (ofun &rest args) per-project-history)
+(define-advice shell (:around (ofun &rest args) per-tree-history)
   (let ((process-environment (copy-sequence process-environment))
         (root (locate-dominating-file default-directory ".bash_history")))
     (when root
@@ -4517,26 +4517,28 @@ a directory name, allow =M-n= to access the most recently used project
 directories saved in =~/.emacs.d/projects=.
 
 #+begin_src emacs-lisp
-(require 'project)
+(define-advice find-file (:around (ofun &rest args) recentf-list)
+  (interactive (lambda (spec)
+                 (minibuffer-with-setup-hook
+                     (lambda ()
+                       (when (featurep 'recentf)
+                         (setq-local minibuffer-default-add-function
+                                     (lambda () recentf-list))))
+                   (advice-eval-interactive-spec spec))))
+  (apply ofun args))
 
-(define-advice read-directory-name (:around (ofun prompt &optional dir default-dirname mustmatch initial) project-defaults)
-  (when (featurep 'project)
-    (setq default-dirname
-          (append (cond
-                   ((null default-dirname)
-                    (list (or dir default-directory)))
-                   ((consp default-dirname)
-                    default-dirname)
-                   (t
-                    (list default-dirname)))
-                  (project-known-project-roots))))
-  (let ((ret (funcall ofun prompt dir default-dirname
-		      mustmatch initial)))
-    (when (featurep 'project)
-      ;; Update project list with selected project dir
-      (let ((default-directory ret))
-        (project-current)))
-    ret))
+(define-advice read-directory-name (:around (ofun &rest args) project-defaults)
+  (minibuffer-with-setup-hook
+      (lambda ()
+        (when (featurep 'project)
+          (setq-local minibuffer-default-add-function
+                      (lambda () (project-known-project-roots)))))
+    (let ((ret (apply ofun args)))
+      (when (featurep 'project)
+        ;; Update project list with selected project dir
+        (let ((default-directory ret))
+          (project-current)))
+      ret)))
 
 (define-advice vc-dir (:after (dir &optional _backend) add-project)
   (when (featurep 'project)
