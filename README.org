@@ -2616,28 +2616,32 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
   (interactive)
   (let* ((file (dired-get-filename)))
     (cond
-     ((let* ((command
-              (and (functionp 'mm-mime-info)
-                   (mm-mime-info
-                    (mm-extension-to-mime (file-name-extension file))))))
-        (if (and command (stringp command))
-            ;; always return ‘t’ for ‘cond’
-            (or (ignore (async-shell-command (concat (format command file) "&")))
-                t))))
+     ;; OBSOLETED mm-mime-info by mailcap-mime-info
+     ;; ((let* ((command
+     ;;          (and (functionp 'mm-mime-info)
+     ;;               (mm-mime-info
+     ;;                (mm-extension-to-mime (file-name-extension file))))))
+     ;;    (if (and command (stringp command))
+     ;;        ;; always return ‘t’ for ‘cond’
+     ;;        (or (ignore (async-shell-command (concat (format command file) "&")))
+     ;;            t))))
      ;; ((string-match "\\.html?$" file) (w3-open-local file))
-     ((string-match "\\.html?$" file)
-      (cond
-       ((fboundp 'browse-url)
-        (browse-url file))))
-     ((string-match "\\.elc?$" file)
-      (load-file file))
-     ((string-match "\\.info?$" file)
-      (info file))
+     ;; OBSOLETED by ‘browse-url-of-dired-file’ bound to ‘W’
+     ;; ((string-match "\\.html?$" file)
+     ;;  (cond
+     ;;   ((fboundp 'browse-url)
+     ;;    (browse-url file))))
+     ;; OBSOLETED by ‘dired-do-load’ bound to ‘L’.
+     ;; ((string-match "\\.elc?$" file)
+     ;;  (load-file file))
+     ;; OBSOLETED by ‘dired-do-info’ bound to ‘I’.
+     ;; ((string-match "\\.info?$" file)
+     ;;  (info file))
      (;; (or (string-match "\\.jpe?g$" file)
       ;;           (string-match "\\.gif$" file)
       ;;           (string-match "\\.pdf$" file))
       (let* ((file-list (list (dired-get-filename)))
-             (command (dired-guess-default file-list))
+             (command (shell-command-guess file-list))
              (async-shell-command-display-buffer nil))
         (if (listp command)
             (setq command (car command)))
@@ -2816,6 +2820,10 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
               )
             ;; Use old "\M-o" instead of new "\C-x\M-o".
             (define-key dired-mode-map "\M-o" 'dired-omit-mode)))
+#+end_src
+
+#+begin_src emacs-lisp
+(keymap-set dired-mode-map "X" #'dired-do-open)
 #+end_src
 
 ** wdired

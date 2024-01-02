@@ -238,6 +238,8 @@
  '(read-file-name-completion-ignore-case t)
  '(read-minibuffer-restore-windows nil)
  '(read-quoted-char-radix 16)
+ '(recentf-exclude '("/[^/]+[@:]"))
+ '(recentf-mode t)
  '(repeat-keep-prefix t)
  '(require-final-newline t)
  '(revert-buffer-quick-short-answers t)
@@ -252,6 +254,8 @@
  '(send-mail-function 'smtpmail-send-it)
  '(set-mark-command-repeat-pop t)
  '(sgml-xml-mode t)
+ '(shell-command-guess-functions
+   '(shell-command-guess-open shell-command-guess-mailcap shell-command-guess-xdg shell-command-guess-dired))
  '(shift-select-mode 'permanent)
  '(show-paren-mode nil)
  '(shr-use-fonts nil)
