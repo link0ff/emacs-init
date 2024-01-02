@@ -2599,14 +2599,6 @@ to display the joined status like "project-branch":
   (when vc-mode (setq vc-mode (string-trim-left vc-mode))))
 #+end_src
 
-It's useful to run such key sequences =C-x p p C-x v L=
-from any buffer:
-
-#+begin_src emacs-lisp
-(with-eval-after-load 'vc
-  (setq vc-deduce-backend-nonvc-modes nil))
-#+end_src
-
 Use ~display-fill-column-indicator~ to limit the width of log entries:
 
 #+begin_src emacs-lisp
