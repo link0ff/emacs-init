@@ -2292,7 +2292,12 @@ goes to the saved location."
        ;; Line string
        ((stringp anchor)
         (goto-char (point-min))
-        (when (re-search-forward (format "[\s\t]*%s" (regexp-quote anchor)) nil nil count)
+        (when (re-search-forward
+               (format "%s" ;; "[\s\t]*%s"
+                       (replace-regexp-in-string
+                        "[[:space:]]+" "[[:space:]]+"
+                        (regexp-quote anchor)))
+               nil nil count)
           (goto-char (match-beginning 0)))))))))
 #+end_src
 
@@ -3589,7 +3594,13 @@ Gnus Article buffers:
 #+begin_src emacs-lisp
 (with-eval-after-load 'gnus-art
   ;; Show attached patches inline:
+  (push "text/patch" mm-attachment-override-types)
+  (push "text/x-patch" mm-attachment-override-types)
   (push "text/x-diff" mm-attachment-override-types)
+  (push "text/plain" mm-attachment-override-types)
+  (push "application/emacs-lisp" mm-attachment-override-types)
+  (setq gnus-unbuttonized-mime-types
+        '("multipart/signed" "multipart/mixed" "text/plain" "text/x-org"))
 
   ;; Set more human-readable time units:
   (setq article-time-units
@@ -3606,6 +3617,7 @@ Gnus Article buffers:
          (if (listp gnus-visible-headers)
              gnus-visible-headers
            (list gnus-visible-headers))
+         (list "^X-Debbugs-Cc")
          (list (concat "^User-Agent:\\|^X-User-Agent:\\|"
                        "^X-Mailer:\\|^X-Newsreader:\\|^X-FTN-Tearline:\\|"
                        "^X-Http-User-Agent:"))))
