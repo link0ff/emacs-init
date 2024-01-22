@@ -47,6 +47,12 @@
  '(compilation-scroll-output 'first-error)
  '(compile-command "make")
  '(completion-auto-select 'second-tab)
+ '(completion-category-overrides
+   '((buffer
+      (display-sort-function . identity))
+     (project-file
+      (styles flex))))
+ '(completion-preview-minimum-symbol-length 1)
  '(completion-show-help nil)
  '(completions-detailed t)
  '(completions-format 'vertical)
