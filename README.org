@@ -2340,20 +2340,24 @@ goes to the saved location."
 
 ** Cursor settings
 
-Use box cursor for ~overwrite-mode~, and red cursor for quail active input:
+Use box cursor for ~overwrite-mode~, and red cursor for quail active input
+and while repeating is active in ~repeat-mode~:
 
 #+begin_src emacs-lisp
-(defun my-change-cursor ()
+(defun my-change-cursor (&rest _)
   "Change cursor color and type depending on insertion mode and input method."
   (set-cursor-color
-   (cond (current-input-method "red3") ; "AntiqueWhite4"
-         ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
-                               "DarkGrey")
+   (cond (repeat-in-progress   "blue")
+         (current-input-method "red3") ;; "AntiqueWhite4"
+         ;; ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
+         ;;                       "DarkGrey")
          (t                    "black")))
   (setq-default cursor-type
    (cond (overwrite-mode       'box)
          (t                    'bar))))
-(add-hook 'post-command-hook 'my-change-cursor)
+(add-hook 'post-command-hook 'my-change-cursor t)
+;; Also update the cursor on the repeat timer events:
+(add-function :after repeat-echo-function #'my-change-cursor)
 #+end_src
 
 ** Display settings
