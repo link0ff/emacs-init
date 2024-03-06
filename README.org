@@ -969,6 +969,31 @@ And two keybindings to accompany the above:
 (define-key ctl-x-map "\C-\M-u" 'raise-sexp)  ;; like ‘C-M-u’
 #+end_src
 
+This is why there is no need to use such extra packages as ~paredit~.
+Here are some examples of what you can do with the aforementioned keys:
+
+#+begin_src emacs-lisp :tangle no
+;; In these examples ‘-!-’ denotes the point location,
+;; and optional ‘-¡-’ denotes the other end of the selected region.
+
+;; When you type ‘M-(’
+;; Before: (foo (a b c) -!-d e f-¡-)
+;; After:  (foo (a b c) (-!-d e f))
+
+;; When you type ‘C-x M-(’
+;; Before: (foo (a b c) -!-(d e f))
+;; After:  (foo (a b c) -!-d e f)
+
+;; When you type ‘C-x M-C-u’
+;; Before: (foo (a b c) (-!-d e f))
+;; After:  (foo (a b c) -!-d)
+
+;; When you type ‘C-x M-C-u’ once, then twice.
+;; Before: (foo (a b c) (d -!-e f-¡-))
+;; First:  (foo (a b c) -!-e f-¡-)
+;; Second: -!-e f
+#+end_src
+
 ** List structural editing
 
 This is my most frequently used DWIM command bound to =C-RET= in Lisp modes.
