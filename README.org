@@ -178,7 +178,8 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (if (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'conf-mode 'mail-archives-mode 'markdown-mode)
+  (if (derived-mode-p '( fundamental-mode dired-mode Man-mode
+                         markdown-mode conf-mode mail-archives-mode))
       (recenter-top)
     (reposition-window)))
 
@@ -623,7 +624,8 @@ An example of the mode where heading highlighting could be enabled is
 #+begin_src emacs-lisp
 (defun my-outline-minor-mode ()
   ;; Enable in modes with reasonable ‘outline-regexp’:
-  (when (derived-mode-p 'emacs-lisp-mode 'ruby-mode 'ruby-ts-mode)
+  (when (and (seq-some #'local-variable-p '(outline-search-function outline-regexp))
+             (not (derived-mode-p '(org-mode markdown-mode))))
     ;; Don't override major mode font-lock
     (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
@@ -729,7 +731,7 @@ Clicking a link from the =*Help*= buffer opens source code in the same window:
 (defun display-buffer-from-help-p (_buffer-name _action)
   (unless current-prefix-arg
     (with-current-buffer (window-buffer)
-      (derived-mode-p 'help-mode))))
+      (derived-mode-p '(help-mode)))))
 
 (add-to-list 'display-buffer-alist
              '(display-buffer-from-help-p
@@ -760,8 +762,7 @@ Visit grep/xref hits in the window where all previous hits were visited:
 (defun display-buffer-from-grep-p (_buffer-name _action)
   (with-current-buffer (window-buffer)
     (and (memq this-command '(compile-goto-error xref-goto-xref my-xref-goto-xref))
-         (or (derived-mode-p 'compilation-mode)
-             (derived-mode-p 'xref--xref-buffer-mode)))))
+         (derived-mode-p '(compilation-mode xref--xref-buffer-mode)))))
 
 (defvar-local display-buffer-previous-window nil)
 
@@ -911,15 +912,15 @@ Here's a short table of mappings:
 (defun use-fancy-quotes-p ()
   (and (memq (coding-system-base buffer-file-coding-system) '(utf-8 utf-8-emacs))
        (or (and comment-start (nth 4 (syntax-ppss)))
-           (and (derived-mode-p 'text-mode)
-                (not (and (derived-mode-p 'org-mode)
+           (and (derived-mode-p '(text-mode))
+                (not (and (derived-mode-p '(org-mode))
                           (consp (get-text-property (point) 'face))
                           (memq 'org-block (get-text-property (point) 'face))))
-                (not (derived-mode-p 'vc-git-log-edit-mode))
-                (not (derived-mode-p 'sgml-mode))
-                (not (derived-mode-p 'yaml-mode))
+                (not (derived-mode-p '(vc-git-log-edit-mode)))
+                (not (derived-mode-p '(sgml-mode)))
+                (not (derived-mode-p '(yaml-mode)))
                 )
-           ;; (derived-mode-p 'fundamental-mode)
+           ;; (derived-mode-p '(fundamental-mode))
            )))
 
 ;; Modify esc-map when not on a tty:
@@ -1161,7 +1162,7 @@ files one by one in a Dired buffer, or from a menu of links to Info nodes, etc.
          (prev-dired (when (buffer-live-p prev-buffer)
                        (with-current-buffer prev-buffer
                          (eq major-mode 'dired-mode))))
-         (jump-dired (or prev-dired (derived-mode-p 'vc-dir-mode))))
+         (jump-dired (or prev-dired (derived-mode-p '(vc-dir-mode)))))
     ;; Keep the buffer displayed on the frame or in a tab
     (if (or (> (length (get-buffer-window-list (current-buffer) t t)) 1)
             (tab-bar-get-buffer-tab (current-buffer) t t))
@@ -1766,8 +1767,8 @@ the same screen state that was before.
                    ;; ‘follow-mode’ doesn't need recentering
                    (not (bound-and-true-p follow-mode)))
           ;; reposition-window takes too much time in large buffers
-          (if (or (derived-mode-p 'fundamental-mode 'dired-mode 'Man-mode 'markdown-mode
-                                  'conf-mode 'sh-mode 'bash-ts-mode)
+          (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode
+                                     markdown-mode conf-mode sh-mode bash-ts-mode))
                   (> (buffer-size) 1000000))
               (recenter-top)
             (condition-case nil
@@ -3742,7 +3743,7 @@ Example:
 \"emacs-devel&query=\" (url-hexify-string (concat \"+message-id:\"
 \"12345678.fsf@gnu.org\"))))"
   (interactive "P")
-  (unless (derived-mode-p 'gnus-summary-mode)
+  (unless (derived-mode-p '(gnus-summary-mode))
     (error "Not in a gnus group buffer"))
   (let ((list-archive
          (with-current-buffer gnus-original-article-buffer
@@ -3773,7 +3774,7 @@ Example:
 \(browse-url (concat \"http://thread.gmane.org/\"
  (url-hexify-string \"12345678.fsf@gnu.org\")))"
   (interactive "P")
-  (unless (derived-mode-p 'gnus-summary-mode)
+  (unless (derived-mode-p '(gnus-summary-mode))
     (error "Not in a gnus group buffer"))
   (let ((message-id
          (with-current-buffer gnus-original-article-buffer
@@ -4599,7 +4600,7 @@ a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779
   (if (vc-deduce-backend)
       (apply ofun args)
     ;; Fall back to non-vc diff-backup
-    (let ((file (if (derived-mode-p 'dired-mode)
+    (let ((file (if (derived-mode-p '(dired-mode))
                     (dired-get-filename)
                   buffer-file-name)))
       (if file
