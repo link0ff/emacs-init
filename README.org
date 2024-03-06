@@ -3233,6 +3233,15 @@ This is useful with customized =grep-use-headings= with xref-like output:
                (window-height . 10)))
 #+end_src
 
+#+begin_src emacs-lisp
+(add-to-list 'display-buffer-alist
+             `(,(rx bos "*Warnings*" eos)
+               (display-buffer-reuse-window
+                display-buffer-at-bottom)
+               (dedicated . nil)
+               (window-height . 10)))
+#+end_src
+
 ** process
 
 Increase throughput of process output:
