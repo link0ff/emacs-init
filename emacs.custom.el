@@ -71,6 +71,8 @@
  '(delete-selection-mode t)
  '(delete-window-choose-selected 'pos)
  '(describe-bindings-outline t)
+ '(describe-bindings-outline-rules
+   '((match-regexp . "Key translations\\|Minor Mode Bindings")))
  '(describe-char-unidata-list t)
  '(desktop-auto-save-timeout 60)
  '(desktop-globals-to-save
