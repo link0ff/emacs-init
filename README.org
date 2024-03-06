@@ -397,6 +397,14 @@ Too dangerous key =C-x t 1=:
 (unbind-key "1" tab-prefix-map)
 #+end_src
 
+#+begin_src emacs-lisp
+(add-hook 'tab-bar-tab-post-select-functions
+          (lambda (_from-tab to-tab)
+            ;; Pulse if not visited the tab for more than 10 minutes
+            (when (> (- (float-time) (alist-get 'time to-tab)) 600)
+              (pulse-momentary-highlight-one-line))))
+#+end_src
+
 ** Full-screen Emacs desktop
 
 To use maximum screen space, my Emacs frame covers the entire screen
@@ -2607,7 +2615,7 @@ Fix keybindings and run ~vc-dir~ in project root:
 #+end_src
 
 Highlight found occurrences in =*vc-search-log*= output buffer of ~vc-log-search~.
-Warning: uses Emacs regexps to highlight Git regexp - their syntax might differ!
+Warning: uses Emacs regexps to highlight Git regexp — their syntax might differ!
 
 #+begin_src emacs-lisp
 (define-advice vc-git-log-search (:after (buffer pattern) highlight)
