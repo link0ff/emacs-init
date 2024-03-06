@@ -2644,6 +2644,20 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
             (display-fill-column-indicator-mode t)))
 #+end_src
 
+Warn about commits behind after switching the branch
+that helps not to forget about ~git pull~:
+
+#+begin_src emacs-lisp
+(define-advice vc-switch-branch (:after (&rest _) commits-behind)
+  (let ((buffer (get-buffer-create "*vc-commits-behind*")))
+    (vc-call-backend (vc-deduce-backend) 'log-incoming buffer "")
+    (vc-run-delayed
+      (with-current-buffer buffer
+        (let ((lines (count-lines (point-min) (point-max))))
+          (unless (zerop lines)
+            (display-warning :warning (format "%s commits behind" lines))))))))
+#+end_src
+
 ** dired
 
 #+begin_src emacs-lisp
