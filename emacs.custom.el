@@ -387,6 +387,7 @@
  '(org-code ((t (:background "grey95"))))
  '(org-link ((t (:inherit link :underline t))))
  '(org-verbatim ((t (:background "grey95"))))
+ '(pulse-highlight-start-face ((t (:extend t :background "#FF0000"))))
  '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "Purple"))))
  '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "Blue1"))))
  '(rainbow-delimiters-depth-3-face ((t (:inherit rainbow-delimiters-base-face :foreground "Red1"))))
