@@ -3948,10 +3948,6 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
             ;; Align screen to the bottom of the output buffer
             (goto-char (point-max))
             (recenter -2 t)))
-
-(with-eval-after-load 'dictionary
-  (add-to-list 'debug-ignored-errors
-               "^No match for \"[^\"]+\" with strategy \"[^\"]+\" in dictionary"))
 #+end_src
 
 ** quail
