@@ -4592,16 +4592,6 @@ a directory name, allow =M-n= to access the most recently used project
 directories saved in =~/.emacs.d/projects=.
 
 #+begin_src emacs-lisp
-(define-advice find-file (:around (ofun &rest args) recentf-list)
-  (interactive (lambda (spec)
-                 (minibuffer-with-setup-hook
-                     (lambda ()
-                       (when (featurep 'recentf)
-                         (setq-local minibuffer-default-add-function
-                                     (lambda () recentf-list))))
-                   (advice-eval-interactive-spec spec))))
-  (apply ofun args))
-
 (define-advice read-directory-name (:around (ofun &rest args) project-defaults)
   (minibuffer-with-setup-hook
       (lambda ()
@@ -4637,12 +4627,28 @@ I often mistype ‘C-x p’ as ‘C-x C-p’:
   (define-key ctl-x-map "\C-p" project-prefix-map))
 #+end_src
 
+** Use recentf for default file names
+
+Allow =C-x C-f M-n= to access the most recently used files.
+
+#+begin_src emacs-lisp :tangle no
+(define-advice find-file (:around (ofun &rest args) recentf-list)
+  (interactive (lambda (spec)
+                 (minibuffer-with-setup-hook
+                     (lambda ()
+                       (when (featurep 'recentf)
+                         (setq-local minibuffer-default-add-function
+                                     (lambda () recentf-list))))
+                   (advice-eval-interactive-spec spec))))
+  (apply ofun args))
+#+end_src
+
 * Other
 
 ** No blinking
 
 Blinking cursors are distracting - turn blink OFF:
-here =(*) (*) (*)= indicates how cursor blinks.
+here =(*) (*) (*)= indicates how the cursor blinks.
 
 #+begin_src emacs-lisp
 (and (fboundp 'blink-cursor-mode) (blink-cursor-mode (- (*) (*) (*))))
