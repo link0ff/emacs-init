@@ -3648,7 +3648,8 @@ Gnus Article buffers:
   (push "text/plain" mm-attachment-override-types)
   (push "application/emacs-lisp" mm-attachment-override-types)
   (setq gnus-unbuttonized-mime-types
-        '("multipart/signed" "multipart/mixed" "text/plain" "text/x-org"))
+        '("multipart/signed" "multipart/mixed" "text/plain"
+          "text/x-org" "text/org"))
 
   ;; Set more human-readable time units:
   (setq article-time-units
