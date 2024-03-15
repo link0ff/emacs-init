@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-03-06
+#+DATE: 2024-03-14
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
@@ -2504,9 +2504,19 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
 ;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
 ;; (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
 
-(add-hook 'text-mode-hook       'flyspell-mode)
-(add-hook 'change-log-mode-hook 'flyspell-mode)
-(add-hook 'prog-mode-hook       'flyspell-prog-mode)
+(defun my-flyspell-mode ()
+  ;; Avoid duplicate calls when ‘flyspell-mode’ is enabled by ‘.dir-locals.el’,
+  ;; because the first call uses the global value of ‘ispell-personal-dictionary’,
+  ;; and so restarts the Ispell process.
+  (unless (progn (hack-dir-local-variables)
+                 (member '(mode . flyspell) file-local-variables-alist))
+    (if (derived-mode-p '(prog-mode))
+        (flyspell-prog-mode)
+      (flyspell-mode))))
+
+(add-hook 'text-mode-hook       'my-flyspell-mode)
+(add-hook 'change-log-mode-hook 'my-flyspell-mode)
+(add-hook 'prog-mode-hook       'my-flyspell-mode)
 #+end_src
 
 ** Other settings
@@ -2664,7 +2674,7 @@ that helps not to forget about ~git pull~:
       (with-current-buffer buffer
         (let ((lines (count-lines (point-min) (point-max))))
           (unless (zerop lines)
-            (display-warning :warning (format "%s commits behind" lines))))))))
+            (warn "%s commits behind" lines)))))))
 #+end_src
 
 ** dired
@@ -3248,7 +3258,10 @@ This is useful with customized =grep-use-headings= with xref-like output:
 (add-to-list 'display-buffer-alist
              `(,(rx bos "*"
                     (or (and "input/output of " (+ (any "A-za-z"))) ; gdb
-                        "Edebug Results") ; edebug
+                        "Edebug Results"
+                        (and "Flymake "
+                             (or "log" (and "diagnostics"
+                                            (zero-or-more (not (any "*")))))))
                     "*" eos)
                (display-buffer-reuse-window
                 display-buffer-below-selected)
@@ -3257,12 +3270,15 @@ This is useful with customized =grep-use-headings= with xref-like output:
 #+end_src
 
 #+begin_src emacs-lisp
+;; TODO: maybe move to ‘display-buffer’ call in ‘display-warning’
+;; ALSO bug in lib that (warn "Test") doesn't move point to the bottom of the window
+;; when window is already displayed
 (add-to-list 'display-buffer-alist
              `(,(rx bos "*Warnings*" eos)
                (display-buffer-reuse-window
                 display-buffer-at-bottom)
-               (dedicated . nil)
-               (window-height . 10)))
+               (reusable-frames . nil)
+               (window-height . 5)))
 #+end_src
 
 ** process
