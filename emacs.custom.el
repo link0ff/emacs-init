@@ -400,7 +400,7 @@
  '(trailing-whitespace ((((class color) (background light)) (:background "pink"))))
  '(variable-pitch-text ((t (:inherit variable-pitch))))
  '(vc-conflict-state ((t (:inherit vc-state-base :foreground "red"))))
- '(vc-edited-state ((t (:inherit vc-state-base :foreground "forestgreen"))))
+ '(vc-edited-state ((t (:inherit vc-state-base))))
  '(vc-locally-added-state ((t (:inherit vc-state-base :foreground "forestgreen"))))
  '(vc-locked-state ((t (:inherit vc-state-base :foreground "red"))))
  '(vc-missing-state ((t (:inherit vc-state-base :foreground "red"))))
