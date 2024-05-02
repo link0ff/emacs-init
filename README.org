@@ -3259,27 +3259,12 @@ This is useful with customized =grep-use-headings= with xref-like output:
 (add-to-list 'display-buffer-alist
              `(,(rx bos "*"
                     (or (and "input/output of " (+ (any "A-za-z"))) ; gdb
-                        "Edebug Results"
-                        (and "Flymake "
-                             (or "log" (and "diagnostics"
-                                            (zero-or-more (not (any "*")))))))
+                        "Edebug Results")
                     "*" eos)
                (display-buffer-reuse-window
                 display-buffer-below-selected)
                (dedicated . nil)
                (window-height . 10)))
-#+end_src
-
-#+begin_src emacs-lisp
-;; TODO: maybe move to ‘display-buffer’ call in ‘display-warning’
-;; ALSO bug in lib that (warn "Test") doesn't move point to the bottom of the window
-;; when window is already displayed
-(add-to-list 'display-buffer-alist
-             `(,(rx bos "*Warnings*" eos)
-               (display-buffer-reuse-window
-                display-buffer-at-bottom)
-               (reusable-frames . nil)
-               (window-height . 5)))
 #+end_src
 
 ** process
