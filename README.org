@@ -3130,12 +3130,13 @@ Project-based compilation:
   (interactive)
   (compile
    ;; Use previous command from history
-   ;; instead of the default from compile-command
+   ;; instead of the default from ‘compile-command’
    (compilation-read-command (car compile-history))
    ;; Don't use compilation-shell-minor-mode
    nil))
 (define-key global-map [(control f9)] 'my-compile)
 
+;; UNUSED!!!
 (defun my-project-compile ()
   (interactive)
   ;; Like ‘project-compile’
@@ -3150,7 +3151,13 @@ Project-based compilation:
      (compilation-read-command (car compile-history))
      ;; Don't use ‘compilation-shell-minor-mode’
      nil)))
-(define-key my-map "m" 'my-project-compile) ; “m” has mnemonics “make”
+(define-key my-map "m" 'project-compile) ; “m” has mnemonics “make”
+
+;; For ‘C-x p c’ (project-compile) and subsequent 'g' (recompile):
+(setopt project-compilation-buffer-name-function
+        (lambda (name-of-mode)
+          (generate-new-buffer-name
+           (project-prefixed-buffer-name name-of-mode))))
 #+end_src
 
 Compilation buffer names:
