@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-03-18
+#+DATE: 2024-06-03
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
@@ -627,11 +627,13 @@ An example of the mode where heading highlighting could be enabled is
 (defun my-outline-minor-mode ()
   ;; Enable in modes with reasonable ‘outline-regexp’:
   (when (and (seq-some #'local-variable-p '(outline-search-function outline-regexp))
-             (not (derived-mode-p '(org-mode markdown-mode))))
+             (not (derived-mode-p '(org-mode markdown-mode bash-ts-mode))))
     ;; Don't override major mode font-lock
     (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
 (add-hook 'find-file-hook 'my-outline-minor-mode)
+(add-hook 'apropos-mode-hook 'my-outline-minor-mode)
+(add-hook 'shortdoc-mode-hook 'my-outline-minor-mode)
 #+end_src
 
 Also enable cycling on filename headings in *xref* buffers:
@@ -919,7 +921,7 @@ Here's a short table of mappings:
 #+begin_src emacs-lisp
 (defun use-fancy-quotes-p ()
   (and (memq (coding-system-base buffer-file-coding-system) '(utf-8 utf-8-emacs))
-       (or (and comment-start (nth 4 (syntax-ppss)))
+       (or ;; (and comment-start (nth 4 (syntax-ppss)))
            (and (derived-mode-p '(text-mode))
                 (not (and (derived-mode-p '(org-mode))
                           (consp (get-text-property (point) 'face))

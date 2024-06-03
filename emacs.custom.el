@@ -308,7 +308,7 @@
  '(w3m-home-page "http://www.jurta.org/")
  '(w3m-key-binding 'info)
  '(w3m-view-this-url-new-session-in-background t)
- '(warning-suppress-log-types '((comp) (comp)))
+ '(warning-suppress-log-types '((comp)))
  '(warning-suppress-types '((comp)))
  '(wget-debug t)
  '(what-cursor-show-names t)
