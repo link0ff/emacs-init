@@ -50,9 +50,11 @@
  '(completion-category-overrides
    '((buffer
       (display-sort-function . identity))
+     (imenu
+      (display-sort-function . identity))
      (project-file
-      (styles flex))))
- '(completion-preview-minimum-symbol-length 1)
+      (styles substring))))
+ '(completion-preview-minimum-symbol-length 2)
  '(completion-show-help nil)
  '(completions-detailed t)
  '(completions-format 'vertical)
@@ -170,6 +172,7 @@
  '(image-converter 'imagemagick)
  '(image-dired-thumbnail-storage 'standard)
  '(image-use-external-converter t)
+ '(imenu-eager-completion-buffer nil)
  '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries '((up . right) (down . right)))
  '(inf-ruby-console-environment "development")

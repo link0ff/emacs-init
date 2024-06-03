@@ -186,6 +186,7 @@ use it where possible in hooks that display a new location:
 
 (add-hook 'next-error-hook 'my-reposition-window)
 (add-hook 'find-function-after-hook 'my-reposition-window)
+(add-hook 'imenu-after-jump-hook 'my-reposition-window)
 (add-hook 'xref-after-return-hook 'my-reposition-window)
 (add-hook 'xref-after-jump-hook 'my-reposition-window)
 (remove-hook 'xref-after-jump-hook 'recenter)
