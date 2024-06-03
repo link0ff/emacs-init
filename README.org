@@ -781,6 +781,12 @@ Visit grep/xref hits in the window where all previous hits were visited:
     (with-current-buffer buffer
       (setq-local display-buffer-previous-window (selected-window)))))
 
+(define-advice compile-goto-error (:around (ofun &rest args) previous-window)
+  (let ((buffer (current-buffer)))
+    (apply ofun args)
+    (with-current-buffer buffer
+      (setq-local display-buffer-previous-window (selected-window)))))
+
 ;; (define-advice window--display-buffer (:around (ofun &rest args) previous-window)
 ;;   (let ((buffer (current-buffer))
 ;;         (window (apply ofun args)))
