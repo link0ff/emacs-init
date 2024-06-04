@@ -267,7 +267,7 @@
  '(set-mark-command-repeat-pop t)
  '(sgml-xml-mode t)
  '(shell-command-guess-functions
-   '(shell-command-guess-open shell-command-guess-mailcap shell-command-guess-xdg shell-command-guess-dired))
+   '(shell-command-guess-open shell-command-guess-mailcap shell-command-guess-xdg shell-command-guess-dired-default shell-command-guess-dired-user))
  '(shift-select-mode 'permanent)
  '(show-paren-mode nil)
  '(shr-use-fonts nil)

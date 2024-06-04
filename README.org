@@ -2697,49 +2697,8 @@ that helps not to forget about ~git pull~:
 ;; to mark files by their type:
 ;; (string-match "perl" (shell-command-to-string (concat "file " name)))
 
-;; Uses editor/viewer info from /usr/bin/run-mailcap
-(defun my-dired-run-find-file ()
-  "My view file for dired."
-  (interactive)
-  (let* ((file (dired-get-filename)))
-    (cond
-     ;; OBSOLETED mm-mime-info by mailcap-mime-info
-     ;; ((let* ((command
-     ;;          (and (functionp 'mm-mime-info)
-     ;;               (mm-mime-info
-     ;;                (mm-extension-to-mime (file-name-extension file))))))
-     ;;    (if (and command (stringp command))
-     ;;        ;; always return ‘t’ for ‘cond’
-     ;;        (or (ignore (async-shell-command (concat (format command file) "&")))
-     ;;            t))))
-     ;; ((string-match "\\.html?$" file) (w3-open-local file))
-     ;; OBSOLETED by ‘browse-url-of-dired-file’ bound to ‘W’
-     ;; ((string-match "\\.html?$" file)
-     ;;  (cond
-     ;;   ((fboundp 'browse-url)
-     ;;    (browse-url file))))
-     ;; OBSOLETED by ‘dired-do-load’ bound to ‘L’.
-     ;; ((string-match "\\.elc?$" file)
-     ;;  (load-file file))
-     ;; OBSOLETED by ‘dired-do-info’ bound to ‘I’.
-     ;; ((string-match "\\.info?$" file)
-     ;;  (info file))
-     (;; (or (string-match "\\.jpe?g$" file)
-      ;;           (string-match "\\.gif$" file)
-      ;;           (string-match "\\.pdf$" file))
-      (let* ((file-list (list (dired-get-filename)))
-             (command (shell-command-guess file-list))
-             (async-shell-command-display-buffer nil))
-        (if (listp command)
-            (setq command (car command)))
-        (if command
-            (async-shell-command
-             (dired-shell-stuff-it command file-list nil 0)))))
-     (t
-      (message "%s" file)))))
-
-(define-key dired-mode-map [(control enter)]  'my-dired-run-find-file)
-(define-key dired-mode-map [(control return)] 'my-dired-run-find-file)
+(define-key dired-mode-map [(control enter)]  'dired-do-open)
+(define-key dired-mode-map [(control return)] 'dired-do-open)
 
 ;; Add different directory sorting keys
 (mapc (lambda (elt)
@@ -2907,10 +2866,6 @@ that helps not to forget about ~git pull~:
               )
             ;; Use old "\M-o" instead of new "\C-x\M-o".
             (define-key dired-mode-map "\M-o" 'dired-omit-mode)))
-#+end_src
-
-#+begin_src emacs-lisp
-(keymap-set dired-mode-map "X" #'dired-do-open)
 #+end_src
 
 ** wdired
