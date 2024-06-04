@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-06-03
+#+DATE: 2024-06-04
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
@@ -617,10 +617,15 @@ An example of the mode where heading highlighting could be enabled is
                   )
          cmd)))))
 
-(define-key outline-navigation-repeat-map (kbd "<down>")
-            #'outline-next-visible-heading)
-(define-key outline-navigation-repeat-map (kbd "<up>")
-            #'outline-previous-visible-heading)
+(keymap-set outline-navigation-repeat-map "<down>" #'outline-next-visible-heading)
+(keymap-set outline-navigation-repeat-map "<up>" #'outline-previous-visible-heading)
+
+(keymap-set outline-overlay-button-map "+" #'outline-show-subtree)
+(keymap-set outline-overlay-button-map "-" #'outline-hide-subtree)
+(keymap-set outline-overlay-button-map "*" #'outline-show-subtree)
+(keymap-set outline-overlay-button-map "\\" #'outline-hide-leaves)
+(keymap-set outline-overlay-button-map "/ s" #'outline-show-by-heading-regexp)
+(keymap-set outline-overlay-button-map "/ h" #'outline-hide-by-heading-regexp)
 #+end_src
 
 #+begin_src emacs-lisp
