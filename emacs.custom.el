@@ -51,7 +51,7 @@
    '((buffer
       (display-sort-function . identity))
      (imenu
-      (display-sort-function . identity))
+      (display-sort-function . minibuffer-sort-alphabetically))
      (project-file
       (styles substring))))
  '(completion-preview-minimum-symbol-length 2)
@@ -173,6 +173,7 @@
  '(image-dired-thumbnail-storage 'standard)
  '(image-use-external-converter t)
  '(imenu-eager-completion-buffer nil)
+ '(imenu-flatten 'annotation)
  '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries '((up . right) (down . right)))
  '(inf-ruby-console-environment "development")
