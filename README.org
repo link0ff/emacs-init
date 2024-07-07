@@ -2406,7 +2406,7 @@ Display triangle for outline of invisible lines
     (let* ((face (lsh (face-id 'escape-glyph) 22)) ;; 22 was 19 in Emacs 22
            ;; (backslash (+ face ?\\))
            ;; TRIANGULAR BULLET keeps the default font height
-           (dot (+ face ?…)))
+           (dot (+ face ?…))) ;; ?‣
       ;; (aset standard-display-table 2208 (vector backslash ?\s)) ; no-break space
       ;; (aset standard-display-table 2221 (vector backslash ?-))  ; soft hyphen
       ;; (set-char-table-extra-slot standard-display-table 2 backslash) ; \364
@@ -2867,7 +2867,8 @@ that helps not to forget about ~git pull~:
             (when (string-match-p "emacs/\\(sv\\|git\\|bzr\\|cvs\\)" default-directory)
               (setq dired-omit-mode t)
               ;; Set variable above because the next calls dired-omit-expunge twice:
-              ;; (dired-omit-mode 1)
+              ;; (dired-omit-mode 1) because of this in dired-x.el:
+              ;; (add-hook 'dired-after-readin-hook 'dired-omit-expunge)
               )
             ;; Use old "\M-o" instead of new "\C-x\M-o".
             (define-key dired-mode-map "\M-o" 'dired-omit-mode)))
