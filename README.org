@@ -2297,7 +2297,8 @@ Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
 (add-hook 'prog-mode-hook #'completion-preview-mode)
 (with-eval-after-load 'completion-preview
   (keymap-set completion-preview-active-mode-map "<down>" #'completion-preview-next-candidate)
-  (keymap-set completion-preview-active-mode-map "<up>"   #'completion-preview-prev-candidate))
+  (keymap-set completion-preview-active-mode-map "<up>"   #'completion-preview-prev-candidate)
+  (keymap-set completion-preview-active-mode-map "C-w"    #'completion-preview-insert-word))
 #+end_src
 
 ** Evaluable bookmarks
