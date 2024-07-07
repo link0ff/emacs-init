@@ -3416,7 +3416,10 @@ Pre-load some useful packages:
 (add-hook 'org-mode-hook
           (lambda ()
             ;; For (info "(org) Structure Templates")
-            (require 'org-tempo)))
+            (require 'org-tempo)
+            ;; Fix paragraph navigation
+            (setq-local paragraph-start (default-value 'paragraph-start))
+            (setq-local paragraph-separate (default-value 'paragraph-separate))))
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
@@ -3487,8 +3490,13 @@ Fix keys broken by ~markdown-mode~:
   ;; Revert hijacked keys to their original bindings
   (unbind-key "C-c <left>" markdown-mode-map)
   (unbind-key "C-c <right>" markdown-mode-map)
+  (define-key markdown-mode-map [remap backward-paragraph] nil)
+  (define-key markdown-mode-map [remap forward-paragraph] nil)
   (add-hook 'markdown-mode-hook
             (lambda ()
+              ;; Fix paragraph navigation
+              (setq-local paragraph-start (default-value 'paragraph-start))
+              (setq-local paragraph-separate (default-value 'paragraph-separate))
               ;; Allow multi-line comments
               (setq-local comment-style 'multi-line ;; 'extra-line
                           comment-continue "")
