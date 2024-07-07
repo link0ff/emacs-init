@@ -161,6 +161,7 @@
  '(grep-use-null-filename-separator nil)
  '(help-clean-buttons t)
  '(help-enable-variable-value-editing t)
+ '(hi-lock-file-patterns-policy 'always)
  '(highlight-nonselected-windows t)
  '(history-delete-duplicates t)
  '(history-length t)
