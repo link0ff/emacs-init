@@ -2657,6 +2657,27 @@ Warning: uses Emacs regexps to highlight Git regexp — their syntax might diffe
               (highlight-regexp "bug#" 'hi-yellow))))
 #+end_src
 
+At the top of the log buffer add an extra line that can be used
+as the region beginning for ~log-view-diff~ to compare revisions
+with the current working tree (bug#35860, bug#62940):
+
+#+begin_src emacs-lisp
+(define-advice vc-git-print-log (:after (_files buffer &optional _shortlog _start-revision _limit) insert-top-line)
+  (when (and (memq vc-log-view-type '(long short))
+             (not (memq this-command '(vc-print-branch-log))))
+    ;; For '(add-hook 'log-view-mode-hook 'rename-uniquely)'
+    (setq buffer (get-buffer buffer))
+    ;; Wrap next lines with 'vc-run-delayed' when using 'insert'
+    ;; instead of 'insert-before-markers-and-inherit' below.
+    (with-current-buffer buffer
+      (save-excursion
+        (goto-char (point-min))
+        (let ((inhibit-read-only t))
+          (insert-before-markers-and-inherit
+           (propertize "(Type 'd' here to show diffs with working version)\n"
+                       'font-lock-face 'shadow)))))))
+#+end_src
+
 When ~project-mode-line~ is customized to ~t~ and
 ~vc-display-status~ is customized to ~no-backend~,
 then it's nice to remove the space between the
