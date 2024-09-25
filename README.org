@@ -408,6 +408,18 @@ Too dangerous key =C-x t 1=:
               (pulse-momentary-highlight-one-line))))
 #+end_src
 
+In ~tab-line-mode~ use =C-x left= to go to the left tab
+whereas keep =C-x C-left= to go to the most recently used tab:
+
+#+begin_src emacs-lisp
+;; https://lists.gnu.org/archive/html/emacs-devel/2024-07/msg00235.html
+(with-eval-after-load 'tab-line
+  ;; Fall back to global 'previous-buffer':
+  (keymap-unset tab-line-mode-map "C-x C-<left>")
+  ;; Fall back to global 'next-buffer':
+  (keymap-unset tab-line-mode-map "C-x C-<right>"))
+#+end_src
+
 ** Full-screen Emacs desktop
 
 To use maximum screen space, my Emacs frame covers the entire screen
