@@ -777,9 +777,32 @@ Visiting new files using ~next-error~ commands should be in the same window:
                (inhibit-same-window . nil)))
 #+end_src
 
-Visit grep/xref hits in the window where all previous hits were visited:
+Visit grep/xref hits in the same window where all previous hits were visited:
 
 #+begin_src emacs-lisp
+(defvar-local display-buffer-last-window nil)
+
+(setq display-buffer-base-action
+      '(nil . ((some-window
+                . (lambda (_buffer alist)
+                    (let ((last-window (buffer-local-value
+                                        'display-buffer-last-window
+                                        (window-buffer))))
+                      ;; (message "! last-window=%S" last-window)
+                      (or (and (eq this-command (car last-window))
+                               (window-live-p (cdr last-window))
+                               (cdr last-window))
+                          (get-mru-window nil nil t))))))))
+
+(define-advice display-buffer-record-window (:after (type window buffer) set-last-window)
+  (with-current-buffer (window-buffer)
+    ;; TODO: maybe later turn cons into alist ((COMMAND . WINDOW))
+    (setq-local display-buffer-last-window (cons this-command window))))
+#+end_src
+
+Below is an old implementation of the above:
+
+#+begin_src emacs-lisp :tangle no
 (defun display-buffer-from-grep-p (_buffer-name _action)
   (with-current-buffer (window-buffer)
     (and (memq this-command '(compile-goto-error xref-goto-xref my-xref-goto-xref))
@@ -807,22 +830,22 @@ Visit grep/xref hits in the window where all previous hits were visited:
     (with-current-buffer buffer
       (setq-local display-buffer-previous-window (selected-window)))))
 
-;; (define-advice window--display-buffer (:around (ofun &rest args) previous-window)
-;;   (let ((buffer (current-buffer))
-;;         (window (apply ofun args)))
-;;     (with-current-buffer buffer
-;;       (setq-local display-buffer-previous-window window))
-;;     window))
+(define-advice window--display-buffer (:around (ofun &rest args) previous-window)
+  (let ((buffer (current-buffer))
+        (window (apply ofun args)))
+    (with-current-buffer buffer
+      (setq-local display-buffer-previous-window window))
+    window))
 #+end_src
 
 Debugging should use the same window:
 
-#+begin_src emacs-lisp
-;; (define-advice edebug-pop-to-buffer (:around (ofun buffer &optional window) same-window)
-;;   (when (string-prefix-p "edebug" (format "%s" real-this-command))
-;;     (window--display-buffer buffer (old-selected-window) 'reuse
-;;                             '(nil (inhibit-same-window . nil))))
-;;   (funcall ofun buffer window))
+#+begin_src emacs-lisp :tangle no
+(define-advice edebug-pop-to-buffer (:around (ofun buffer &optional window) same-window)
+  (when (string-prefix-p "edebug" (format "%s" real-this-command))
+    (window--display-buffer buffer (old-selected-window) 'reuse
+                            '(nil (inhibit-same-window . nil))))
+  (funcall ofun buffer window))
 #+end_src
 
 ** Shorter answers
