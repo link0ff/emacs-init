@@ -2349,7 +2349,7 @@ goes to the saved location."
     (push-mark nil t)
     (cond
      ((file-exists-p url)
-      (find-file url)
+      (pop-to-buffer-same-window (find-file-noselect url))
       (cond
        ;; Line number
        ((integerp anchor)
