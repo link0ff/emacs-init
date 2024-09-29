@@ -3060,20 +3060,25 @@ It highlights prompts with special faces, so it's easier to browse
 old log files:
 
 #+begin_src emacs-lisp
+(defvar shell-log-regexp
+  (rx-let ((c (* (not (any "#$%>\12"))))) ; any non-prompt char
+    (rx bol
+        (group-n 1 c (or
+                      ;; Bash or Ruby prompt
+                      (and (or "@" "irb" ) c ":" c)
+                      ;; Elixir prompt
+                      (and "iex" c))
+                 (any "#$%>") (* " "))
+        (group-n 2 (* nonl))
+        eol)))
+
 (defvar shell-log-font-lock-keywords
   ;; ‘shell-prompt-pattern’ can't be used: it finds too many false matches
-  `((,(rx-let ((c (* (not (any "#$%>\12"))))) ; any non-prompt char
-        (rx bol
-            (group-n 1 c (or
-                          ;; Bash or Ruby prompt
-                          (and (or "@" "irb" ) c ":" c)
-                          ;; Elixir prompt
-                          (and "iex" c))
-                     (any "#$%>") (* " "))
-            (group-n 2 (* nonl))
-            eol))
+  `((,shell-log-regexp
      (1 'comint-highlight-prompt)
-     (2 'comint-highlight-input)))
+     (2 'comint-highlight-input))
+    (,shell-prompt-pattern
+     (0 'comint-highlight-prompt)))
   "Shell prompts to highlight in Shell Log mode.")
 
 (define-derived-mode shell-log-mode shell-mode "Shell-Log"
@@ -3083,15 +3088,18 @@ old log files:
 
 (defun shell-log-or-compilation-mode ()
   "Enable either ‘shell-log-mode’ or ‘compilation-mode’ based on log contents."
-  (let ((mode (if (save-excursion
-                    (goto-char (point-min))
-                    (re-search-forward
-                     (rx (or "./configure" (and bol "Compilation")))
-                     nil t))
-                  'compilation-mode
-                (require 'shell)
-                'shell-log-mode)))
-    (call-interactively mode)))
+  (require 'shell)
+  (let ((mode (save-excursion
+                (goto-char (point-min))
+                (cond ((re-search-forward
+                        (rx (or "./configure" (and bol "Compilation")))
+                        nil t)
+                       'compilation-mode)
+                      ((re-search-forward shell-log-regexp nil t)
+                       'shell-log-mode)
+                      ((re-search-forward shell-prompt-pattern nil t)
+                       'shell-mode)))))
+    (when mode (funcall mode))))
 
 (add-to-list 'auto-mode-alist '("\\.log\\'" . shell-log-or-compilation-mode))
 #+end_src
