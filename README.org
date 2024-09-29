@@ -2978,6 +2978,33 @@ Per-project shell history:
     (apply ofun args)))
 #+end_src
 
+Override ~comint-delchar-or-maybe-eof~ on =C-d= in shell:
+
+#+begin_src emacs-lisp
+(defun my-shell-c-d (&optional arg)
+  (interactive "p")
+  ;; (let* ((proc (get-buffer-process (current-buffer)))))
+  (cond ((and (eobp)
+              (save-excursion
+                (let ((inhibit-field-text-motion t))
+                  (goto-char (line-beginning-position))
+                  (looking-at-p "^iex.*>\s*$"))))
+         (let ((process (get-buffer-process (current-buffer))))
+           (process-send-string process ":init.stop()\n")))
+        ((and (eobp)
+              (save-excursion
+                (let ((inhibit-field-text-motion t))
+                  (goto-char (line-beginning-position))
+                  ;; e.g. “dev:cljs.user=> ”
+                  (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
+         (let ((process (get-buffer-process (current-buffer))))
+           (process-send-string process ":cljs/quit\n")))
+        (t
+         (comint-delchar-or-maybe-eof arg))))
+#+end_src
+
+Also rename shell buffers uniquely:
+
 #+begin_src emacs-lisp
 (with-eval-after-load 'shell
   ;; This affects “*Async Shell Command*” buffers
@@ -2986,30 +3013,13 @@ Per-project shell history:
   (add-hook 'shell-mode-hook 'rename-uniquely)
   ;; Turn off dirtrack because it fails in Bash on Heroku.
   (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
-  (define-key shell-mode-map "\C-d"
-    (lambda (&optional arg)
-      (interactive "p")
-      ;; (let* ((proc (get-buffer-process (current-buffer)))))
-      (cond ((and (eobp)
-                  (save-excursion
-                    (let ((inhibit-field-text-motion t))
-                      (goto-char (line-beginning-position))
-                      (looking-at-p "^iex.*>\s*$"))))
-             (let ((process (get-buffer-process (current-buffer))))
-               (process-send-string process ":init.stop()\n")))
-            ((and (eobp)
-                  (save-excursion
-                    (let ((inhibit-field-text-motion t))
-                      (goto-char (line-beginning-position))
-                      ;; e.g. “dev:cljs.user=> ”
-                      (looking-at-p "^[a-z:]*cljs\\..*=>\s*$"))))
-             (let ((process (get-buffer-process (current-buffer))))
-               (process-send-string process ":cljs/quit\n")))
-            (t
-             (comint-delchar-or-maybe-eof arg))))))
+  (define-key shell-mode-map "\C-d" 'my-shell-c-d))
+#+end_src
 
-;; S-RET switches to the *Shell Command Output* buffer
-;; instead of displaying output in the echo area.
+=C-j= switches to the “*Shell Command Output*” buffer
+instead of displaying short output in the echo area:
+
+#+begin_src emacs-lisp
 ;; TODO: Another idea from http://thread.gmane.org/gmane.emacs.bugs/4533
 ;;       Use M-RETURN to run ‘async-shell-command’.
 (define-advice shell-command (:around (ofun &rest args) messagify)
@@ -3045,8 +3055,11 @@ Per-project shell history:
       (message "")
       (pop-to-buffer "*Shell Command Output*")
       (goto-char (point-min)))))
+#+end_src
 
-;; This command has so many bindings because it's difficult to type with AltGr.
+This command has so many bindings because it's difficult to type with =AltGr= key:
+
+#+begin_src emacs-lisp
 (define-key esc-map "|"    'shell-command-on-region-or-buffer)
 (define-key esc-map "\M-|" 'shell-command-on-region-or-buffer) ; ‘M-ESC |’
 (define-key global-map [(control ?|)] 'shell-command-on-region-or-buffer)
