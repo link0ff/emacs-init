@@ -2742,7 +2742,7 @@ Use ~display-fill-column-indicator~ to limit the width of log entries:
 Warn about commits behind after switching the branch
 that helps not to forget about ~git pull~:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (define-advice vc-switch-branch (:after (&rest _) commits-behind)
   (let ((buffer (get-buffer-create "*vc-commits-behind*")))
     (vc-call-backend (vc-deduce-backend) 'log-incoming buffer "")
@@ -3383,7 +3383,10 @@ that highlights escape sequences emitted by many programs:
  comint-move-point-for-output nil)
 
 ;; (setq-default comint-pager "cat | head -1000")
-(setq-default comint-pager "cat | sed -e '1000a*** OUTPUT TRUNCATED ***' -e '1000q'")
+;; (setq-default comint-pager "cat | sed -e '1000a*** OUTPUT TRUNCATED ***' -e '1000q'")
+
+(when delete-selection-mode
+  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
 #+end_src
 
 * Used packages
@@ -3577,6 +3580,8 @@ Fix keys broken by ~markdown-mode~:
   (define-key markdown-mode-map [remap forward-paragraph] nil)
   (add-hook 'markdown-mode-hook
             (lambda ()
+              ;; This overrides ‘markdown-line-break-face’:
+              ;; (setq-local show-trailing-whitespace t)
               ;; Fix paragraph navigation
               (setq-local paragraph-start (default-value 'paragraph-start))
               (setq-local paragraph-separate (default-value 'paragraph-separate))
