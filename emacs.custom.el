@@ -408,6 +408,7 @@
  '(sh-heredoc ((((class color) (background light)) (:foreground "ForestGreen"))))
  '(show-paren-match ((((class color)) (:background "gainsboro"))))
  '(trailing-whitespace ((((class color) (background light)) (:background "pink"))))
+ '(variable-pitch ((t (:family "DejaVu Sans"))))
  '(variable-pitch-text ((t (:inherit variable-pitch))))
  '(vc-conflict-state ((t (:inherit vc-state-base :foreground "red"))))
  '(vc-edited-state ((t (:inherit vc-state-base))))

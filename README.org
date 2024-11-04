@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-10-20
+#+DATE: 2024-11-04
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
@@ -431,6 +431,7 @@ And ~follow-mode~ displays one buffer with 83 columns x 150 lines.
 On 1366x768 this gives 225 columns x 75 lines, this means either
 2 horizontally split windows each 112 columns wide, or
 3 horizontally split windows each 75 columns wide.
+On 2560x1400 this gives 255 columns x 70 lines.
 
 #+begin_src emacs-lisp
 (cond
@@ -440,6 +441,7 @@ On 1366x768 this gives 225 columns x 75 lines, this means either
   (setq default-frame-alist
         (append
          '(
+           ;; Better to set font in ~/.Xresources, e.g. "emacs.font: DejaVu Sans Mono-12"
            ;; A lot of different fonts were tried to pick the best one:
            ;;(font . "-*-*-medium-r-normal--10-*-*-*-c-60-fontset-koi8_r_10")
            ;;? (font . "-rfx-fixed-medium-r-normal--10-*-*-*-c-60-koi8-*")
