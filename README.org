@@ -4740,6 +4740,12 @@ I often mistype ‘C-x p’ as ‘C-x C-p’:
   (define-key ctl-x-map "\C-p" project-prefix-map))
 #+end_src
 
+Also allow adding the file ‘.project’ as the project root marker:
+
+#+begin_src emacs-lisp
+(add-to-list 'project-vc-extra-root-markers ".project")
+#+end_src
+
 ** Use recentf for default file names
 
 Allow =C-x C-f M-n= to access the most recently used files.
