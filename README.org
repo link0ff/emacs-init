@@ -1819,7 +1819,7 @@ the same screen state that was before.
                    ;; ‘follow-mode’ doesn't need recentering
                    (not (bound-and-true-p follow-mode)))
           ;; reposition-window takes too much time in large buffers
-          (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode
+          (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode org-mode
                                      markdown-mode conf-mode sh-mode bash-ts-mode))
                   (> (buffer-size) 1000000))
               (recenter-top)
@@ -3500,6 +3500,11 @@ Pre-load some useful packages:
                display-buffer-below-selected
                (window-height . fit-window-to-buffer)
                (preserve-size . (nil . t))))
+(add-to-list 'display-buffer-alist
+             '("\\` \\*\\(Agenda Commands\\)\\*\\'"
+               display-buffer-below-selected
+               (window-height . 12)
+               (preserve-size . (nil . t))))
 
 (add-hook 'org-mode-hook
           (lambda ()
@@ -3511,7 +3516,7 @@ Pre-load some useful packages:
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cb" 'org-iswitchb)
+;; (global-set-key "\C-cb" 'org-iswitchb)
 #+end_src
 
 Fix keys broken by org:
