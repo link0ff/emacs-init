@@ -136,8 +136,6 @@
  '(find-ls-option '("-print0 | sort -z | xargs -0 -e ls -ld" . "-ld"))
  '(flymake-no-changes-timeout nil)
  '(flymake-show-diagnostics-at-end-of-line t)
- '(flyspell-check-changes t)
- '(flyspell-use-meta-tab nil)
  '(gdb-display-io-buffer nil)
  '(global-eldoc-mode nil)
  '(global-mark-ring-max 1024)

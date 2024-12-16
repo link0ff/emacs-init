@@ -2551,7 +2551,17 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
                                    5))))
 #+end_src
 
-** Spelling features
+** Spell checking
+
+Spell-check only edited words, not when moving point over words as it does by default:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'flyspell
+  (setopt flyspell-check-changes t)
+  ;; Also free 'M-TAB' for other uses:
+  (setopt flyspell-use-meta-tab nil)
+  (setopt flyspell-delay-use-timer t))
+#+end_src
 
 Enable Flyspell only when starting to edit the current buffer:
 
@@ -2572,6 +2582,8 @@ Enable Flyspell only when starting to edit the current buffer:
 ;; Don't save to the desktop
 (add-to-list 'desktop-minor-mode-table '(flyspell-mode nil))
 #+end_src
+
+Other useful text-related settings:
 
 #+begin_src emacs-lisp
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -3818,7 +3830,7 @@ Gnus Article buffers:
 (defun my-gnus-article-press-or-scroll ()
   (interactive)
   (if (or (not (get-char-property (point) 'button))
-          ;; or point is on the bottom of the window while scrolling
+          ;; or point is at the bottom of the window while scrolling
           (eq (point) (save-excursion (move-to-window-line -1) (point))))
       (progn (scroll-up 1) (move-to-window-line -1) (beginning-of-line))
     (if (eq (get-char-property (point) 'category) 'shr)
