@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-11-04
+#+DATE: 2024-12-16
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
@@ -93,7 +93,7 @@
   - [[#fix-set-variable][Fix set-variable]]
   - [[#fix-sit-for][Fix sit-for]]
   - [[#fix-follow-mode][Fix follow-mode]]
-  - [[#fix-messages-buffer][Fix =*Messages*= buffer]]
+  - [[#fix-messages-buffer][Fix the ‘*Messages*’ buffer]]
   - [[#fix-mark-in-two-windows-with-same-buffer][Fix mark in two windows with same buffer]]
   - [[#fix-outline-regexp][Fix outline-regexp]]
   - [[#fix-outline-mode-in-news-files][Fix outline-mode in NEWS files]]
@@ -121,14 +121,14 @@ called [[https://en.wikipedia.org/wiki/Literate_programming][Literate programmin
 2. Tangling: the same document is executed during Emacs loading.
 
 One line of code that initiates loading is in the separate file [[file:init.el][init.el]].
-This makes it the smallest =init.el= file possible, having metric of just 1 [[https://en.wikipedia.org/wiki/Source_lines_of_code][SLOC]].
-The single line in =init.el= is the following:
+This makes it the smallest ‘init.el’ file possible, having metric of just 1 [[https://en.wikipedia.org/wiki/Source_lines_of_code][SLOC]].
+The single line in the ‘init.el’ is the following:
 
 #+begin_src emacs-lisp :tangle no
 (org-babel-load-file (locate-file "README.org" load-path))
 #+end_src
 
-It exports source code from this file to the file =README.el=.
+It exports source code from this file to the file ‘README.el’.
 To support lexical binding, the output file should have the
 ~lexical-binding~ cookie in its header:
 
@@ -138,7 +138,7 @@ To support lexical binding, the output file should have the
 
 You can read more about details of weaving and tangling in [[https://www.gnu.org/software/emacs/manual/html_mono/org.html#Extracting-source-code][the Org manual]].
 
-Using the same file =README.org= as an self-executable document
+Using the same file ‘README.org’ as an self-executable document
 fits nicely into the definition of Emacs where Emacs is the
 self-documenting editor, and this file is a self-documenting init file.
 
@@ -491,7 +491,7 @@ Note that in Emacs 29 instead of above you can use:
 ~(add-hook 'window-size-change-functions 'frame-hide-title-bar-when-maximized)~
 
 In earlier versions there was no way to unframe and maximize Emacs window from Emacs,
-so it was necessary to use such code in =~/.sawfish/rc=:
+so it was necessary to use such code in ‘~/.sawfish/rc’:
 
 #+begin_src lisp
 (require 'sawfish.wm.state.maximize)
@@ -655,7 +655,7 @@ An example of the mode where heading highlighting could be enabled is
 (add-hook 'shortdoc-mode-hook 'my-outline-minor-mode)
 #+end_src
 
-Also enable cycling on filename headings in *xref* buffers:
+Also enable cycling on filename headings in ‘*xref*’ buffers:
 
 #+begin_src emacs-lisp
 (add-hook 'xref-after-update-hook
@@ -748,7 +748,7 @@ so there is no need to switch windows back and forth:
                (window-height . nil)))
 #+end_src
 
-Clicking a link from the =*Help*= buffer opens source code in the same window:
+Clicking a link from the ‘*Help*’ buffer opens source code in the same window:
 
 #+begin_src emacs-lisp
 (defun display-buffer-from-help-p (_buffer-name _action)
@@ -798,7 +798,7 @@ Visit grep/xref hits in the same window where all previous hits were visited:
 
 (define-advice display-buffer-record-window (:after (type window buffer) set-last-window)
   (with-current-buffer (window-buffer)
-    ;; TODO: maybe later turn cons into alist ((COMMAND . WINDOW))
+    ;; TODO: maybe later turn cons into alist ((COMMAND1 . WINDOW1) (COMMAND2 . WINDOW2))
     (setq-local display-buffer-last-window (cons this-command window))))
 #+end_src
 
@@ -2187,7 +2187,7 @@ to find all text properties with font-lock face."
 
 *** occur
 
-Make the =*Occur*= buffer names unique and writable
+Make the ‘*Occur*’ buffer names unique and writable
 (like in ~compilation-mode-hook~ in this file).
 
 #+begin_src emacs-lisp
@@ -2270,7 +2270,7 @@ begin with a space character are not saved in the history list.  A value of
 ignoredups causes lines matching the previous history entry to not be saved."
 #+end_quote
 
-=TODO=: We already have ~history-delete-duplicates~ that corresponds to ~ignoredups~,
+*TODO*: We already have ~history-delete-duplicates~ that corresponds to ~ignoredups~,
 but still no option that would corresponds to ~ignorespace~.
 
 #+begin_src emacs-lisp
@@ -2545,7 +2545,7 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
                                    5))))
 (add-function :after-while repunctuate-sentences-filter
               (lambda (start end)
-                (not (looking-back (rx (or (and "т." (any "екнч") ".")
+                (not (looking-back (rx (or (and "т." (any "декнопч") ".")
                                            "см.")
                                        " ")
                                    5))))
@@ -2588,7 +2588,7 @@ Non-customizable variables:
 
 For a new non-file buffer set its major mode based on the buffer name.
 For example, =C-x b newbuffer.el= will set the major mode in a new buffer
-to ~emacs-lisp-mode~ by the file extension =.el= in the buffer name.
+to ~emacs-lisp-mode~ by the file extension ‘.el’ in the buffer name.
 
 #+begin_src emacs-lisp
 (setq-default major-mode (lambda ()
@@ -2598,7 +2598,7 @@ to ~emacs-lisp-mode~ by the file extension =.el= in the buffer name.
                                (set-auto-mode)))))
 #+end_src
 
-Note that this has some problems, e.g. in =autoinsert.el= that uses
+Note that this has some problems, e.g. in ‘autoinsert.el’ that uses
 ~(eq major-mode (default-value 'major-mode))~.
 
 ** diff
@@ -2682,7 +2682,7 @@ Fix keybindings and run ~vc-dir~ in project root:
 (define-key my-map "d" 'project-vc-dir)
 #+end_src
 
-Highlight found occurrences in =*vc-search-log*= output buffer of ~vc-log-search~.
+Highlight found occurrences in ‘*vc-search-log*’ output buffer of ~vc-log-search~.
 Warning: uses Emacs regexps to highlight Git regexp — their syntax might differ!
 
 #+begin_src emacs-lisp
@@ -2945,7 +2945,7 @@ that helps not to forget about ~git pull~:
 ;; (define-key dired-mode-map "r"        'wdired-change-to-wdired-mode)
 
 ;; (OLD) This is a bad keybinding because I sometimes type ‘C-x C-q’
-;; in *Locate* buffer (which is in dired-mode) and do ‘flush-lines’
+;; in the ‘*Locate*’ buffer (which is in dired-mode) and do ‘flush-lines’
 ;; (define-key dired-mode-map "\C-x\C-q" 'wdired-change-to-wdired-mode)
 ;; UPDATE: http://thread.gmane.org/gmane.emacs.devel/118678/focus=118684
 
@@ -2968,7 +2968,7 @@ that helps not to forget about ~git pull~:
   (setq locate-make-command-line 'locate-make-command-line-ignore-case))
 #+end_src
 
-Highlight all matches in the =*Locate*= buffer like in the =*Occur*= buffer
+Highlight all matches in the ‘*Locate*’ buffer like in the ‘*Occur*’ buffer
 
 #+begin_src emacs-lisp
 (add-hook 'locate-post-command-hook
@@ -3040,9 +3040,9 @@ Also rename shell buffers uniquely:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'shell
-  ;; This affects “*Async Shell Command*” buffers
+  ;; This affects ‘*Async Shell Command*’ buffers
   (add-hook 'shell-command-mode-hook 'rename-uniquely)
-  ;; This affects “*shell*” buffers
+  ;; This affects ‘*shell*’ buffers
   (add-hook 'shell-mode-hook 'rename-uniquely)
   ;; Turn off dirtrack because it fails in Bash on Heroku.
   (add-hook 'shell-mode-hook (lambda () (shell-dirtrack-mode -1)))
@@ -3057,8 +3057,8 @@ instead of displaying short output in the echo area:
 ;;       Use M-RETURN to run ‘async-shell-command’.
 (define-advice shell-command (:around (ofun &rest args) messagify)
   (let ((messages-buffer-max-lines
-         ;; Don't add output to the *Messages* buffer
-         ;; when S-RET displays the *Shell Command Output* buffer.
+         ;; Don't add output to the ‘*Messages*’ buffer
+         ;; when S-RET displays the ‘*Shell Command Output*’ buffer.
          (unless (memq last-input-event '(S-return ?\C-j))
            messages-buffer-max-lines)))
     (apply ofun args)
@@ -3308,7 +3308,7 @@ Compilation buffer names:
         (cdr grep-files-aliases)))
 #+end_src
 
-This is useful with customized =grep-use-headings= with xref-like output:
+This is useful with customized ~grep-use-headings~ with xref-like output:
 
 #+begin_src emacs-lisp
 (add-hook 'grep-mode-hook
@@ -3352,7 +3352,7 @@ Increase throughput of process output:
 
 ** ansi
 
-One of the most useful settings is using =ansi= for terminal output
+One of the most useful settings is using “ansi” for terminal output
 that highlights escape sequences emitted by many programs:
 
 #+begin_src emacs-lisp
@@ -3626,7 +3626,7 @@ Run Gnus:
 
 #+begin_src emacs-lisp
 (defun my-gnus ()
-  "Start a new Gnus, or locate the existing buffer *Group*."
+  "Start a new Gnus, or locate the existing buffer ‘*Group*’."
   (interactive)
   (if (buffer-live-p (get-buffer "*Group*"))
       (pop-to-buffer-same-window (get-buffer "*Group*"))
@@ -4092,7 +4092,7 @@ This is now available from https://github.com/a13/reverse-im.el
 
 ** mule
 
-Delete codings like =utf-*-with-signature= (they hide BOMs)
+Delete codings like ~utf-*-with-signature~ (they hide BOMs)
 to allow to always display the BOM (Byte-order mark signature)
 to be able to remove it without the need to visit files literally
 or with =C-x RET c utf-8 RET C-x C-f=.
@@ -4126,7 +4126,7 @@ for the package to improve.
 
 ** Fix timer in battery
 
-The built-in package =battery= doesn't provide an additional timer that
+The built-in package ‘battery’ doesn't provide an additional timer that
 periodically would check if the laptop is not on AC power line, then
 display battery status on the mode line.
 
@@ -4149,7 +4149,7 @@ display battery status on the mode line.
 
 ** Fix inconsistency in motion keys
 
-Implementation of =right-word= / =left-word= is broken - it doesn't take
+Implementation of ~right-word~ / ~left-word~ is broken - it doesn't take
 into account mixed content when words of one script are intermingled with
 words of another script.  This advice fixes this:
 
@@ -4170,8 +4170,8 @@ words of another script.  This advice fixes this:
     (apply ofun args)))
 #+end_src
 
-There was no symmetry for sexp like in =right-char= / =left-char=
-and =right-word= / =left-word= ([[https://debbugs.gnu.org/36923][bug#36923]])
+There was no symmetry for sexp like in ~right-char~ / ~left-char~
+and ~right-word~ / ~left-word~ ([[https://debbugs.gnu.org/36923][bug#36923]]):
 
 #+begin_src emacs-lisp
 (defun right-sexp (&optional arg)
@@ -4419,7 +4419,7 @@ Don't use delay after displaying useless error messages:
   (define-key follow-mode-map [remap View-scroll-page-backward] #'follow-scroll-down))
 #+end_src
 
-** Fix =*Messages*= buffer
+** Fix the ‘*Messages*’ buffer
 
 #+begin_src emacs-lisp
 (add-hook 'messages-buffer-mode-hook
@@ -4525,7 +4525,7 @@ of outline faces.  So need to restore original distinctive colors in outline fac
 ** Fix org-mode keys
 
 Allow using shifted keys in org with isearch when ~isearch-yank-on-move~
-is customized to the value =shift=:
+is customized to the value ‘shift’:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'org-keys
@@ -4620,17 +4620,17 @@ Fix ~nobreak-char-display~ in Dired file sizes (see [[https://debbugs.gnu.org/44
 
 ** Fix file sorting order between vc-dir and vc-diff
 
-Typing ~=~ in a *vc-dir* buffer displays a *vc-diff* buffer where files are
-sorted by different order than files are sorted in the *vc-dir* buffer.
+Typing ~=~ in a ‘*vc-dir*’ buffer displays a ‘*vc-diff*’ buffer where files are
+sorted by different order than files are sorted in the ‘*vc-dir*’ buffer.
 
 For example, there is a need to commit only part of changes.
-To decide what files should be marked in the *vc-dir* buffer,
-a convenient way is to browse diffs in the *vc-diff* buffer
-one by one and mark corresponding files in the *vc-dir* buffer.
+To decide what files should be marked in the ‘*vc-dir*’ buffer,
+a convenient way is to browse diffs in the ‘*vc-diff*’ buffer
+one by one and mark corresponding files in the ‘*vc-dir*’ buffer.
 But since these file lists are in different order, the task
-becomes a major hassle because *vc-diff* doesn't distinguish
+becomes a major hassle because ‘*vc-diff*’ doesn't distinguish
 between files and directories while sorting them by name,
-but *vc-dir* puts directories at the end after files.
+but ‘*vc-dir*’ puts directories at the end after files.
 
 This can be fixed by creating a git-specific ~orderfile~ in ~vc-dir~
 and using it in ~vc-git-diff~:
@@ -4697,7 +4697,7 @@ a non-vc file then fall back to ~diff-backup~.  ([[https://debbugs.gnu.org/41779
 
 When a prompt of some commands such as ~rgrep~ or ~vc-print-log~ asks for
 a directory name, allow =M-n= to access the most recently used project
-directories saved in =~/.emacs.d/projects=.
+directories saved in ‘~/.emacs.d/projects’.
 
 #+begin_src emacs-lisp
 (define-advice read-directory-name (:around (ofun &rest args) project-defaults)
@@ -4793,13 +4793,13 @@ Boston, MA 02111-1307, USA.
 * Local Variables :noexport:
 
 ~time-stamp~ in these local variables specifies the format
-of the property =DATE= at the beginning of this file, so that
+of the property “DATE” at the beginning of this file, so that
 on saving it is updated automatically.
 
 - Local Variables:
 - eval: (add-hook 'before-save-hook 'time-stamp nil t)
 - time-stamp-start: "DATE: "
-- time-stamp-format: "%:y-%02m-%02d"
+- time-stamp-format: "%Y-%02m-%02d"
 - time-stamp-end: "$"
 - time-stamp-line-limit: 15
 - End:
