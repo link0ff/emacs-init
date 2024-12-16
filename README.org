@@ -2559,6 +2559,9 @@ Enable Flyspell only when starting to edit the current buffer:
 (defun my-enable-flyspell ()
   (when (and (not flyspell-mode)
              (not buffer-read-only)
+             (derived-mode-p '( fundamental-mode
+                                prog-mode change-log-mode log-edit-mode
+                                text-mode org-mode markdown-mode))
              ;; Don't enable in hidden buffers
              (eq (current-buffer) (window-buffer)))
     (if (derived-mode-p '(prog-mode))
