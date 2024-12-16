@@ -2553,38 +2553,28 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
 
 ** Spelling features
 
-#+begin_src emacs-lisp
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'fill-nobreak-predicate 'fill-single-char-nobreak-p)
-;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
-;; (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
+Enable Flyspell only when starting to edit the current buffer:
 
-;; Enable flyspell only when starting to edit the current buffer:
+#+begin_src emacs-lisp
 (defun my-enable-flyspell ()
   (when (and (not flyspell-mode)
              (not buffer-read-only)
+             ;; Don't enable in hidden buffers
              (eq (current-buffer) (window-buffer)))
     (if (derived-mode-p '(prog-mode))
         (flyspell-prog-mode)
       (flyspell-mode))))
 (add-hook 'first-change-hook 'my-enable-flyspell)
-(add-to-list 'desktop-minor-mode-table '(flyspell-mode nil))
 
-;; The old way to enable flyspell that causes too much ispell process restarts
-;; when loading the desktop with many files that use different personal dictionaries.
-;; It was also enabled by dir-local settings '(mode . flyspell)'.
-;; (defun my-flyspell-mode ()
-;;   ;; Avoid duplicate calls when ‘flyspell-mode’ is enabled by ‘.dir-locals.el’,
-;;   ;; because the first call uses the global value of ‘ispell-personal-dictionary’,
-;;   ;; and so restarts the Ispell process (bug#69703).
-;;   (unless (progn (hack-dir-local-variables)
-;;                  (member '(mode . flyspell) file-local-variables-alist))
-;;     (if (derived-mode-p '(prog-mode))
-;;         (flyspell-prog-mode)
-;;       (flyspell-mode))))
-;; (add-hook 'text-mode-hook       'my-flyspell-mode)
-;; (add-hook 'change-log-mode-hook 'my-flyspell-mode)
-;; (add-hook 'prog-mode-hook       'my-flyspell-mode)
+;; Don't save to the desktop
+(add-to-list 'desktop-minor-mode-table '(flyspell-mode nil))
+#+end_src
+
+#+begin_src emacs-lisp
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'fill-nobreak-predicate 'fill-single-char-nobreak-p)
+;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
+;; (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
 #+end_src
 
 ** Other settings
