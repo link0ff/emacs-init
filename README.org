@@ -1,10 +1,10 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2024-12-16
+#+DATE: 2025-01-21
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
-#+Copyright: (C) 1989-2024  Juri Linkov <juri@linkov.net>/
+#+Copyright: (C) 1989-2025  Juri Linkov <juri@linkov.net>/
 #+HTML_link_home: http://www.linkov.net/emacs
 #+HTML_head: <script type="text/javascript" src="load.js"></script>
 #+InfoJS_opt: view:info toc:t
@@ -3674,10 +3674,10 @@ Run Gnus:
 (define-key my-map "g" 'my-gnus)
 ;; (define-key my-map "g" (lambda () (gnus 3)))
 ;; (define-key my-map "G" 'gnus-no-server)
-(define-key my-map "G" (lambda () (interactive)
-                          (gnus-no-server)
-                          ;; BUG? mail groups don't come automatically
-                          (gnus-group-jump-to-group "nnml:mail.inbox")))
+;; (define-key my-map "G" (lambda () (interactive)
+;;                           (gnus-no-server)
+;;                           ;; BUG? mail groups don't come automatically
+;;                           (gnus-group-jump-to-group "nnml:mail.inbox")))
 (define-key my-map "Q" 'smtpmail-send-queued-mail)
 #+end_src
 
@@ -4826,7 +4826,7 @@ Display the time of the Emacs initialization:
 
 * Copyright
 
-Copyright (C) 1989-2024  Juri Linkov <juri@linkov.net>
+Copyright (C) 1989-2025  Juri Linkov <juri@linkov.net>
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
