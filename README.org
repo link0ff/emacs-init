@@ -50,7 +50,7 @@
   - [[#cursor-settings][Cursor settings]]
   - [[#display-settings][Display settings]]
   - [[#whitespace-settings][Whitespace settings]]
-  - [[#spelling-features][Spelling features]]
+  - [[#spell-checking-lazy-flyspell][Spell checking (Lazy Flyspell)]]
   - [[#other-settings][Other settings]]
 - [[#major-modes][Major modes]]
   - [[#diff][diff]]
@@ -93,7 +93,7 @@
   - [[#fix-set-variable][Fix set-variable]]
   - [[#fix-sit-for][Fix sit-for]]
   - [[#fix-follow-mode][Fix follow-mode]]
-  - [[#fix-messages-buffer][Fix the ‘*Messages*’ buffer]]
+  - [[#fix-the-messages-buffer][Fix the ‘*Messages*’ buffer]]
   - [[#fix-mark-in-two-windows-with-same-buffer][Fix mark in two windows with same buffer]]
   - [[#fix-outline-regexp][Fix outline-regexp]]
   - [[#fix-outline-mode-in-news-files][Fix outline-mode in NEWS files]]
@@ -4788,7 +4788,7 @@ This can search files in subdirectories from everywhere:
   (eq (car pr) 'transient))
 #+end_src
 
-** Use recentf for default file names
+** Use recentf for default file names :noexport:
 
 Allow =C-x C-f M-n= to access the most recently used files.
 
