@@ -2251,11 +2251,20 @@ See https://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00299.html
 
 *** history/defaults completion
 
-Complete history in all non-completion minibuffers like 'rgrep' (bug#62800):
+Shorter keys to complete history and defaults in all minibuffers.
+Also pop up the completions list immediately:
 
 #+begin_src emacs-lisp
-(keymap-set minibuffer-local-map "TAB" 'minibuffer-complete-history)
-(keymap-set minibuffer-local-map "<backtab>" 'minibuffer-complete-defaults)
+(keymap-set minibuffer-local-map "C-<up>" 'minibuffer-complete-history)
+(keymap-set minibuffer-local-map "C-<down>" 'minibuffer-complete-defaults)
+
+(define-advice minibuffer-complete-history (:around (ofun &rest args) always)
+  (let* ((completion-auto-help 'always))
+    (apply ofun args)))
+
+(define-advice minibuffer-complete-defaults (:around (ofun &rest args) always)
+  (let* ((completion-auto-help 'always))
+    (apply ofun args)))
 #+end_src
 
 *** deletion of history items
