@@ -4758,10 +4758,18 @@ I often mistype ‘C-x p’ as ‘C-x C-p’:
   (define-key ctl-x-map "\C-p" project-prefix-map))
 #+end_src
 
-Also allow adding the file ‘.project’ as the project root marker:
+Allow using any directory as a project root.
+This can search files in subdirectories from everywhere:
 
 #+begin_src emacs-lisp
-(add-to-list 'project-vc-extra-root-markers ".project")
+(defun project-any-transient (dir)
+  (when (memq this-command '(project-find-regexp))
+    `(transient . ,dir)))
+(add-hook 'project-find-functions 'project-any-transient t)
+
+;; But don't remember transient projects:
+(define-advice project-remember-project (:before-until (pr &rest _) skip)
+  (eq (car pr) 'transient))
 #+end_src
 
 ** Use recentf for default file names

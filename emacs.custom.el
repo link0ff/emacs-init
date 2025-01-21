@@ -80,7 +80,7 @@
  '(describe-char-unidata-list t)
  '(desktop-auto-save-timeout 60)
  '(desktop-globals-to-save
-   '(compile-history extended-command-history find-args-history find-command-history grep-history read-expression-history regexp-history dired-shell-command-history shell-command-history vc-git-history gud-gdb-history))
+   '(compile-history extended-command-history find-args-history find-command-history grep-history read-expression-history regexp-history dired-shell-command-history shell-command-history vc-git-history vc-revision-history gud-gdb-history))
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diary-date-forms '((year "-" month "-" day "[^0-9]") (dayname "\\W")))
@@ -154,7 +154,7 @@
  '(gnus-user-agent '(gnus emacs config))
  '(grep-command "grep --color -inH -e ")
  '(grep-find-template
-   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading -a --null -j8 --sort path -M 200 --max-columns-preview -e <R>")
+   "find <D> <X> -type f <F> -print0 | sort -z | xargs -0 -e rg <C> -nH --no-heading --null -j8 --sort path -M 200 --max-columns-preview -e <R>")
  '(grep-find-use-xargs 'gnu-sort)
  '(grep-program "rg")
  '(grep-use-headings t)
@@ -323,7 +323,7 @@
  '(xref-history-storage 'xref-window-local-history)
  '(xref-search-program 'ripgrep)
  '(xref-search-program-alist
-   '((ripgrep . "xargs -0 rg <C> -a --null -nH --sort path --no-heading --null --no-messages -g '!*/' -e <R>")))
+   '((ripgrep . "xargs -0 rg <C> --null -nH --sort path --no-heading --null --no-messages -g '!*/' -e <R>")))
  '(xref-show-definitions-function 'xref--show-defs-minibuffer)
  '(xref-truncation-width 200)
  '(yank-excluded-properties t))
