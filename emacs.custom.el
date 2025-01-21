@@ -236,6 +236,7 @@
  '(org-fontify-todo-headline nil)
  '(org-fontify-whole-heading-line t)
  '(org-startup-with-inline-images t)
+ '(org-todo-keywords '((sequence "TODO" "|" "DONE" "NONEED")))
  '(outline-minor-mode-use-buttons 'in-margins)
  '(parens-require-spaces nil)
  '(perl-indent-level 2)

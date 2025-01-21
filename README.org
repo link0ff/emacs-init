@@ -2560,9 +2560,11 @@ While using ~repunctuate-sentences~, skip some known abbreviations:
                                    5))))
 #+end_src
 
-** Spell checking
+** Spell checking (Lazy Flyspell)
 
-Spell-check only edited words, not when moving point over words as it does by default:
+Spell-check only edited words, not when moving point over words as it does by default.
+This greatly improves the desktop loading time during startup.
+Also visiting files not intended to spell-check is much faster.
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'flyspell
@@ -2571,6 +2573,10 @@ Spell-check only edited words, not when moving point over words as it does by de
   (setopt flyspell-use-meta-tab nil)
   (setopt flyspell-delay-use-timer t))
 #+end_src
+
+It's possible to use per-project personal dictionary
+by pointing ~ispell-local-pdict~ to a project-local file
+in ‘.dir-locals.el’.
 
 Enable Flyspell only when starting to edit the current buffer:
 
@@ -2588,7 +2594,8 @@ Enable Flyspell only when starting to edit the current buffer:
       (flyspell-mode))))
 (add-hook 'first-change-hook 'my-enable-flyspell)
 
-;; Don't save to the desktop
+;; Don't save this minor mode to the desktop
+;; to be able to enable it only on the first change
 (add-to-list 'desktop-minor-mode-table '(flyspell-mode nil))
 #+end_src
 
