@@ -102,6 +102,7 @@
   - [[#fix-org-mode-keys][Fix org-mode keys]]
   - [[#fix-org-mode-code-blocks][Fix org-mode code blocks]]
   - [[#fix-mode-line-faces][Fix mode-line faces]]
+  - [[#add-more-hi-lock-faces][Add more hi-lock faces]]
   - [[#fix-dired][Fix dired]]
   - [[#fix-file-sorting-order-between-vc-dir-and-vc-diff][Fix file sorting order between vc-dir and vc-diff]]
   - [[#fall-back-between-vc-diff-and-diff-backup][Fall back between vc-diff and diff-backup]]
@@ -4633,6 +4634,30 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 ;; (set-face-attribute 'mode-line-active   nil :inherit '(mode-line variable-pitch))
 ;; (set-face-attribute 'mode-line-inactive nil :inherit '(mode-line variable-pitch))
 (set-face-attribute 'mode-line nil :inherit '(variable-pitch))
+#+end_src
+
+** Add more hi-lock faces
+
+#+begin_src emacs-lisp
+(setopt hi-lock-face-defaults
+        (append
+         ;; Good-looking default faces
+         '("hi-yellow" "hi-pink" "hi-green" "hi-blue" "hi-salmon" "hi-aquamarine")
+         ;; Add more distinct faces
+         (mapcar (lambda (color)
+                   ;; Substring from index 1 to remove any leading `#' in the name
+                   (let* ((name (concat "hi-" (if (string-equal
+                                                   (substring color 0 1) "#")
+                                                  (substring color 1)
+                                                color)))
+                          (face (intern name)))
+                     ;; Make the face if not done.
+                     (unless (facep face)
+                       (make-face face)
+                       (set-face-background face color)
+                       face)
+                     name))
+                 '("violet" "turquoise" "deepskyblue" "greenyellow"))))
 #+end_src
 
 ** Fix dired
