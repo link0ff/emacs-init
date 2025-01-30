@@ -675,6 +675,29 @@ Also use Org-like =C-c C-o= to open external links:
               (kbd "C-c C-o") #'goto-address-at-point))
 #+end_src
 
+Also enable ~hs-minor-mode~ in treesit buffers:
+
+#+begin_src emacs-lisp
+(defun my-hs-minor-mode ()
+  (when (or (treesit-parser-list) (derived-mode-p '(emacs-lisp-mode)))
+    (hs-minor-mode +1)))
+
+(add-hook 'find-file-hook 'my-hs-minor-mode)
+
+(defun my-hs-toggle-hiding (&optional arg)
+  (interactive "P")
+  (cond
+   ((eq arg 0) (if (seq-some (lambda (ov) (overlay-get ov 'hs))
+                             (overlays-in (point-min) (point-max)))
+                   (hs-show-all)
+                 (hs-hide-all)))
+   (arg (hs-hide-level arg))
+   (t (hs-toggle-hiding))))
+
+(with-eval-after-load 'hideshow
+  (keymap-set hs-minor-mode-map "s--" #'my-hs-toggle-hiding))
+#+end_src
+
 * Time optimization
 
 Time optimization mostly means less clanking on keyboard to save time
