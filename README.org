@@ -4867,8 +4867,7 @@ This can search files in subdirectories from everywhere:
 (add-hook 'project-find-functions 'project-any-transient t)
 
 ;; But don't remember transient projects:
-(define-advice project-remember-project (:before-until (pr &rest _) skip)
-  (eq (car pr) 'transient))
+(add-to-list 'project-list-exclude (lambda (pr) (eq (car pr) 'transient)))
 #+end_src
 
 ** Use recentf for default file names :noexport:
