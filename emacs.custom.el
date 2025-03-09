@@ -203,6 +203,7 @@
  '(mail-source-delete-incoming 30)
  '(mark-even-if-inactive nil)
  '(mark-ring-max 1024)
+ '(markdown-fontify-code-blocks-natively t)
  '(max-image-size 32.0 t)
  '(message-log-max t)
  '(message-send-mail-function 'smtpmail-send-it)

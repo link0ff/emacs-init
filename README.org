@@ -648,9 +648,12 @@ An example of the mode where heading highlighting could be enabled is
 (defun my-outline-minor-mode ()
   ;; Enable in modes with reasonable ‘outline-regexp’:
   (when (and (seq-some #'local-variable-p '(outline-search-function outline-regexp))
-             (not (derived-mode-p '(org-mode markdown-mode bash-ts-mode))))
+             (or (not (derived-mode-p '(org-mode markdown-mode)))
+                 (derived-mode-p '(markdown-ts-mode))))
     ;; Don't override major mode font-lock
-    (setq-local outline-minor-mode-highlight nil)
+    (setq-local outline-minor-mode-highlight
+                (when (derived-mode-p '(markdown-ts-mode))
+                  'override))
     (outline-minor-mode +1)))
 (add-hook 'find-file-hook 'my-outline-minor-mode)
 (add-hook 'apropos-mode-hook 'my-outline-minor-mode)
@@ -680,7 +683,9 @@ Also enable ~hs-minor-mode~ in treesit buffers:
 
 #+begin_src emacs-lisp
 (defun my-hs-minor-mode ()
-  (when (or (treesit-parser-list) (derived-mode-p '(emacs-lisp-mode)))
+  (when (or (and (treesit-parser-list)
+                 (treesit-thing-defined-p 'list nil))
+            (derived-mode-p '(emacs-lisp-mode)))
     (hs-minor-mode +1)))
 
 (add-hook 'find-file-hook 'my-hs-minor-mode)
@@ -994,6 +999,8 @@ Here's a short table of mappings:
                           (consp (get-text-property (point) 'face))
                           (memq 'org-block (get-text-property (point) 'face))))
                 (not (derived-mode-p '(vc-git-log-edit-mode)))
+                (not (derived-mode-p '(change-log-mode)))
+                (not (derived-mode-p '(message-mode)))
                 (not (derived-mode-p '(sgml-mode)))
                 (not (derived-mode-p '(yaml-mode)))
                 )
@@ -4059,8 +4066,8 @@ Configuration of ts-modes:
     (add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
     (add-to-list 'major-mode-remap-alist '(js-mode . js-ts-mode)))
   (when (treesit-ready-p 'json t)
-    (add-to-list 'major-mode-remap-alist '(json-mode . json-ts-mode)))
-  (when (and (treesit-ready-p 'javascript t) (treesit-ready-p 'json t))
+    (add-to-list 'major-mode-remap-alist '(js-json-mode . json-ts-mode)))
+  (when (and (treesit-ready-p 'javascript t) (not (treesit-ready-p 'json t)))
     (add-to-list 'major-mode-remap-alist '(js-json-mode . js-ts-mode)))
   ;; (when (treesit-ready-p 'typescript t)
   ;;   (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
