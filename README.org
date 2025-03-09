@@ -269,15 +269,16 @@ when after jumping point stays within current window bounds:
 #+begin_src emacs-lisp
 (define-advice beginning-of-defun (:around (ofun &rest args) recenter-top)
   (let ((w-s (window-start))
-        (w-e (window-end)))
-    (apply ofun args)
+        (w-e (window-end))
+        (ret (apply ofun args)))
     (when (and
            ;; Only when used interactively
            (eq this-command 'beginning-of-defun)
            ;; And only when jumping outside of window
            ;; to the center of the window
            (or (< (point) w-s) (> (point) w-e)))
-      (recenter-top))))
+      (recenter-top))
+    ret))
 #+end_src
 
 * Space optimization
