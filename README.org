@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2025-03-03
+#+DATE: 2025-03-30
 #+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2025  Juri Linkov <juri@linkov.net>/
@@ -2702,7 +2702,7 @@ Don't reuse existing diff buffers, and add more highlighting:
 (remove-hook 'vc-diff-finish-functions 'vc-shrink-buffer-window)
 (remove-hook 'vc-log-finish-functions 'vc-shrink-buffer-window)
 
-(define-generic-mode 'diff-generic-mode
+(define-generic-mode diff-generic-mode
   (list ?#)
   nil
   '(("^\\(<-? \\)" 1 'font-lock-keyword-face)
@@ -4579,6 +4579,13 @@ Posted to https://lists.gnu.org/archive/html/emacs-devel/2018-09/msg00716.html
 ;; (add-hook 'pre-redisplay-functions #'redisplay--update-mark-active-window)
 #+end_src
 
+** Fix delete-selection
+
+#+begin_src emacs-lisp
+(when delete-selection-mode
+  (put 'sgml-slash 'delete-selection t))
+#+end_src
+
 ** Fix outline-regexp
 
 By default, ~outline-regexp~ includes the page delimiter =^L=.
@@ -4799,8 +4806,8 @@ and using it in ~vc-git-diff~:
              (append (list (format "-O%s" vc-git-orderfile))
                      vc-git-diff-switches)))
         (unwind-protect
-	    (apply ofun args)
-	  (delete-file vc-git-orderfile)
+            (apply ofun args)
+          (delete-file vc-git-orderfile)
           (setq vc-git-orderfile nil)))
     (apply ofun args)))
 #+end_src

@@ -336,7 +336,7 @@ by doing (clear-string STRING)."
                   (t 3)))))))
 
 ;; add to generic-x, if not supported by cperl-mode.el
-(define-generic-mode 'pod-generic-mode
+(define-generic-mode pod-generic-mode
   nil
   nil
   '(("^=\\w+" 0 'font-lock-function-name-face))
@@ -623,8 +623,8 @@ Optional prefix ARG says how many lines to move; default is one line."
 (define-advice shell-command-sentinel (:after (process _signal) propertize-mode-line)
   (with-current-buffer (process-buffer process)
     (setq mode-line-process
-	  `(:propertize ,(format ":%s [%s]" "%s" (process-exit-status process))
-			face compilation-mode-line-fail))))
+          `(:propertize ,(format ":%s [%s]" "%s" (process-exit-status process))
+                        face compilation-mode-line-fail))))
 
 
 ;;; eshell
@@ -670,7 +670,7 @@ Optional prefix ARG says how many lines to move; default is one line."
 
 ;; renamed from `apache-log-generic-mode' (because not suitable for error_log)
 ;; and improved
-(define-generic-mode 'apache-access-log-generic-mode
+(define-generic-mode apache-access-log-generic-mode
   nil
   nil
   ;; remote-host remote-logname remote-user time request status bytes-sent referer user-agent
@@ -683,7 +683,7 @@ Optional prefix ARG says how many lines to move; default is one line."
   "Mode for Apache access log files")
 
 ;; added new
-(define-generic-mode 'apache-error-log-generic-mode
+(define-generic-mode apache-error-log-generic-mode
   nil
   nil
   ;; time error-severity IP-address
