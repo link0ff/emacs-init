@@ -2,7 +2,7 @@
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
 #+DATE: 2025-03-30
-#+Version: GNU Emacs 30.0.50 (x86_64-pc-linux-gnu)
+#+Version: GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2025  Juri Linkov <juri@linkov.net>/
 #+HTML_link_home: http://www.linkov.net/emacs
@@ -3494,9 +3494,6 @@ Pre-load some useful packages:
 (require 'wid-edit)
 (require 'generic)
 (require 'generic-x)
-;; Use standard js-mode instead of javascript-generic-mode from generic-x.
-(setq auto-mode-alist (delete (rassoc 'javascript-generic-mode auto-mode-alist)
-                              auto-mode-alist))
 
 ;; (and (require 'ffap) (ffap-bindings))
 ;; Don't bind ffap keybindings anymore, because now ‘C-x C-f M-n’

@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2023-08-31 for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2025-03-30 for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -863,7 +863,8 @@ With prefix arg, insert the current timestamp to the current buffer."
               (setq tab-width 2)
               (alchemist-mode 1))))
 
-(add-to-list 'auto-mode-alist '("\\.eex\\'" . html-erb-mode))
+;; Handled now by 'heex-ts-mode':
+;; (add-to-list 'auto-mode-alist '("\\.eex\\'" . html-erb-mode))
 
 (with-eval-after-load 'alchemist
   ;; (global-company-mode)
@@ -1008,16 +1009,19 @@ With prefix arg, insert the current timestamp to the current buffer."
 ;;; css
 
 ;; If there is no css-mode available already, use c-mode for .css files.
-(unless (rassoc 'css-mode auto-mode-alist)
-  (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
+;; Handled now by 'css-ts-mode':
+;; (unless (rassoc 'css-mode auto-mode-alist)
+;;   (add-to-list 'auto-mode-alist '("\\.css\\'" . c-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.less\\'" . css-mode))
 ;; 'scss-mode' was added to Emacs 25.1
 ;; (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
 ;; '.jsx' was added to auto-mode-alist in the new version of Emacs
 ;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-jsx-mode))
-(add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
+;; Handled now by 'typescript-ts-mode':
+;; (add-to-list 'auto-mode-alist '("\\.ts\\'" . js-mode))
+;; Handled now by 'tsx-ts-mode':
+;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-jsx-mode))
 (add-to-list 'auto-mode-alist '("\\.proto\\'" . conf-mode))
 
 
@@ -1411,10 +1415,10 @@ Example:
 ;;; dropbox
 
 ;; Don't make auto-saves and backups in the Dropbox directory:
-(when (boundp 'lock-file-name-transforms)
-  (add-to-list 'lock-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t)))
-(add-to-list 'auto-save-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
-(add-to-list 'backup-directory-alist '("\\`.*/Dropbox/.*" . "/tmp/"))
+;; (when (boundp 'lock-file-name-transforms)
+;;   (add-to-list 'lock-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t)))
+;; (add-to-list 'auto-save-file-name-transforms '("\\`.*/Dropbox/.*" "/tmp/" t))
+;; (add-to-list 'backup-directory-alist '("\\`.*/Dropbox/.*" . "/tmp/"))
 
 
 ;;; scroll-lock
@@ -1522,7 +1526,7 @@ Cancel the clock if called with C-u."
 ;;; outline-regexp: ";;;;* "
 ;;; eval: (add-hook 'before-save-hook 'time-stamp nil t)
 ;;; time-stamp-start: "Version: "
-;;; time-stamp-format: "%:y-%02m-%02d for GNU Emacs 28.0.50 (x86_64-pc-linux-gnu)"
+;;; time-stamp-format: "%Y-%02m-%02d for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)"
 ;;; time-stamp-end: "$"
 ;;; time-stamp-line-limit: 15
 ;;; End:
