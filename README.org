@@ -2614,16 +2614,17 @@ Enable Flyspell only when starting to edit the current buffer:
 
 #+begin_src emacs-lisp
 (defun my-enable-flyspell ()
-  (when (and (not flyspell-mode)
-             (not buffer-read-only)
-             (not (derived-mode-p '(special-mode)))
-             (derived-mode-p '( fundamental-mode
-                                prog-mode change-log-mode log-edit-mode
-                                text-mode org-mode markdown-mode))
-             ;; Don't enable in internal buffers
-             (not (string-match-p "\\` " (buffer-name)))
-             ;; Don't enable in hidden buffers
-             (eq (current-buffer) (window-buffer)))
+  (unless (or flyspell-mode                         ;; already enabled
+              (string-match-p "\\` " (buffer-name)) ;; internal buffers
+              buffer-read-only                      ;; some read-only
+              inhibit-read-only                     ;; briefly inhibited
+              (derived-mode-p '(special-mode))      ;; special buffers
+              ;; Enable in these modes:
+              (not (derived-mode-p '( fundamental-mode
+                                      prog-mode change-log-mode log-edit-mode
+                                      text-mode org-mode markdown-mode)))
+              ;; Don't enable in hidden buffers:
+              (not (eq (current-buffer) (window-buffer))))
     (if (derived-mode-p '(prog-mode))
         (flyspell-prog-mode)
       (flyspell-mode))))
@@ -2740,6 +2741,9 @@ Fix keybindings and run ~vc-dir~ in project root:
   ;; Because ‘C-x v =’ is easily mistyped as ‘C-x v +’
   (define-key vc-prefix-map "+" 'vc-diff)
   (define-key vc-prefix-map "S" 'vc-log-search)
+  ;; More mnemonic keys
+  (keymap-set vc-prefix-map "<down>" #'vc-pull)
+  (keymap-set vc-prefix-map "<up>" #'vc-push)
   ;; Unbind dangerous commands
   (define-key vc-prefix-map "u" nil))
 
@@ -3510,7 +3514,8 @@ Pre-load some useful packages:
 ** ee
 
 #+begin_src emacs-lisp
-(when (require 'ee-autoloads nil t)
+(when (let ((warning-inhibit-types '((files missing-lexbind-cookie))))
+        (require 'ee-autoloads nil t))
   (define-key global-map [f1] 'ee-info)
   ;; (define-key global-map [(super tab)] 'ee-buffers)
   ;; (define-key ctl-x-map [(control tab)] 'ee-buffers)
