@@ -1,4 +1,4 @@
-;;; custom
+;;; custom  -*- lexical-binding: t; -*-
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -318,8 +318,6 @@
  '(w3m-home-page "http://www.jurta.org/")
  '(w3m-key-binding 'info)
  '(w3m-view-this-url-new-session-in-background t)
- '(warning-suppress-log-types '((comp)))
- '(warning-suppress-types '((comp)))
  '(wget-debug t)
  '(what-cursor-show-names t)
  '(woman-use-own-frame nil)

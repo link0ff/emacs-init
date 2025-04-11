@@ -3192,15 +3192,16 @@ old log files:
         eol)))
 
 (defvar shell-log-font-lock-keywords
-  ;; ‘shell-prompt-pattern’ can't be used: it finds too many false matches
   `((,shell-log-regexp
      (1 'comint-highlight-prompt)
      (2 'comint-highlight-input))
-    (,(bound-and-true-p shell-prompt-pattern)
-     (0 'comint-highlight-prompt)))
+    ;; ‘shell-prompt-pattern’ can't be used: it finds too many false matches
+    ;; (,(bound-and-true-p shell-prompt-pattern)
+    ;;  (0 'comint-highlight-prompt))
+    )
   "Shell prompts to highlight in Shell Log mode.")
 
-(define-derived-mode shell-log-mode shell-mode "Shell-Log"
+(define-derived-mode shell-log-mode nil "Shell-Log"
   "Font-lock for shell logs."
   (put 'shell-log-mode 'mode-class nil)
   (setq-local font-lock-defaults '(shell-log-font-lock-keywords t)))
@@ -3561,7 +3562,9 @@ Pre-load some useful packages:
  org-src-fontify-natively t
  org-src-preserve-indentation t
  org-src-tab-acts-natively t
- org-src-window-setup 'split-window-below)
+ ;; Instead of using 'display-buffer-alist'
+ ;; to specify the location of the "Org Src" window:
+ org-src-window-setup 'current-window)
 
 ;; Unfortunately, Org window customization has no effect because
 ;; ‘display-buffer-alist’ is ignored in ‘org-no-popups’
