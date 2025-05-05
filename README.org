@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2025-03-30
+#+DATE: 2025-05-05
 #+Version: GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2025  Juri Linkov <juri@linkov.net>/
@@ -840,6 +840,14 @@ Below is an old implementation of the above:
 
 (defvar-local display-buffer-previous-window nil)
 
+;; Note that ‘display-buffer-from-grep-p’ can NOT be simplified to something like:
+;; (add-to-list 'display-buffer-alist
+;;              '((and (this-command . (compile-goto-error xref-goto-xref my-xref-goto-xref))
+;;                     (derived-mode . (compilation-mode xref--xref-buffer-mode)))
+;; 	       display-buffer-in-previous-window
+;; 	       ...))
+;; because it checks the derived more in the current buffer, not in the displayed buffer.
+
 (add-to-list 'display-buffer-alist
              '(display-buffer-from-grep-p
                display-buffer-in-previous-window
@@ -991,7 +999,8 @@ Here's a short table of mappings:
 #+begin_src emacs-lisp
 (defun use-fancy-quotes-p ()
   (and (memq (coding-system-base buffer-file-coding-system) '(utf-8 utf-8-emacs))
-       (or ;; (and comment-start (nth 4 (syntax-ppss)))
+       (or (and (string-match-p "Org Src" (buffer-name))
+                comment-start (nth 4 (syntax-ppss)))
            (and (derived-mode-p '(text-mode))
                 (not (and (derived-mode-p '(org-mode))
                           (consp (get-text-property (point) 'face))
@@ -1005,7 +1014,7 @@ Here's a short table of mappings:
            ;; (derived-mode-p '(fundamental-mode))
            )))
 
-;; Modify esc-map when not on a tty:
+;; Modify ‘esc-map’ when not on a tty:
 (when window-system
   ;; Insert paired characters (either ''/"" or ‘’/“” depending on mode)
   (define-key esc-map "\""
@@ -4433,18 +4442,13 @@ Show hidden outlines like isearch does:
 ** Fix xref
 
 #+begin_src emacs-lisp
-;; This supposes ‘display-buffer-alist’ to be customized to contain:
-;; '((display-buffer-to-xref-p display-buffer-maybe-below-selected) ...)
-(defun display-buffer-to-xref-p (buffer-name _action)
-  (and (stringp buffer-name)
-       (string-match-p "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
-                       buffer-name)
-       (memq this-command '(xref-find-definitions))))
-
+;; This is applicable only when ‘xref-show-definitions-function’
+;; is NOT customized to ‘xref-show-definitions-completing-read’.
 (add-to-list 'display-buffer-alist
-             '(display-buffer-to-xref-p
+             '((and "\\`\\*\\(xref\\)\\*\\(\\|<[0-9]+>\\)\\'"
+                    (this-command . xref-find-definitions))
                ;; TODO:
-               ;; display-buffer-maybe-below-selected
+               ;; ‘display-buffer-maybe-below-selected’
                display-buffer-in-direction
                (direction . below)
                (window-height . fit-window-to-buffer)))

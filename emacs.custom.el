@@ -326,7 +326,7 @@
  '(xref-search-program 'ripgrep)
  '(xref-search-program-alist
    '((ripgrep . "xargs -0 rg <C> --null -nH --sort path --no-heading --null --no-messages -g '!*/' -e <R>")))
- '(xref-show-definitions-function 'xref--show-defs-minibuffer)
+ '(xref-show-definitions-function 'xref-show-definitions-completing-read)
  '(xref-truncation-width 200)
  '(yank-excluded-properties t))
 (custom-set-faces
