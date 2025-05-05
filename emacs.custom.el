@@ -199,7 +199,7 @@
  '(load-prefer-newer t)
  '(log-edit-confirm t)
  '(log-edit-hook
-   '(log-edit-insert-changelog log-edit-insert-filenames-without-changelog))
+   '(log-edit-insert-changelog log-edit-insert-filenames-without-changelog log-edit-maybe-show-diff))
  '(ls-lisp-dirs-first t)
  '(mail-source-delete-incoming 30)
  '(mark-even-if-inactive nil)

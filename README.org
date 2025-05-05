@@ -651,9 +651,7 @@ An example of the mode where heading highlighting could be enabled is
              (or (not (derived-mode-p '(org-mode markdown-mode)))
                  (derived-mode-p '(markdown-ts-mode))))
     ;; Don't override major mode font-lock
-    (setq-local outline-minor-mode-highlight
-                (when (derived-mode-p '(markdown-ts-mode))
-                  'override))
+    (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
 (add-hook 'find-file-hook 'my-outline-minor-mode)
 (add-hook 'apropos-mode-hook 'my-outline-minor-mode)
@@ -2742,8 +2740,8 @@ Fix keybindings and run ~vc-dir~ in project root:
   (define-key vc-prefix-map "+" 'vc-diff)
   (define-key vc-prefix-map "S" 'vc-log-search)
   ;; More mnemonic keys
-  (keymap-set vc-prefix-map "<down>" #'vc-pull)
-  (keymap-set vc-prefix-map "<up>" #'vc-push)
+  ;; (keymap-set vc-prefix-map "<down>" #'vc-pull)
+  ;; (keymap-set vc-prefix-map "<up>" #'vc-push)
   ;; Unbind dangerous commands
   (define-key vc-prefix-map "u" nil))
 
@@ -3514,8 +3512,7 @@ Pre-load some useful packages:
 ** ee
 
 #+begin_src emacs-lisp
-(when (let ((warning-inhibit-types '((files missing-lexbind-cookie))))
-        (require 'ee-autoloads nil t))
+(when (require 'ee-autoloads nil t)
   (define-key global-map [f1] 'ee-info)
   ;; (define-key global-map [(super tab)] 'ee-buffers)
   ;; (define-key ctl-x-map [(control tab)] 'ee-buffers)
