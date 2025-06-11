@@ -2386,6 +2386,49 @@ Use the ~substring~ completion style for =C-x p f M-n= and =C-x v b l=:
   (keymap-set completion-preview-active-mode-map "C-w"    #'completion-preview-insert-word))
 #+end_src
 
+*** Multi-message echo area
+
+Extensions for message accumulation by ‘set-message-functions’:
+
+#+begin_src emacs-lisp
+(defun delete-duplicate-multi-messages (message)
+  "Uniq on the set of previous messages."
+  (setq multi-message-list
+        (seq-remove (lambda (m)
+                      ;; Alternative logic:
+                      ;; (equal (aref m 1) message)
+                      ;; Remove a message that is part of previous one
+                      ;; or vice versa when it's a superset.
+                      (or (string-search (aref m 1) message)
+                          (string-search message (aref m 1))))
+                    multi-message-list))
+  message)
+
+;; (defun inhibit-message-in-buffers (message)
+;;   (if (string-match-p "\\*Calendar\\*" (buffer-name)) t message))
+;; Instead of inhibiting messages, inhibit only multi-messages
+;; in certain buffers where resizing is undesirable:
+(defun set-multi-message-with-exceptions  (message)
+  (if (string-match-p "\\*Calendar\\*" (buffer-name))
+      message
+    (set-multi-message message)))
+
+(when (boundp 'set-message-functions)
+  (setq set-message-functions '( inhibit-message
+                                 delete-duplicate-multi-messages
+                                 set-multi-message-with-exceptions
+                                 set-minibuffer-message)))
+
+;; Inhibit some useless messages completely:
+(when (boundp 'inhibit-message-regexps)
+  (add-to-list 'inhibit-message-regexps "^Finding changes")
+  (add-to-list 'inhibit-message-regexps "^Saving")
+  (add-to-list 'inhibit-message-regexps "^Mark set$")
+  (add-to-list 'inhibit-message-regexps "^Mark saved where search started$")
+  (add-to-list 'inhibit-message-regexps "^Omit\\|omit)$")
+  (add-to-list 'inhibit-message-regexps "^Garbage collecting"))
+#+end_src
+
 ** Evaluable bookmarks
 
 #+begin_src emacs-lisp
