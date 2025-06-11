@@ -1,7 +1,7 @@
 #+TITLE: .emacs --- Emacs init file
 #+AUTHOR: Juri Linkov
 #+EMAIL: juri@linkov.net
-#+DATE: 2025-05-21
+#+DATE: 2025-06-11
 #+Version: GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 #+Keywords: dotemacs, init
 #+Copyright: (C) 1989-2025  Juri Linkov <juri@linkov.net>/
@@ -593,9 +593,9 @@ An example of the mode where heading highlighting could be enabled is
 ~dictionary-mode~ customized at the bottom of this file.
 
 #+begin_src emacs-lisp
-(setq-default
- outline-minor-mode-cycle t
- outline-minor-mode-highlight t)
+(setopt outline-minor-mode-cycle t)
+(setopt outline-minor-mode-highlight t)
+(setopt outline-minor-mode-cycle-filter (lambda () (bolp)))
 
 ;; It might be useful to use short keys only on headings.
 ;; This works only when ‘outline-minor-mode-cycle-filter’
@@ -1474,7 +1474,7 @@ Below is customization of different modes to support convenient navigation:
               ;; Some modes use own TAB keys at the beginning of the line,
               ;; such as e.g. ‘diff-mode’ where TAB goes to the next hunk,
               ;; so allow cycling when point is not at BOL:
-              (setq-local outline-minor-mode-cycle-filter '(lambda nil (not (bolp))))
+              (setq-local outline-minor-mode-cycle-filter (lambda () (not (bolp))))
               (setq-local outline-default-state 2
                           ;; TODO: maybe also add (match-regexp . "public/packs")
                           outline-default-rules '(subtree-has-long-lines)
@@ -2491,7 +2491,7 @@ Display triangle for outline of invisible lines
 
 #+begin_src emacs-lisp
 (defface my-ellipsis ;; like ‘hs-ellipsis’
-  '((t :height 0.80 :box (:line-width -1) :inherit default))
+  '((t :height 0.80 :box (:line-width -1)))
   "Face used for ellipsis.")
 
 (let* ((face (lsh (face-id 'my-ellipsis) 22)) ;; 22 was 19 in Emacs 22
@@ -2648,7 +2648,10 @@ Enable Flyspell only when starting to edit the current buffer:
 Other useful text-related settings:
 
 #+begin_src emacs-lisp
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'text-mode-hook
+          (lambda ()
+            (unless (memq major-mode '(markdown-mode markdown-ts-mode))
+              (turn-on-auto-fill))))
 (add-hook 'fill-nobreak-predicate 'fill-single-char-nobreak-p)
 ;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
 ;; (add-hook 'fill-nobreak-predicate 'fill-single-word-nobreak-p)
@@ -3119,7 +3122,7 @@ Override ~comint-delchar-or-maybe-eof~ on =C-d= in shell:
          (comint-delchar-or-maybe-eof arg))))
 
 (when delete-selection-mode
-  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede)
+  ;; (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede)
   (put 'my-shell-c-d 'delete-selection 'supersede))
 #+end_src
 
@@ -3478,8 +3481,8 @@ that highlights escape sequences emitted by many programs:
 ;; (setq-default comint-pager "cat | head -1000")
 ;; (setq-default comint-pager "cat | sed -e '1000a*** OUTPUT TRUNCATED ***' -e '1000q'")
 
-(when delete-selection-mode
-  (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
+;; (when delete-selection-mode
+;;   (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
 #+end_src
 
 * Used packages

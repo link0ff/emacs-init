@@ -306,6 +306,7 @@
  '(vc-bzr-status-switches nil)
  '(vc-command-messages 'log)
  '(vc-deduce-backend-nonvc-modes t)
+ '(vc-dir-hide-up-to-date-on-revert t)
  '(vc-display-status 'no-backend)
  '(vc-find-revision-no-save t)
  '(vc-git-diff-switches '("--diff-algorithm=patience"))
