@@ -4876,14 +4876,9 @@ directories saved in ‘~/.emacs.d/projects’.
       (when (featurep 'project)
         ;; Update project list with selected project dir
         (let ((default-directory ret))
+          ;; Uses ‘project-remember-project’
           (project-current)))
       ret)))
-
-(define-advice vc-dir (:after (dir &optional _backend) add-project)
-  (when (featurep 'project)
-    ;; Add current vc project dir to project list
-    (let ((default-directory dir))
-      (project-current))))
 #+end_src
 
 Add the default project command bound to the =RET= key,
