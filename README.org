@@ -1163,20 +1163,20 @@ Otherwise, kill characters backward until encountering the end of a word."
 A smart version if completion is bound to =TAB= in Lisp modes:
 
 #+begin_src emacs-lisp
-(defun my-lisp-indent-or-complete (&optional arg)
-  "Complete Lisp symbol, or indent line or region.
+(defun my-indent-or-complete (&optional arg)
+  "Complete symbol, or indent line or region.
 If the character preceding point is symbol-constituent, then perform
-completion on Lisp symbol preceding point using ‘lisp-complete-symbol’.
+completion on a symbol preceding point using ‘completion-at-point’.
 Otherwise, call ‘indent-for-tab-command’ that indents line or region."
   (interactive "P")
   (if (and (not (and transient-mark-mode mark-active
                      (not (eq (region-beginning) (region-end)))))
            (memq (char-syntax (preceding-char)) (list ?w ?_))
-           (not (bobp)))
+           (not (bolp)))
       (completion-at-point)
     (indent-for-tab-command arg)))
 
-(define-key emacs-lisp-mode-map (kbd "TAB") 'my-lisp-indent-or-complete)
+(define-key global-map "\t" 'my-indent-or-complete)
 #+end_src
 
 A smarter jumping to the beginning of the line:

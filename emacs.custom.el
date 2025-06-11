@@ -266,6 +266,7 @@
  '(repeat-keep-prefix t)
  '(require-final-newline t)
  '(revert-buffer-quick-short-answers t)
+ '(ring-bell-function 'flash-face-bell-function)
  '(ruby-insert-encoding-magic-comment nil)
  '(save-interprogram-paste-before-kill t)
  '(save-place-limit nil)
