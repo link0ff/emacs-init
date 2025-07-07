@@ -15,7 +15,6 @@
  '(async-shell-command-buffer 'confirm-rename-buffer)
  '(async-shell-command-display-buffer t)
  '(async-shell-command-width 222)
- '(auto-insert-mode t)
  '(battery-mode-line-format "[%b%p%%,%t]")
  '(bbdb-use-pop-up nil)
  '(bidi-paragraph-direction 'left-to-right)

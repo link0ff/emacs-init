@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2025-03-30 for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2025-06-28 for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -922,39 +922,40 @@ With prefix arg, insert the current timestamp to the current buffer."
             (setq sgml-xml-mode t)
             ))
 
-(defvar my-auto-insert-html-mode-language "en")
-(add-to-list
- 'auto-insert-alist
- '(html-mode
-   nil
-   (when (string-match "\\.\\([^.][^.]\\)\\.html$" buffer-file-name)
-     (setq my-auto-insert-html-mode-language
-           (match-string 1 buffer-file-name))
-     "")
-   ;; "<?xml version=\"1.0\" encoding=\""
-   ;; (if (equal my-auto-insert-html-mode-language "ru") "KOI8-R" "ISO-8859-1")
-   ;; "\"?>\n"
-   "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n"
-   "     \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
-   "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\""
-   my-auto-insert-html-mode-language "\" lang=\""
-   my-auto-insert-html-mode-language "\">\n"
-   "<head>\n"
-   "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="
-   (if (equal my-auto-insert-html-mode-language "ru") "koi8-r" "iso-8859-1")
-   "\" />\n"
-   "<meta http-equiv=\"Content-Language\" content=\""
-   my-auto-insert-html-mode-language "\" />\n"
-   "<meta name=\"description\" content=\"\" />\n"
-   "<meta name=\"keywords\" content=\"\" />\n"
-   "<title>" (capitalize (setq str (downcase (read-string "Title: ")))) "</title>\n"
-   "<link rel=\"stylesheet\" type=\"text/css\" href=\"/jurta.css\" />\n"
-   "</head>\n"
-   "<body>\n<h1><a name=\"" str "\" id=\"" str "\">" str "</a></h1>\n"
-   _
-   "\n"
-   "</body>\n"
-   "</html>\n"))
+(with-eval-after-load 'autoinsert
+  (defvar my-auto-insert-html-mode-language "en")
+  (add-to-list
+   'auto-insert-alist
+   '(html-mode
+     nil
+     (when (string-match "\\.\\([^.][^.]\\)\\.html$" buffer-file-name)
+       (setq my-auto-insert-html-mode-language
+             (match-string 1 buffer-file-name))
+       "")
+     ;; "<?xml version=\"1.0\" encoding=\""
+     ;; (if (equal my-auto-insert-html-mode-language "ru") "KOI8-R" "ISO-8859-1")
+     ;; "\"?>\n"
+     "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n"
+     "     \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
+     "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\""
+     my-auto-insert-html-mode-language "\" lang=\""
+     my-auto-insert-html-mode-language "\">\n"
+     "<head>\n"
+     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="
+     (if (equal my-auto-insert-html-mode-language "ru") "koi8-r" "iso-8859-1")
+     "\" />\n"
+     "<meta http-equiv=\"Content-Language\" content=\""
+     my-auto-insert-html-mode-language "\" />\n"
+     "<meta name=\"description\" content=\"\" />\n"
+     "<meta name=\"keywords\" content=\"\" />\n"
+     "<title>" (capitalize (setq str (downcase (read-string "Title: ")))) "</title>\n"
+     "<link rel=\"stylesheet\" type=\"text/css\" href=\"/jurta.css\" />\n"
+     "</head>\n"
+     "<body>\n<h1><a name=\"" str "\" id=\"" str "\">" str "</a></h1>\n"
+     _
+     "\n"
+     "</body>\n"
+     "</html>\n")))
 
 
 ;;; htmlize
