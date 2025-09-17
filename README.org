@@ -407,7 +407,7 @@ Too dangerous key =C-x t 1=:
           (lambda (_from-tab to-tab)
             ;; Pulse if not visited the tab for more than 10 minutes
             (when (> (- (float-time) (alist-get 'time to-tab)) 600)
-              (pulse-momentary-highlight-one-line))))
+              (pulse-momentary-highlight-current-line))))
 #+end_src
 
 In ~tab-line-mode~ use =C-x left= to go to the left tab
@@ -4805,6 +4805,34 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
                        face)
                      name))
                  '("violet" "turquoise" "deepskyblue" "greenyellow"))))
+#+end_src
+
+** Fix pulse
+
+This is based on ~pulse-momentary-highlight-one-line~
+with fixes explained in comments:
+
+#+begin_src emacs-lisp
+(defun pulse-momentary-highlight-current-line (&rest _)
+  (save-excursion
+    (let ((start (if (eobp)
+                     ;; Avoid empty overlay at eob:
+                     (progn (vertical-motion -1) (point))
+                   (progn (vertical-motion 0) (point))))
+          (end (progn (vertical-motion 1) (point))))
+      (let ((o (make-overlay start end)))
+        (overlay-put o 'pulse-delete t)
+        ;; Don't show it in another window of the same buffer:
+        (overlay-put o 'window (selected-window))
+        (pulse-momentary-highlight-overlay o)))))
+
+(add-hook 'window-buffer-change-functions #'pulse-momentary-highlight-current-line)
+(add-hook 'window-selection-change-functions #'pulse-momentary-highlight-current-line)
+
+(with-eval-after-load 'pulse
+  ;; Extend to eol for empty line and short lines:
+  (set-face-extend 'pulse-highlight-start-face t)
+  (set-face-extend 'pulse-highlight-face t))
 #+end_src
 
 ** Fix dired
