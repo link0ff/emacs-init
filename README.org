@@ -3526,8 +3526,22 @@ that highlights escape sequences emitted by many programs:
 ;; (setq-default comint-pager "cat | head -1000")
 ;; (setq-default comint-pager "cat | sed -e '1000a*** OUTPUT TRUNCATED ***' -e '1000q'")
 
+;; Since the default was removed from ‘normal-top-level’, here is the original content:
+;; Similarly, a subprocess should not try to invoke a pager, as most
+;; pagers will fail in a dumb terminal.  Many programs default to
+;; using "less" when PAGER is unset, so set PAGER to "cat"; using cat
+;; as a pager is equivalent to not using a pager at all.
+(when (executable-find "cat")
+  (setenv "PAGER" "cat"))
+
 ;; (when delete-selection-mode
 ;;   (put 'comint-delchar-or-maybe-eof 'delete-selection 'supersede))
+
+;; This should be in the default value:
+(add-hook 'comint-output-filter-functions 'comint-osc-process-output)
+(require 'ansi-color)
+(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+(add-hook 'compilation-filter-hook 'ansi-osc-compilation-filter)
 #+end_src
 
 * Used packages
