@@ -1125,23 +1125,6 @@ With prefix arg, insert the current timestamp to the current buffer."
         " ")))
     thumb-file))
 
-;; Allow image-mode to open WEBP images.
-;; After installing `sudo apt-get install webp`, the command
-;; `identify -list delegate` confirms it's supported:
-;; webp => "dwebp' -pam '%i' -o '%o"
-
-(when (boundp 'imagemagick-enabled-types)
-  (add-to-list 'imagemagick-enabled-types 'WEBP))
-
-(define-advice imagemagick-types (:around (ofun &rest args) add-webp)
-  (append (apply ofun args) '(WEBP)))
-
-(imagemagick-register-types)
-
-;; But what's BAD is that it writes to ~/.xsession-errors such info:
-;; Decoded /tmp/magick-2449whQo5ntkvXs3. Dimensions: 635 x 846 . Format: lossy. Now saving...
-;; Saved file /tmp/magick-2449WjsPHiXypqga
-
 
 ;;; thumbs
 
