@@ -55,6 +55,7 @@
       (styles substring))
      (unicode-name
       (group-p . t))))
+ '(completion-eager-update t)
  '(completion-preview-minimum-symbol-length 2)
  '(completion-show-help nil)
  '(completions-detailed t)
@@ -225,7 +226,6 @@
  '(mouse-avoidance-mode 'banish nil (avoid))
  '(mouse-highlight 1)
  '(mouse-prefer-closest-glyph t)
- '(mouse-select-region-move-to-beginning t)
  '(mouse-wheel-scroll-amount-horizontal 5)
  '(multi-isearch-pause nil)
  '(next-error-message-highlight 'keep)
@@ -294,7 +294,6 @@
  '(switch-to-buffer-preserve-window-point nil)
  '(tab-line-tab-face-functions nil)
  '(tar-mode-show-date t)
- '(temp-buffer-resize-mode t)
  '(thumbs-per-line 65536)
  '(thumbs-relief 0)
  '(tool-bar-style 'both-horiz)
