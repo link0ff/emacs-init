@@ -1747,6 +1747,10 @@ where the repeat key can be pressed after a long delay.
 (add-hook 'context-menu-functions 'dictionary-context-menu 15)
 #+end_src
 
+#+begin_src emacs-lisp
+(mouse-shift-adjust-mode +1)
+#+end_src
+
 * Useful features
 
 ** Copy/Paste
