@@ -22,6 +22,7 @@
  '(browse-url-firefox-new-window-is-tab t)
  '(browse-url-new-window-flag t)
  '(c-echo-syntactic-information-p t)
+ '(c-ts-mode-enable-doxygen t)
  '(calendar-date-display-form
    '((format "%04s-%02d-%02d" year
              (string-to-number month)
@@ -255,6 +256,7 @@
  '(project-kill-buffers-display-buffer-list t)
  '(project-mode-line t)
  '(project-prompter 'project-prompt-project-dir)
+ '(project-prune-zombie-projects '((list-first-read . always)))
  '(project-switch-commands 'project-prefix-or-any-command)
  '(rainbow-delimiters-max-face-count 5)
  '(read-char-by-name-sort 'code)
@@ -398,6 +400,7 @@
  '(mm-uu-extract ((t (:extend t :background "grey98"))))
  '(mode-line-buffer-id ((t nil)))
  '(next-error-message ((t (:extend t :background "#ffffbb"))))
+ '(nobreak-hyphen ((t (:foreground "red"))))
  '(org-agenda-diary ((t nil)))
  '(org-agenda-structure ((t (:background "#ddeeff"))))
  '(org-block ((t nil)))

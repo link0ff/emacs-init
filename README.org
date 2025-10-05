@@ -717,7 +717,7 @@ Holding the =S-s-= keys and typing arrow keys will move windows up/down, left/ri
 like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 #+begin_src emacs-lisp
-(setq-default
+(setopt
  windmove-default-keybindings '(nil super)
  windmove-display-default-keybindings '(nil super meta)
  windmove-delete-default-keybindings `(,(kbd "C-x") super)
@@ -739,7 +739,7 @@ horizontally, and two windows vertically, since I don't need more than two
 windows in a row:
 
 #+begin_src emacs-lisp
-(setq-default
+(setopt
  windmove-create-window t
  windmove-wrap-around t)
 #+end_src
@@ -1455,6 +1455,15 @@ Below is customization of different modes to support convenient navigation:
   ;; Also no need to set ‘view-inhibit-help-message’.
   (when (boundp 'inhibit-message-regexps)
     (add-to-list 'inhibit-message-regexps "^End of buffer")))
+
+(with-eval-after-load 'browse-url
+  (defun browse-url-keymap-filter (cmd)
+    (when (and buffer-read-only
+               ;; While scrolling with ‘RET’ (‘View-scroll-line-forward’) above
+               ;; don't allow ‘RET’ to visit an URL when it happen to be
+               ;; at the window's bottom line:
+               (pos-visible-in-window-p (line-beginning-position 2)))
+      cmd)))
 #+end_src
 
 *** diff
@@ -2695,7 +2704,7 @@ Other useful text-related settings:
 #+begin_src emacs-lisp
 (add-hook 'text-mode-hook
           (lambda ()
-            (unless (memq major-mode '(markdown-mode markdown-ts-mode))
+            (unless (derived-mode-p '(markdown-mode))
               (turn-on-auto-fill))))
 (add-hook 'fill-nobreak-predicate 'fill-single-char-nobreak-p)
 ;; (add-hook 'fill-nobreak-predicate 'fill-french-nobreak-p)
@@ -4153,6 +4162,18 @@ Customization of ts-modes:
                 ;; (setq-local treesit-font-lock-level 4)
                 ;; (treesit-font-lock-recompute-features)
                 (treesit-font-lock-recompute-features '() '(string))))))
+#+end_src
+
+Toggle the type of sexp navigation:
+
+#+begin_src emacs-lisp
+(keymap-global-set "s-=" #'treesit-cycle-sexp-thing)
+
+;; Or toggle in all ts-modes:
+;; (add-hook 'prog-mode-hook
+;;           (lambda ()
+;;             (when treesit-primary-parser
+;;               (treesit-cycle-sexp-thing))))
 #+end_src
 
 Show the output buffer of ~treesit-explore-mode~ below from the selected window:
