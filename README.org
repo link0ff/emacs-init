@@ -1467,14 +1467,14 @@ Below is customization of different modes to support convenient navigation:
   (when (boundp 'inhibit-message-regexps)
     (add-to-list 'inhibit-message-regexps "^End of buffer")))
 
-(with-eval-after-load 'browse-url
-  (defun browse-url-keymap-filter (cmd)
-    (when (and buffer-read-only
-               ;; While scrolling with ‘RET’ (‘View-scroll-line-forward’) above
-               ;; don't allow ‘RET’ to visit an URL when it happen to be
-               ;; at the window's bottom line:
-               (pos-visible-in-window-p (line-beginning-position 2)))
-      cmd)))
+;; Override the default definition:
+(defun keymap--read-only-filter (cmd)
+  (when (and buffer-read-only
+             ;; While scrolling with ‘RET’ (‘View-scroll-line-forward’) above
+             ;; don't allow ‘RET’ to visit an URL when it happen to be
+             ;; at the window's bottom line:
+             (pos-visible-in-window-p (line-beginning-position 2)))
+    cmd))
 #+end_src
 
 *** diff
@@ -2848,15 +2848,35 @@ Warning: uses Emacs regexps to highlight Git regexp — their syntax might diffe
       (vc-run-delayed
         (highlight-regexp pattern 'hi-yellow)))))
 
-(add-hook 'log-view-mode-hook
-          (lambda ()
-            (vc-run-delayed
-              (highlight-regexp "bug#" 'hi-yellow))))
+;; (add-hook 'log-view-mode-hook
+;;           (lambda ()
+;;             (vc-run-delayed
+;;               (highlight-regexp "bug#" 'hi-yellow))))
+
+(add-hook 'log-view-mode-hook 'bug-reference-mode)
+(add-hook 'log-view-mode-hook 'goto-address-mode)
+;; (add-hook 'log-view-mode-hook 'button-mode)
+
+(with-eval-after-load 'log-view
+  (keymap-set log-view-mode-map "TAB"
+              `(menu-item
+                "" log-view-msg-next
+                :filter ,(lambda (_cmd)
+                           (if (looking-at log-view-message-re)
+                               #'log-view-msg-next
+                             #'forward-button))))
+  (keymap-set log-view-mode-map "<backtab>" ;; "S-TAB"
+              `(menu-item
+                "" log-view-msg-prev
+                :filter ,(lambda (_cmd)
+                           (if (looking-at log-view-message-re)
+                               #'log-view-msg-prev
+                             #'backward-button)))))
 #+end_src
 
 At the top of the log buffer add an extra line that can be used
 as the region beginning for ~log-view-diff~ to compare revisions
-with the current working tree (bug#35860, bug#62940):
+with the current working tree (bug#35624, bug#35860, bug#62940):
 
 #+begin_src emacs-lisp
 (define-advice vc-git-print-log (:after (_files buffer &optional _shortlog _start-revision _limit) insert-top-line)
