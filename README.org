@@ -2430,8 +2430,9 @@ Extensions for message accumulation by ‘set-message-functions’:
 ;;   (if (string-match-p "\\*Calendar\\*" (buffer-name)) t message))
 ;; Instead of inhibiting messages, inhibit only multi-messages
 ;; in certain buffers where resizing is undesirable:
-(defun set-multi-message-with-exceptions  (message)
-  (if (string-match-p "\\*Calendar\\*" (buffer-name))
+(defun set-multi-message-with-exceptions (message)
+  (if (or (string-match-p "\\*Calendar\\*" (buffer-name))
+          (bound-and-true-p edebug-active))
       message
     (set-multi-message message)))
 
@@ -4214,7 +4215,7 @@ Emacs 28 provides the built-in package ~dictionary~, here is its customization:
                   ;; Try to get a copied word from the clipboard
                   (and (ignore-errors (current-kill 0))
                        (string-match-p "\\`[A-Za-z]+\n?\\'" (current-kill 0))
-                       (current-kill 0)))))
+                       (string-trim (current-kill 0))))))
     (when word
       (add-to-history 'dictionary-word-history word))
     (dictionary-search word)))
@@ -4784,9 +4785,9 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 #+begin_src emacs-lisp
 (setopt hi-lock-face-defaults
         (append
-         ;; Good-looking default faces
-         '("hi-yellow" "hi-pink" "hi-green" "hi-blue" "hi-salmon" "hi-aquamarine")
-         ;; Add more distinct faces
+         ;; Some default faces that are intense and vivid
+         '("hi-yellow" "hi-salmon" "hi-aquamarine")
+         ;; More faces with rich colors
          (mapcar (lambda (color)
                    ;; Substring from index 1 to remove any leading `#' in the name
                    (let* ((name (concat "hi-" (if (string-equal
@@ -4800,7 +4801,10 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
                        (set-face-background face color)
                        face)
                      name))
-                 '("violet" "turquoise" "deepskyblue" "greenyellow"))))
+                 '("violet" "turquoise" "deepskyblue" "greenyellow"))
+         ;; Remaining default faces that are too washed-out
+         ;; and too similar to diff/refined background colors
+         '("hi-pink" "hi-green" "hi-blue")))
 #+end_src
 
 ** Fix pulse
@@ -4809,6 +4813,7 @@ This is based on ~pulse-momentary-highlight-one-line~
 with fixes explained in comments:
 
 #+begin_src emacs-lisp
+(require 'pulse)
 (defun pulse-momentary-highlight-current-line (&rest _)
   (save-excursion
     (let ((start (if (eobp)
@@ -4822,8 +4827,8 @@ with fixes explained in comments:
         (overlay-put o 'window (selected-window))
         (pulse-momentary-highlight-overlay o)))))
 
-(add-hook 'window-buffer-change-functions #'pulse-momentary-highlight-current-line)
-(add-hook 'window-selection-change-functions #'pulse-momentary-highlight-current-line)
+;; (add-hook 'window-buffer-change-functions #'pulse-momentary-highlight-current-line)
+;; (add-hook 'window-selection-change-functions #'pulse-momentary-highlight-current-line)
 
 (with-eval-after-load 'pulse
   ;; Extend to eol for empty line and short lines:
