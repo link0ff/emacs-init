@@ -180,8 +180,10 @@ use it where possible in hooks that display a new location:
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
   (unless (pos-visible-in-window-p)
-    (if (derived-mode-p '( fundamental-mode dired-mode Man-mode
-                           markdown-mode conf-mode mail-archives-mode))
+    (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode
+                               markdown-mode conf-mode mail-archives-mode))
+            ;; `reposition-window' on a newly visited file takes too much time
+            (not (get-text-property (point) 'fontified)))
         (recenter-top)
       (reposition-window))))
 
@@ -639,13 +641,16 @@ An example of the mode where heading highlighting could be enabled is
 (keymap-set outline-overlay-button-map "\\" #'outline-hide-leaves)
 (keymap-set outline-overlay-button-map "/ s" #'outline-show-by-heading-regexp)
 (keymap-set outline-overlay-button-map "/ h" #'outline-hide-by-heading-regexp)
+;; (keymap-set outline-inserted-button-map "/ s" #'outline-show-by-heading-regexp)
+;; (keymap-set outline-inserted-button-map "/ h" #'outline-hide-by-heading-regexp)
 #+end_src
 
 #+begin_src emacs-lisp
 (defun my-outline-minor-mode ()
   ;; Enable in modes with reasonable ‘outline-regexp’:
   (when (and (seq-some #'local-variable-p '(outline-search-function outline-regexp))
-             (or (not (derived-mode-p '(org-mode markdown-mode)))
+             (not (string-match-p "\\.h\\'" (buffer-name)))
+             (or (not (derived-mode-p '(org-mode markdown-mode liquid-generic-ts-mode))) ; liquid only for big files
                  (derived-mode-p '(markdown-ts-mode))))
     ;; Don't override major mode font-lock
     (setq-local outline-minor-mode-highlight nil)
@@ -662,7 +667,10 @@ Also enable cycling on filename headings in ‘*xref*’ buffers:
           (lambda ()
             (setq-local outline-minor-mode-highlight nil
                         outline-default-state 1
-                        outline-default-rules '((match-regexp . "ChangeLog\\|test/manual/etags")))
+                        outline-default-rules '((match-regexp . "ChangeLog\\|test/manual/etags"))
+                        outline-minor-mode-cycle-filter nil)
+            ;; Already enabled by default in ‘xref--xref-buffer-mode’,
+            ;; but need to re-apply the settings above.
             (outline-minor-mode +1)))
 #+end_src
 
@@ -679,11 +687,14 @@ Also enable ~hs-minor-mode~ in treesit buffers:
 #+begin_src emacs-lisp
 (defun my-hs-minor-mode ()
   (when (or (and (treesit-parser-list)
-                 (treesit-thing-defined-p 'list nil))
+                 (treesit-thing-defined-p 'list nil)
+                 (not (derived-mode-p '(liquid-generic-ts-mode)))) ; liquid only for big files
             (derived-mode-p '(emacs-lisp-mode)))
     (hs-minor-mode +1)))
 
-(add-hook 'find-file-hook 'my-hs-minor-mode)
+;; Moving this hook to end changes the order of overlays,
+;; but not order of indicators in margins:
+(add-hook 'find-file-hook 'my-hs-minor-mode 90)
 
 (defun my-hs-toggle-hiding (&optional arg)
   (interactive "P")
@@ -1173,7 +1184,7 @@ Otherwise, call ‘indent-for-tab-command’ that indents line or region."
       (completion-at-point)
     (indent-for-tab-command arg)))
 
-(define-key global-map "\t" 'my-indent-or-complete)
+(keymap-set global-map "TAB" #'my-indent-or-complete)
 #+end_src
 
 A smarter jumping to the beginning of the line:
@@ -1870,7 +1881,7 @@ the same screen state that was before.
                    (not (bound-and-true-p follow-mode)))
           ;; reposition-window takes too much time in large buffers
           (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode org-mode
-                                     markdown-mode conf-mode sh-mode bash-ts-mode))
+                                     markdown-mode conf-mode sh-mode bash-ts-mode c-ts-mode))
                   (> (buffer-size) 1000000))
               (recenter-top)
             (condition-case nil
