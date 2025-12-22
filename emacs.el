@@ -5,7 +5,7 @@
 ;; Author: Juri Linkov <juri@linkov.net>
 ;; Keywords: dotemacs, init
 ;; URL: <http://www.linkov.net/emacs>
-;; Version: 2025-06-28 for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
+;; Version: 2025-12-22 for GNU Emacs 31.0.50 (x86_64-pc-linux-gnu)
 
 
 ;; This file now contains semi-obsolete settings.
@@ -1000,9 +1000,14 @@ With prefix arg, insert the current timestamp to the current buffer."
                           (flymake-mode (if view-mode -1 1)))
                         nil t))))
 
-(with-eval-after-load 'flymake
-  (define-key flymake-mode-map [left-fringe mouse-1]
-    'flymake-show-diagnostics-buffer))
+;; FIXED IN flymake.el:
+;; (with-eval-after-load 'flymake
+;;   (define-key flymake-mode-map [left-fringe mouse-1]
+;;               #'flymake-show-buffer-diagnostics))
+
+(with-eval-after-load 'eglot
+  (define-key eglot-diagnostics-map [mouse-1]
+              #'eglot-code-actions-at-mouse))
 
 (add-to-list 'auto-mode-alist '("\\.slang\\'" . slim-mode)) ; for Crystal/Amber
 

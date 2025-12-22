@@ -2862,14 +2862,20 @@ Warning: uses Emacs regexps to highlight Git regexp — their syntax might diffe
               `(menu-item
                 "" log-view-msg-next
                 :filter ,(lambda (_cmd)
-                           (if (looking-at log-view-message-re)
+                           (if (or (save-excursion
+                                     (goto-char (pos-bol))
+                                     (looking-at log-view-message-re))
+                                   (bobp))
                                #'log-view-msg-next
                              #'forward-button))))
   (keymap-set log-view-mode-map "<backtab>" ;; "S-TAB"
               `(menu-item
                 "" log-view-msg-prev
                 :filter ,(lambda (_cmd)
-                           (if (looking-at log-view-message-re)
+                           (if (or (save-excursion
+                                     (goto-char (pos-bol))
+                                     (looking-at log-view-message-re))
+                                   (bobp))
                                #'log-view-msg-prev
                              #'backward-button)))))
 #+end_src
