@@ -5003,10 +5003,36 @@ This can search files in subdirectories from everywhere:
 (defun project-any-transient (dir)
   (when (memq this-command '(project-find-regexp))
     `(transient . ,dir)))
-(add-hook 'project-find-functions 'project-any-transient t)
+(add-hook 'project-find-functions 'project-any-transient 20)
 
 ;; But don't remember transient projects:
 (add-to-list 'project-list-exclude (lambda (pr) (eq (car pr) 'transient)))
+#+end_src
+
+Also exclude remote projects from remembering:
+
+#+begin_src emacs-lisp
+(add-to-list 'project-list-exclude
+             (lambda (pr)
+               (and (eq (nth 0 pr) 'vc)
+                    (file-remote-p (nth 2 pr)))))
+#+end_src
+
+Also don't check remote dirs for project roots:
+
+#+begin_src emacs-lisp
+(defun project-disable-remote (dir)
+  (when (file-remote-p dir)
+    ;; Unfortunately, this writes log message: "Cannot access file or directory".
+    (signal 'permission-denied (list (format "Remote projects disabled in %S" dir)))))
+(add-hook 'project-find-functions 'project-disable-remote -20)
+#+end_src
+
+The setting above allows using project uniquification
+and disable it on remote dirs:
+
+#+begin_src emacs-lisp
+(setopt uniquify-dirname-transform #'project-uniquify-dirname-transform)
 #+end_src
 
 ** Use recentf for default file names :noexport:

@@ -46,6 +46,7 @@
  '(compilation-environment '("LANG=C" "TERM=dumb"))
  '(compilation-scroll-output 'first-error)
  '(compile-command "make")
+ '(completion-auto-help 'visible)
  '(completion-auto-select 'second-tab)
  '(completion-category-overrides
    '((buffer
@@ -266,7 +267,7 @@
  '(project-file-history-behavior 'relativize)
  '(project-kill-buffer-conditions '(buffer-file-name))
  '(project-kill-buffers-display-buffer-list t)
- '(project-mode-line t)
+ '(project-mode-line 'non-remote)
  '(project-prompter 'project-prompt-project-dir)
  '(project-prune-zombie-projects '((list-first-read . always)))
  '(project-switch-commands 'project-prefix-or-any-command)
