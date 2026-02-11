@@ -179,13 +179,15 @@ use it where possible in hooks that display a new location:
 #+begin_src emacs-lisp
 (defun my-reposition-window ()
   "Override default command that doesn't handle some modes."
-  (unless (pos-visible-in-window-p)
-    (if (or (derived-mode-p '( fundamental-mode dired-mode Man-mode
+  ;; `reposition-window' on a newly visited file takes too much time,
+  ;; and even `pos-visible-in-window-p' causes `jit-lock' calls.
+  (if (get-text-property (point) 'fontified)
+      (unless (pos-visible-in-window-p)
+        (if (derived-mode-p '( fundamental-mode dired-mode Man-mode
                                markdown-mode conf-mode mail-archives-mode))
-            ;; `reposition-window' on a newly visited file takes too much time
-            (not (get-text-property (point) 'fontified)))
-        (recenter-top)
-      (reposition-window))))
+            (recenter-top)
+          (reposition-window)))
+    (recenter-top)))
 
 (add-hook 'next-error-hook 'my-reposition-window)
 (add-hook 'find-function-after-hook 'my-reposition-window)
@@ -1277,12 +1279,12 @@ files one by one in a Dired buffer, or from a menu of links to Info nodes, etc.
 (defun my-find-thing-at-point (&optional arg)
   "Find variable, function or file at point."
   (interactive "P")
-  (cond ((not (eq (variable-at-point) 0))
+  (cond ((thing-at-point 'url)
+         (browse-url (thing-at-point 'url) arg))
+        ((not (eq (variable-at-point) 0))
          (call-interactively 'describe-variable))
         ((function-called-at-point)
          (call-interactively 'describe-function))
-        ((thing-at-point 'url)
-         (browse-url (thing-at-point 'url) arg))
         (t (find-file-at-point))))
 
 (define-key global-map [(meta left)]  'my-go-back)
@@ -2705,9 +2707,14 @@ Enable Flyspell only when starting to edit the current buffer:
                                       text-mode org-mode markdown-mode)))
               ;; Don't enable in hidden buffers:
               (not (eq (current-buffer) (window-buffer))))
-    (if (derived-mode-p '(prog-mode))
-        (flyspell-prog-mode)
-      (flyspell-mode))))
+    ;; Postpone to not redisplay in the middle of the existing redisplay
+    (letrec ((postfun
+              (lambda ()
+                (if (derived-mode-p '(prog-mode))
+                    (flyspell-prog-mode)
+                  (flyspell-mode))
+                (remove-hook 'post-command-hook postfun))))
+      (add-hook 'post-command-hook postfun))))
 (add-hook 'first-change-hook 'my-enable-flyspell)
 
 ;; Don't save this minor mode to the desktop
@@ -2753,6 +2760,15 @@ to ~emacs-lisp-mode~ by the file extension ‘.el’ in the buffer name.
 
 Note that this has some problems, e.g. in ‘autoinsert.el’ that uses
 ~(eq major-mode (default-value 'major-mode))~.
+
+** xml
+
+Some XML files don't begin with mandatory ~<?xml version="1.0"?>~,
+so add more heuristics:
+
+#+begin_src emacs-lisp
+(push '("<[-[:alnum:]]+ xmlns=" . xml-mode) magic-fallback-mode-alist)
+#+end_src
 
 ** diff
 
@@ -3330,11 +3346,12 @@ old log files:
                        'compilation-mode)
                       ((re-search-forward shell-log-regexp nil t)
                        'shell-log-mode)
-                      ((re-search-forward (replace-regexp-in-string
-                                           "[#>]" ""
-                                           shell-prompt-pattern)
-                                          nil t)
-                       'shell-mode)))))
+                      ;; ((re-search-forward (replace-regexp-in-string
+                      ;;                      "[#>]" ""
+                      ;;                      shell-prompt-pattern)
+                      ;;                     nil t)
+                      ;;  'shell-mode)
+                      (t 'shell-log-mode)))))
     (when mode (funcall mode))))
 
 (add-to-list 'auto-mode-alist '("\\.log\\'" . shell-log-or-compilation-mode))
@@ -3595,6 +3612,16 @@ that highlights escape sequences emitted by many programs:
 (add-hook 'compilation-filter-hook 'ansi-osc-compilation-filter)
 #+end_src
 
+** custom
+
+Move point to the editable field in the Customization buffer (bug#80218):
+
+#+begin_src emacs-lisp
+(define-advice custom-buffer-create-internal (:after (&rest _args) navigate)
+  (when (search-forward "Hide" nil t)
+    (widget-forward 1)))
+#+end_src
+
 * Used packages
 
 #+begin_src emacs-lisp
@@ -3838,7 +3865,8 @@ Run Gnus:
   (interactive)
   (if (buffer-live-p (get-buffer "*Group*"))
       (pop-to-buffer-same-window (get-buffer "*Group*"))
-    (gnus)))
+    (let ((default-directory installation-directory))
+      (gnus))))
 
 (define-key my-map "g" 'my-gnus)
 ;; (define-key my-map "g" (lambda () (gnus 3)))
@@ -3940,6 +3968,10 @@ Gnus Summary buffers:
               (setq-local line-number-mode nil)
               (setq-local column-number-mode nil)))
 
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              ;; Don't split the narrow Summary buffer
+              (setq-local window-size-fixed t)))
 
   ;; Zebra stripes for the summary buffer
   ;; (from http://www.emacswiki.org/cgi-bin/wiki/StripesMode)
