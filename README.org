@@ -656,6 +656,7 @@ An example of the mode where heading highlighting could be enabled is
     (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
 (add-hook 'find-file-hook 'my-outline-minor-mode)
+(add-hook 'archive-extract-hook 'my-outline-minor-mode)
 (add-hook 'apropos-mode-hook 'my-outline-minor-mode)
 (add-hook 'shortdoc-mode-hook 'my-outline-minor-mode)
 #+end_src
@@ -694,7 +695,8 @@ Also enable ~hs-minor-mode~ in treesit buffers:
 
 ;; Moving this hook to end changes the order of overlays,
 ;; but not order of indicators in margins:
-(add-hook 'find-file-hook 'my-hs-minor-mode 90)
+(add-hook 'find-file-hook 'my-hs-minor-mode) ;; 90
+(add-hook 'archive-extract-hook 'my-hs-minor-mode)
 
 (defun my-hs-toggle-hiding (&optional arg)
   (interactive "P")
@@ -1853,6 +1855,8 @@ go to the previous/next matches:
 #+begin_src emacs-lisp
 (put 'previous-line 'isearch-motion '(left-char . backward))
 (put 'next-line 'isearch-motion '(right-char . forward))
+(put 'archive-previous-line 'isearch-motion '(left-char . backward))
+(put 'archive-next-line 'isearch-motion '(right-char . forward))
 ;; (put 'previous-line 'isearch-motion '((lambda () (forward-line 0)) . backward))
 ;; (put 'next-line 'isearch-motion '(forward-line . forward))
 ;; (put 'left-char 'isearch-motion '(left-char . backward))
