@@ -3905,13 +3905,8 @@ Gnus Group buffer:
 Gnus Summary buffers:
 
 #+begin_src emacs-lisp
-;; Gnus breaks windows when reply is used in Summary, so switch to Article:
-(defun my-gnus-reply ()
-  (interactive)
-  (gnus-summary-select-article-buffer)
-  (let ((buf (current-buffer)))
-    (gnus-summary-wide-reply-with-original nil)
-    (set-window-start (get-buffer-window buf) 1)))
+(define-advice gnus-summary-wide-reply-with-original (:after (&rest _args) show-window-start)
+  (set-window-start nil 1))
 
 (with-eval-after-load 'gnus-sum
   (add-hook 'gnus-summary-exit-hook 'quit-window)
@@ -3934,8 +3929,8 @@ Gnus Summary buffers:
   ;; (define-key gnus-summary-mode-map "!" 'my-gnus-summary-tick-article-forward)
   ;; Commented out because sometimes I mistype "r" without the Shift key:
   ;; (define-key gnus-summary-mode-map "r" 'gnus-summary-reply-with-original)
-  (define-key gnus-summary-mode-map "r" 'my-gnus-reply)
-  (define-key gnus-summary-mode-map "R" 'my-gnus-reply)
+  (define-key gnus-summary-mode-map "r" 'gnus-summary-wide-reply-with-original)
+  (define-key gnus-summary-mode-map "R" 'gnus-summary-wide-reply-with-original)
 
   ;; Use standard keybinding instead of stupid ‘gnus-summary-show-thread’
   (define-key gnus-summary-mode-map "\M-\C-s" 'isearch-forward-regexp)
