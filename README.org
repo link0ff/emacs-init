@@ -2906,7 +2906,7 @@ with the current working tree (bug#35624, bug#35860, bug#62940):
 
 #+begin_src emacs-lisp
 (define-advice vc-git-print-log (:after (_files buffer &optional _shortlog _start-revision _limit) insert-top-line)
-  (when (and (memq vc-log-view-type '(long short))
+  (when (and (seq-intersection vc-log-view-types '(long short))
              (not (memq this-command '(vc-print-branch-log))))
     ;; For '(add-hook 'log-view-mode-hook 'rename-uniquely)'
     (setq buffer (get-buffer buffer))
@@ -3614,7 +3614,8 @@ that highlights escape sequences emitted by many programs:
 
 ** custom
 
-Move point to the editable field in the Customization buffer (bug#80218):
+Move point to the editable field in the Customization buffer (bug#80218).
+In Emacs 31 a new command ~Custom-goto-first-choice~ (=C-c C-i=) does the same:
 
 #+begin_src emacs-lisp
 (define-advice custom-buffer-create-internal (:after (&rest _args) navigate)
