@@ -732,10 +732,11 @@ Holding the =S-s-= keys and typing arrow keys will move windows up/down, left/ri
 like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 #+begin_src emacs-lisp
+(require 'windmove)
 (setopt
  windmove-default-keybindings '(nil super)
  windmove-display-default-keybindings '(nil super meta)
- windmove-delete-default-keybindings `(,(kbd "C-x") super)
+ windmove-delete-default-keybindings `(,(kbd "C-x") super) ;; '([?\C-x] super)
  windmove-swap-states-default-keybindings '(nil shift super))
 ;; (require 'windmove)
 (windmove-mode)
@@ -3615,7 +3616,7 @@ that highlights escape sequences emitted by many programs:
 ** custom
 
 Move point to the editable field in the Customization buffer (bug#80218).
-In Emacs 31 a new command ~Custom-goto-first-choice~ (=C-c C-i=) does the same:
+In Emacs 31 a new command ~Custom-goto-first-choice~ (=C-c TAB=) does the same:
 
 #+begin_src emacs-lisp
 (define-advice custom-buffer-create-internal (:after (&rest _args) navigate)
@@ -3829,7 +3830,13 @@ Fix keys broken by ~markdown-mode~:
               ;; Revert disabling spell-check in comments
               (kill-local-variable 'flyspell-generic-check-word-predicate)))
   (when delete-selection-mode
-    (put 'markdown-enter-key 'delete-selection t)))
+    (put 'markdown-enter-key 'delete-selection t))
+  ;; Fix ‘C-c C-u’:
+  (defun markdown-outline-up ()
+    "Move to previous list item, when in a list, or previous heading."
+    (interactive)
+    (unless (markdown-up-list)
+      (markdown-up-heading (if (markdown-on-heading-p) 1 0)))))
 #+end_src
 
 ** gnus
@@ -4547,6 +4554,9 @@ Show hidden outlines like isearch does:
 
 ** Fix xref
 
+(In Emacs 31, xrefs are displayed with the category ‘xref-jump’
+that may be obsoleted the configuration below.)
+
 #+begin_src emacs-lisp
 ;; This is applicable only when ‘xref-show-definitions-function’
 ;; is NOT customized to ‘xref-show-definitions-completing-read’.
@@ -4841,6 +4851,7 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 ** Add more hi-lock faces
 
 #+begin_src emacs-lisp
+(require 'hi-lock)
 (setopt hi-lock-face-defaults
         (append
          ;; Some default faces that are intense and vivid
