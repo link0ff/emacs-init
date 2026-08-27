@@ -3815,11 +3815,34 @@ Fix keys broken by ~markdown-mode~:
   (face-spec-set 'markdown-blockquote-face '((t (:inherit italic))))
   (face-spec-set 'markdown-code-face '((t (:background "grey95"))))
   (face-spec-set 'markdown-table-face '((t (:inherit italic))))
+  ;; Use outline-like keys for navigation
+  (bind-keys
+   :map markdown-mode-map
+   ("C-c <up>" . markdown-outline-previous)
+   ("C-c <down>" . markdown-outline-next)
+   :repeat-map markdown-mode-repeat-map
+   ("<up>" . markdown-outline-previous)
+   ("<down>" . markdown-outline-next))
   ;; Revert hijacked keys to their original bindings
   (unbind-key "C-c <left>" markdown-mode-map)
   (unbind-key "C-c <right>" markdown-mode-map)
   (define-key markdown-mode-map [remap backward-paragraph] nil)
   (define-key markdown-mode-map [remap forward-paragraph] nil)
+  ;; There is a bug where ‘uncomment-region’ hangs up
+  ;; on multi-line HTML comments in markdown-mode.
+  ;; So let-bind ‘comment-style’ to ‘multi-line’ only
+  ;; for ‘comment-region’, but not ‘uncomment-region’.
+  (keymap-set markdown-mode-map "M-;"
+              (lambda (arg)
+                (interactive "*P")
+                (comment-normalize-vars)
+                (if (and (use-region-p)
+                         (not (comment-only-p (region-beginning)
+                                              (region-end))))
+                    (let ((comment-style 'multi-line) ;; 'extra-line
+                          (comment-continue ""))
+                      (call-interactively 'comment-dwim))
+                  (call-interactively 'comment-dwim))))
   (add-hook 'markdown-mode-hook
             (lambda ()
               ;; This overrides ‘markdown-line-break-face’:
@@ -3827,9 +3850,11 @@ Fix keys broken by ~markdown-mode~:
               ;; Fix paragraph navigation
               (setq-local paragraph-start (default-value 'paragraph-start))
               (setq-local paragraph-separate (default-value 'paragraph-separate))
-              ;; Allow multi-line comments
-              (setq-local comment-style 'multi-line ;; 'extra-line
-                          comment-continue "")
+              ;; We can't use multi-line comments because this setting
+              ;; conflicts with narrowing by ‘uncomment-region’.
+              ;; So let's use own version of ‘comment-dwim’ above.
+              ;; (setq-local comment-style 'multi-line ;; 'extra-line
+              ;;             comment-continue "")
               ;; Revert disabling spell-check in comments
               (kill-local-variable 'flyspell-generic-check-word-predicate)))
   (when delete-selection-mode
