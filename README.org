@@ -681,8 +681,12 @@ Also use Org-like =C-c C-o= to open external links:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'goto-addr
-  (define-key goto-address-highlight-keymap
-              (kbd "C-c C-o") #'goto-address-at-point))
+  (keymap-set goto-address-highlight-keymap "C-c C-o" #'goto-address-at-point)
+  ;; But can't suggest to use the below keys for button navigation
+  ;; because often the rest of the buffer is not yet fontified,
+  ;; so other buttons might not be found.
+  (keymap-set goto-address-highlight-keymap "C-c TAB" #'forward-button)
+  (keymap-set goto-address-highlight-keymap "C-c <backtab>" #'backward-button))
 #+end_src
 
 Also enable ~hs-minor-mode~ in treesit buffers:
@@ -732,11 +736,10 @@ Holding the =S-s-= keys and typing arrow keys will move windows up/down, left/ri
 like tiles in the [[https://en.wikipedia.org/wiki/15_puzzle][15-puzzle]]:
 
 #+begin_src emacs-lisp
-(require 'windmove)
 (setopt
  windmove-default-keybindings '(nil super)
  windmove-display-default-keybindings '(nil super meta)
- windmove-delete-default-keybindings `(,(kbd "C-x") super) ;; '([?\C-x] super)
+ windmove-delete-default-keybindings `(,(kbd "C-x") super)
  windmove-swap-states-default-keybindings '(nil shift super))
 ;; (require 'windmove)
 (windmove-mode)
@@ -1722,9 +1725,9 @@ Like standard Emacs 22 commands (bound to =M-g n/p=):
 (define-key global-map [(control shift f12)] 'compilation-next-file)
 #+end_src
 
-Easier-to-type grep invocations:
+Easier-to-type grep invocations (currently unused):
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (define-key goto-map "re" 'grep)
 (define-key goto-map "rr" 'rgrep)
 (define-key goto-map "rl" 'lgrep)
@@ -4851,7 +4854,6 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 ** Add more hi-lock faces
 
 #+begin_src emacs-lisp
-(require 'hi-lock)
 (setopt hi-lock-face-defaults
         (append
          ;; Some default faces that are intense and vivid
