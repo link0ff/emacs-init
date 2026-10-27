@@ -653,7 +653,8 @@ An example of the mode where heading highlighting could be enabled is
   (when (and (seq-some #'local-variable-p '(outline-search-function outline-regexp))
              (not (string-match-p "\\.h\\'" (buffer-name)))
              (or (not (derived-mode-p '(org-mode markdown-mode liquid-generic-ts-mode))) ; liquid only for big files
-                 (derived-mode-p '(markdown-ts-mode))))
+                 ;; Enable only for margin indicators:
+                 (derived-mode-p '(markdown-mode markdown-ts-mode))))
     ;; Don't override major mode font-lock
     (setq-local outline-minor-mode-highlight nil)
     (outline-minor-mode +1)))
@@ -2709,6 +2710,14 @@ Enable Flyspell only when starting to edit the current buffer:
               (not (derived-mode-p '( fundamental-mode
                                       prog-mode change-log-mode log-edit-mode
                                       text-mode org-mode markdown-mode)))
+              ;; ‘flyspell-mode’ interacts badly with ‘gud-mode’.
+              ;; After typing RET in GUD, flyspell's post-command-hook
+              ;; moves point to the previous prompt.  But can't disable
+              ;; by derived-mode because at the time this function is called
+              ;; the mode is still fundamental-mode.  The same for Gnus buffers.
+              (string-match-p
+               (rx bos "*" (or "Group" (and "gud-" (+ (any "a-z0-9")))) "*" eos)
+               (buffer-name))
               ;; Don't enable in hidden buffers:
               (not (eq (current-buffer) (window-buffer))))
     ;; Postpone to not redisplay in the middle of the existing redisplay
