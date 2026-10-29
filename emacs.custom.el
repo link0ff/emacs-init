@@ -368,8 +368,8 @@
                (expand-file-name "themes/" (file-name-directory
                                             load-file-name))))
 
-(load-theme 'jeanne-darc t t)
-(load-theme 'jeanne-light t t)
+(load-theme 'jeanne-darc nil t)
+(load-theme 'jeanne-light nil t)
 (add-hook 'desktop-after-read-hook
           (lambda ()
             (enable-theme (if (eq (frame-parameter nil 'background-mode)

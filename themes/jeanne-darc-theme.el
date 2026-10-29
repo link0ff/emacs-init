@@ -17,6 +17,7 @@
  '(diff-refine-added ((t (:inherit diff-refine-changed :background "#005500"))))
  '(diff-refine-removed ((t (:inherit diff-refine-changed :background "#660000"))))
  '(diff-removed ((t (:inherit diff-changed :extend t :background "#331111"))))
+ '(dired-directory ((t (:inherit link))))
  '(escape-glyph ((t (:foreground "magenta3"))))
  ;; '(font-lock-builtin-face ((t (:foreground "Sienna3"))))
  '(font-lock-doc-face ((t (:inherit font-lock-comment-face))))
@@ -28,11 +29,20 @@
  '(glyphless-char ((t (:background "red"))))
  '(hi-yellow ((t (:background "yellow3" :foreground "black"))))
  '(isearch ((t (:background "magenta4" :foreground "lightskyblue1"))))
+ '(link ((t (:foreground "#66B5FF"))))
  '(margin ((t (:background "grey10"))))
  '(nobreak-hyphen ((t (:foreground "red"))))
  '(org-block ((t nil)))
  '(org-block-begin-line ((t (:inherit org-meta-line :extend t :background "grey25"))))
- '(region ((t (:background "gray20")))))
+ '(query-replace-preview-match ((t (:inherit diff-removed))))
+ '(query-replace-preview ((t (:inherit diff-added))))
+ '(region ((t (:background "gray20"))))
+ ;; Use the default face like in Dired
+ '(vc-dir-file ((t)))
+ ;; Like 'dired-directory'
+ '(vc-dir-directory ((t (:inherit link))))
+ ;; Like 'dired-mark'
+ '(vc-dir-mark-indicator ((t (:inherit font-lock-constant-face)))))
 
 (provide-theme 'jeanne-darc)
 
