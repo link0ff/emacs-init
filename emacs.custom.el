@@ -368,13 +368,16 @@
                (expand-file-name "themes/" (file-name-directory
                                             load-file-name))))
 
-(setopt frame-background-mode 'dark)
-(if (eq frame-background-mode 'dark)
-    (load-theme 'jeanne-darc t)
-  (load-theme 'jeanne-light t))
+(load-theme 'jeanne-darc t t)
+(load-theme 'jeanne-light t t)
+(add-hook 'desktop-after-read-hook
+          (lambda ()
+            (enable-theme (if (eq (frame-parameter nil 'background-mode)
+                                  'dark)
+                              'jeanne-darc
+                            'jeanne-light))))
 
 (set-face-background 'margin (face-background 'fringe))
 (set-face-foreground 'margin (face-foreground 'fringe))
 
-(global-text-scale-adjust 4)
 (setopt split-width-threshold 144)

@@ -8,7 +8,7 @@
 
 (custom-theme-set-faces
  'jeanne-darc
- '(default ((t (:background "black" :foreground "grey90" :height 143))))
+ '(default ((t (:background "black" :foreground "grey90" :height 169))))
  '(dictionary-reference-face ((t (:inherit link))))
  '(dictionary-word-definition-face ((t nil)))
  '(diff-added ((t (:inherit diff-changed :extend t :background "#002200"))))
