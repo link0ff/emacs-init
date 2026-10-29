@@ -306,6 +306,7 @@
  '(smtpmail-debug-info t)
  '(smtpmail-queue-mail t)
  '(split-height-threshold 100)
+ '(split-width-threshold 144)
  '(sql-sqlite-login-params '((database :file ".*")))
  '(sql-sqlite-program "sqlite3")
  '(suggest-key-bindings nil)
@@ -362,7 +363,6 @@
  ;; If there is more than one, they won't work right.
  )
 
-
 (when load-file-name
   (add-to-list 'custom-theme-load-path
                (expand-file-name "themes/" (file-name-directory
@@ -376,8 +376,3 @@
                                   'dark)
                               'jeanne-darc
                             'jeanne-light))))
-
-(set-face-background 'margin (face-background 'fringe))
-(set-face-foreground 'margin (face-foreground 'fringe))
-
-(setopt split-width-threshold 144)
