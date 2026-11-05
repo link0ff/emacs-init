@@ -124,10 +124,6 @@
  '(ediff-split-window-function 'split-window-horizontally)
  '(ediff-window-setup-function 'ediff-setup-windows-plain)
  '(ee-ps-program-switches '("aux" "--columns" "1024"))
- '(eglot-confirm-server-edits
-   '((eglot-code-actions . diff)
-     (eglot-rename . diff)
-     (t . diff)))
  '(electric-indent-mode nil)
  '(emacs-lisp-docstring-fill-column 75)
  '(enable-recursive-minibuffers t)
@@ -280,6 +276,10 @@
  '(read-minibuffer-restore-windows nil)
  '(read-quoted-char-radix 16)
  '(recentf-exclude '("/[^/]+[@:]"))
+ '(refactor-confirmation
+   '((eglot-code-actions . diff)
+     (refactor-rename . diff)
+     (t . diff)))
  '(repeat-keep-prefix t)
  '(require-final-newline t)
  '(revert-buffer-quick-short-answers t)

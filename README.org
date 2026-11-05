@@ -2461,7 +2461,12 @@ Extensions for message accumulation by ‘set-message-functions’:
   (add-to-list 'inhibit-message-regexps "^Mark set$")
   (add-to-list 'inhibit-message-regexps "^Mark saved where search started$")
   (add-to-list 'inhibit-message-regexps "^Omit\\|omit)$")
-  (add-to-list 'inhibit-message-regexps "^Garbage collecting"))
+  (add-to-list 'inhibit-message-regexps "^Garbage collecting")
+  ;; Useless indent-related messages from sh-mode:
+  ;; “Setting up indent for shell type bash”
+  ;; “Indentation variables are now local.”
+  ;; “Indentation setup for shell type bash”
+  (add-to-list 'inhibit-message-regexps "indent"))
 #+end_src
 
 ** Evaluable bookmarks
