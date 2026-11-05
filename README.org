@@ -474,8 +474,9 @@ that removes any remaining window decorations including the title bar:
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (modify-frame-parameters frame '((undecorated . t)))
-            ;; Some OS resources change background to grey, revert it back to white:
-            (modify-frame-parameters frame '((background-color . "white")))
+            ;; Some OS resources change background to grey, revert it back to white.
+            ;; It's commented out since now default background is handled by themes.
+            ;; (modify-frame-parameters frame '((background-color . "white")))
             ;; For some OS window managers that don't put focus to new frames:
             (select-frame-set-input-focus frame)))
 
@@ -2536,10 +2537,10 @@ and while repeating is active in ~repeat-mode~:
 (defun my-change-cursor (&rest _)
   "Change cursor color and type depending on insertion mode and input method."
   (set-cursor-color
-   (cond (repeat-in-progress   "blue")
+   (cond (repeat-in-progress   "LightSeaGreen")
          (current-input-method "red3") ;; "AntiqueWhite4"
-         ;; ((eq (frame-parameter (selected-frame) 'background-mode) 'dark)
-         ;;                       "DarkGrey")
+         ((eq (frame-parameter nil 'background-mode) 'dark)
+                               "HotPink")
          (t                    "black")))
   (setq-default cursor-type
    (cond (overwrite-mode       'box)
@@ -3822,7 +3823,14 @@ Fix keys broken by ~markdown-mode~:
   ;; so do the same explicitly below:
   :config
   (face-spec-set 'markdown-blockquote-face '((t (:inherit italic))))
-  (face-spec-set 'markdown-code-face '((t (:background "grey95"))))
+  (cond ((eq (frame-parameter nil 'background-mode) 'dark)
+         (set-face-background 'markdown-header-delimiter-face "#222222")
+         (set-face-background 'markdown-header-face "#222222")
+         (face-spec-set 'markdown-code-face '((t (:background "grey20")))))
+        (t
+         (set-face-background 'markdown-header-delimiter-face "#ddeeff")
+         (set-face-background 'markdown-header-face "#ddeeff")
+         (face-spec-set 'markdown-code-face '((t (:background "grey95"))))))
   (face-spec-set 'markdown-table-face '((t (:inherit italic))))
   ;; Use outline-like keys for navigation
   (bind-keys
@@ -4081,6 +4089,9 @@ Gnus Article buffers:
   (define-key gnus-article-mode-map [(meta up)] 'widget-backward)
   ;; Disable dangerous key bindings
   (define-key gnus-article-mode-map [(meta ?g)] nil))
+
+(with-eval-after-load 'mm-uu
+  (set-face-background 'mm-uu-extract nil))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -4787,18 +4798,26 @@ of outline faces.  So need to restore original distinctive colors in outline fac
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'outline
-  (set-face-foreground 'outline-1 "Blue1")
-  (set-face-foreground 'outline-2 "VioletRed4") ;; "sienna"
-  (set-face-foreground 'outline-3 "Purple")
-  (set-face-foreground 'outline-4 "Firebrick")
-  (set-face-foreground 'outline-5 "ForestGreen")
-  (set-face-foreground 'outline-6 "dark cyan")
-  (set-face-foreground 'outline-7 "dark slate blue")
-  (set-face-foreground 'outline-8 "sienna") ;; "VioletRed4"
+  (unless (eq (frame-parameter nil 'background-mode) 'dark)
+    (set-face-foreground 'outline-1 "Blue1")
+    (set-face-foreground 'outline-2 "VioletRed4") ;; "sienna"
+    (set-face-foreground 'outline-3 "Purple")
+    (set-face-foreground 'outline-4 "Firebrick")
+    (set-face-foreground 'outline-5 "ForestGreen")
+    (set-face-foreground 'outline-6 "dark cyan")
+    (set-face-foreground 'outline-7 "dark slate blue")
+    (set-face-foreground 'outline-8 "sienna") ;; "VioletRed4"
+    )
 
   ;; Header colors like in Wikipedia
-  (mapc (lambda (f) (set-face-background f "#ddeeff")) outline-font-lock-faces)
-  (mapc (lambda (f) (set-face-extend f t)) outline-font-lock-faces))
+  (cond ((eq (frame-parameter nil 'background-mode) 'dark)
+         (mapc (lambda (f) (set-face-background f "#222222"))
+               outline-font-lock-faces))
+        (t
+         (mapc (lambda (f) (set-face-background f "#ddeeff"))
+               outline-font-lock-faces)))
+  (mapc (lambda (f) (set-face-extend f t))
+        outline-font-lock-faces))
 #+end_src
 
 ** Fix org-mode faces
@@ -4806,7 +4825,10 @@ of outline faces.  So need to restore original distinctive colors in outline fac
 #+begin_src emacs-lisp
 (with-eval-after-load 'org-faces
   ;; Header colors like in Wikipedia
-  (mapc (lambda (f) (set-face-background f "#ddeeff")) org-level-faces)
+  (cond ((eq (frame-parameter nil 'background-mode) 'dark)
+         (mapc (lambda (f) (set-face-background f "#333333")) org-level-faces))
+        (t
+         (mapc (lambda (f) (set-face-background f "#ddeeff")) org-level-faces)))
   ;; TODO: :extend should be fixed in next version of Org, so remove later:
   (mapc (lambda (f) (set-face-extend f t)) org-level-faces))
 #+end_src
@@ -4874,10 +4896,17 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
 #+begin_src emacs-lisp
 (set-face-attribute 'mode-line-active   nil :box '(:line-width -1 :style released-button))
 (set-face-attribute 'mode-line-inactive nil :box '(:line-width -1 :style released-button))
-(set-face-attribute 'mode-line-active   nil :background "grey85")
-(set-face-attribute 'mode-line-inactive nil :background "grey75")
-(set-face-attribute 'mode-line-active   nil :foreground "black")
-(set-face-attribute 'mode-line-inactive nil :foreground "black")
+(cond
+ ((eq (frame-parameter nil 'background-mode) 'dark)
+  (set-face-attribute 'mode-line-active   nil :background "grey10")
+  (set-face-attribute 'mode-line-inactive nil :background "grey10")
+  (set-face-attribute 'mode-line-active   nil :foreground "white")
+  (set-face-attribute 'mode-line-inactive nil :foreground "grey40"))
+ (t
+  (set-face-attribute 'mode-line-active   nil :background "grey85")
+  (set-face-attribute 'mode-line-inactive nil :background "grey75")
+  (set-face-attribute 'mode-line-active   nil :foreground "black")
+  (set-face-attribute 'mode-line-inactive nil :foreground "black")))
 (set-face-attribute 'mode-line-inactive nil :weight 'normal)
 ;; Variable pitch is better on the mode line
 ;; (set-face-attribute 'mode-line-active   nil :inherit '(mode-line variable-pitch))
@@ -4904,6 +4933,7 @@ Make the default mode-line faces look like active/inactive tabs on the tab bar:
                      (unless (facep face)
                        (make-face face)
                        (set-face-background face color)
+                       (set-face-foreground face "black")
                        face)
                      name))
                  '("violet" "turquoise" "deepskyblue" "greenyellow"))

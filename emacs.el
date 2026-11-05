@@ -63,10 +63,10 @@ i.e. in daylight or under bright electric lamps."
   (if frame
       (select-frame frame)
     (setq frame (selected-frame)))
-  (set-background-color "black")
-  (set-foreground-color "DarkGrey")
+  (set-background-color "black")  ;; "grey5"
+  (set-foreground-color "grey96") ;; "DarkGrey"
   (when (facep 'region)
-    (set-face-background 'region "DimGray" frame))
+    (set-face-background 'region "gray20" frame)) ;; "DimGray"
   (when (facep 'fringe)
     (set-face-background 'fringe (face-background 'default) frame)
     (set-face-foreground 'fringe (face-foreground 'default) frame)))

@@ -31,6 +31,8 @@
  '(isearch ((t (:background "magenta4" :foreground "lightskyblue1"))))
  '(link ((t (:foreground "#66B5FF"))))
  '(margin ((t (:background "grey10"))))
+ '(match ((t (:background "gold4"))))
+ '(mode-line-buffer-id ((t nil)))
  '(nobreak-hyphen ((t (:foreground "red"))))
  '(org-block ((t nil)))
  '(org-block-begin-line ((t (:inherit org-meta-line :extend t :background "grey25"))))
